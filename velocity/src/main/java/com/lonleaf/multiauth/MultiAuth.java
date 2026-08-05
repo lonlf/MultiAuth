@@ -10,6 +10,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.lonleaf.multiauth.Core;
 import com.lonleaf.multiauth.Messages;
+import com.lonleaf.multiauth.auth.SessionSyncManager;
 import com.lonleaf.multiauth.command.CommandManager;
 import com.lonleaf.multiauth.listener.VelocityAuthListener;
 import org.bstats.velocity.Metrics;
@@ -31,6 +32,7 @@ public class MultiAuth {
     private Core core;
     private VelocityConfig config;
     private VelocityAuthListener authListener;
+    private SessionSyncManager sessionSyncManager;
 
     @Inject
     public MultiAuth(
@@ -64,6 +66,11 @@ public class MultiAuth {
         }
 
         this.authListener = new VelocityAuthListener(core, config, logger, server, this);
+
+        // 跨服会话同步（proxy 模式下启用，Velocity 作为会话中心）
+        boolean syncEnabled = config.getConfig().isProxy();
+        this.sessionSyncManager = new SessionSyncManager(server, logger, syncEnabled);
+        this.authListener.setSessionSyncManager(sessionSyncManager);
         server.getEventManager().register(this, authListener);
 
         // CommandManager 内部完成 /multiauth 命令注册
@@ -94,6 +101,9 @@ public class MultiAuth {
     public void onProxyShutdown(ProxyShutdownEvent event) {
         if (authListener != null) {
             authListener.shutdownExecutor();
+        }
+        if (sessionSyncManager != null) {
+            sessionSyncManager.shutdown();
         }
         if (core != null) {
             core.shutdown();

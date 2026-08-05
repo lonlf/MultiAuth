@@ -15,16 +15,6 @@ MultiAuth 是一个支持正版与离线玩家混合验证的 Minecraft 认证�
 - **数据库备份**：定时备份 + 旧备份自动清理 + SQLite↔MySQL 双向迁移
 - **国际化**：zh_cn / en_gb 双语(未来更多)，140+ 消息键，热重载
 
-## 模块架构
-
-```
-multiauth (父 POM)
-├── core      — 核心层（认证流程、Mojang API、数据库、加密、IP 地理位置、国际化）
-├── auth      — 离线玩家注册/登录服务（Argon2id 密码哈希、会话管理、登录安全/历史）
-├── spigot    — Spigot/Paper 实现（完整认证 + 离线注册登录 + PacketEvents 加密握手 + 安全增强）
-└── velocity  — Velocity 代理端实现（认证决策）
-```
-
 ## 快速开始
 
 ### 安装

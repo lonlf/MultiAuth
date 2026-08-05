@@ -10,6 +10,7 @@ import com.lonleaf.multiauth.geo.IpGeoService;
 import com.lonleaf.multiauth.listener.AuthJoinListener;
 import com.lonleaf.multiauth.listener.AuthState;
 import com.lonleaf.multiauth.listener.PlayerRestrictionListener;
+import com.lonleaf.multiauth.listener.SessionSyncReceiver;
 import com.lonleaf.multiauth.listener.SpigotAuthListener;
 import com.lonleaf.multiauth.listener.SpigotPacketListener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -30,6 +31,7 @@ public final class MultiAuth extends JavaPlugin {
     private AuthState authState;
     private AuthJoinListener authJoinListener;
     private PlayerRestrictionListener restrictionListener;
+    private SessionSyncReceiver sessionSyncReceiver;
 
     // 安全增强服务
     private LoginSecurityManager loginSecurityManager;
@@ -96,6 +98,12 @@ public final class MultiAuth extends JavaPlugin {
             new AuthCommandManager(this, authService);
             julLogger.info("[MultiAuth] 离线玩家注册登录模块已启用（含安全增强）");
 
+            // proxy=true 模式下注册跨服会话同步接收器
+            if (config.isProxy()) {
+                this.sessionSyncReceiver = new SessionSyncReceiver(this, authService, authState, julLogger);
+                this.sessionSyncReceiver.register();
+            }
+
             // 定期清理过期的持久化会话，避免 persistentSessions 内存泄漏
             getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
                 try {
@@ -151,6 +159,9 @@ public final class MultiAuth extends JavaPlugin {
     public void onDisable() {
         if (packetListener != null) {
             packetListener.unregister();
+        }
+        if (sessionSyncReceiver != null) {
+            sessionSyncReceiver.unregister();
         }
         if (authListener != null) {
             authListener.shutdownExecutor();

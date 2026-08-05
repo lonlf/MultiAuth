@@ -6,6 +6,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
+import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.util.GameProfile;
@@ -14,6 +15,7 @@ import com.lonleaf.multiauth.Messages;
 import com.lonleaf.multiauth.VelocityConfig;
 import com.lonleaf.multiauth.auth.AuthFlow;
 import com.lonleaf.multiauth.auth.AuthManager;
+import com.lonleaf.multiauth.auth.SessionSyncManager;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.slf4j.Logger;
 
@@ -39,6 +41,7 @@ public class VelocityAuthListener {
     private final Logger logger;
     private final ProxyServer server;
     private final Object plugin;
+    private SessionSyncManager sessionSyncManager;
 
     /**
      * PreLogin 阶段的决策缓存（绑定连接引用，用于兜底清理判断连接是否仍活跃）：
@@ -80,6 +83,11 @@ public class VelocityAuthListener {
         this.logger = logger;
         this.server = server;
         this.plugin = plugin;
+    }
+
+    /** 注入跨服会话同步管理器 */
+    public void setSessionSyncManager(SessionSyncManager sessionSyncManager) {
+        this.sessionSyncManager = sessionSyncManager;
     }
 
     /** 关闭验证线程池（插件卸载时调用，释放 daemon 线程） */
@@ -329,7 +337,23 @@ public class VelocityAuthListener {
     public void onLogin(LoginEvent event) {
         String username = event.getPlayer().getUsername();
         cleanupHandshakeState(username);
+        // 记录会话到 Velocity 内存，并同步到目标服务器
+        if (sessionSyncManager != null) {
+            HandshakeState state = handshakeStates.get(username);
+            boolean isPremium = state != null && state.premiumDecision;
+            sessionSyncManager.markLoggedIn(event.getPlayer(), isPremium);
+        }
         debug(Messages.get(Messages.SESSION_COMPLETE, username, "login completed"));
+    }
+
+    // ==================== ServerConnectedEvent：跨服转移同步 ====================
+
+    @Subscribe
+    public void onServerConnected(ServerConnectedEvent event) {
+        // 首次连接和跨服转移都同步会话到目标服务器
+        if (sessionSyncManager != null) {
+            sessionSyncManager.syncSessionToServer(event.getPlayer(), event.getServer());
+        }
     }
 
     // ==================== DisconnectEvent：检测 Velocity 握手失败 ====================
@@ -339,6 +363,11 @@ public class VelocityAuthListener {
         // Velocity 的 DisconnectEvent 仅对已建立连接的玩家触发（pre-login 阶段断开走
         // PreLoginDisconnectEvent），getPlayer().getUsername() 不会抛异常。
         String username = event.getPlayer().getUsername();
+
+        // 清理 Velocity 端会话，并通知后端服务器清理
+        if (sessionSyncManager != null) {
+            sessionSyncManager.removeSession(event.getPlayer());
+        }
 
         HandshakeState state = handshakeStates.get(username);
         if (state != null && state.premiumDecision && !state.hasJoinedPassed) {

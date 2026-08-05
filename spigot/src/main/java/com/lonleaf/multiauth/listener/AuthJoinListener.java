@@ -80,6 +80,19 @@ public class AuthJoinListener implements Listener {
             return;
         }
 
+        // 离线玩家但已通过 Velocity 跨服会话同步登录 → 跳过限制
+        if (authService.isLoggedIn(uuid)) {
+            if (authConfig.isAuthReturnLastLocation()) {
+                onLoginSuccess(player);
+            } else if (authConfig.isAuthLoginSpawnPoint()) {
+                player.teleport(resolveSpawnPoint(player));
+            }
+            if (authConfig.isAuthForceSurvival()) {
+                player.setGameMode(GameMode.SURVIVAL);
+            }
+            return;
+        }
+
         // 离线玩家 → 未登录 → 应用限制
         if (authConfig.isAuthLoginSpawnPoint()) {
             player.teleport(resolveSpawnPoint(player));
