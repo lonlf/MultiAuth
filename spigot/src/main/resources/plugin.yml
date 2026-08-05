@@ -1,0 +1,36 @@
+name: MultiAuth
+version: ${project.version}
+main: com.lonleaf.multiauth.MultiAuth
+api-version: '1.18'
+prefix: MultiAuth
+load: STARTUP
+authors: [ lonlf ]
+description: Login authenticated players and other players.
+website: https://github.com/lonlf
+softdepend:
+  - BungeeCord
+  - Velocity
+  - packetevents
+  - Multiverse-Core
+commands:
+  multiauth:
+    description: MultiAuth management command
+    usage: /multiauth <reload|status|backup|migrate|info|unregister> [args]
+  register:
+    description: Register an offline account
+    usage: /register <password> <confirmPassword>
+    aliases: [reg]
+  login:
+    description: Login to an offline account
+    usage: /login <password>
+    aliases: [l]
+  changepassword:
+    description: Change your password
+    usage: /changepassword <oldPassword> <newPassword>
+permissions:
+  multiauth.admin:
+    description: Allows reloading the plugin config and managing auth accounts
+    default: op
+  multiauth.status:
+    description: Allows viewing player auth status
+    default: true

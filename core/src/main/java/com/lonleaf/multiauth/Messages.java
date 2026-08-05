@@ -1,0 +1,1202 @@
+package com.lonleaf.multiauth;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ * 国际化消息管理类。
+ */
+public class Messages {
+
+    private static final Logger LOGGER = Logger.getLogger(Messages.class.getName());
+
+    /** 当前语言代码 */
+    private static volatile String currentLang = "zh_cn";
+
+    /** 语言文件目录 */
+    private static Path langDir;
+
+    /** 默认资源路径前缀（打包在 JAR 中的内置语言文件） */
+    private static final String RESOURCE_PREFIX = "/lang/";
+
+    /** 消息存储（ConcurrentHashMap 保证 reload 时并发读取线程安全） */
+    private static final Map<String, String> messages = new ConcurrentHashMap<>();
+
+    /**
+     * 消息版本号：每次 loadMessages 完成后递增，作为 volatile 写屏障，
+     * 保证后续读取线程能看到所有静态 String 字段的最新值。
+     */
+    private static volatile long messagesVersion = 0;
+
+    /** 是否初始化 */
+    private static volatile boolean initialized = false;
+
+    // ==================== 所有消息键常量 ====================
+
+    // --- 数据库相关 ---
+    public static volatile String DB_INIT_FAILED;
+    public static volatile String DB_CONNECTED;
+    public static volatile String DB_PING_FAILED;
+    public static volatile String DB_HEARTBEAT_PING_FAILED;
+    public static volatile String DB_HEARTBEAT_NOT_CONNECTED;
+    public static volatile String DB_RECONNECTED;
+    public static volatile String DB_RECONNECT_FAILED;
+    public static volatile String DB_HEARTBEAT_ERROR;
+    public static volatile String DB_BACKUP_CREATED;
+    public static volatile String DB_BACKUP_FAILED;
+    public static volatile String DB_BACKUP_DELETED_OLD;
+    public static volatile String DB_MIGRATION_COMPLETE;
+    public static volatile String DB_MIGRATION_FAILED;
+    public static volatile String DB_UUID_REWRITE_WARNING;
+    public static volatile String DB_CONNECTION_FAILED;
+    public static volatile String DB_REBUILD_CONNECTION;
+    public static volatile String DB_BACKUP_CLEAN_FAILED;
+    public static volatile String DB_BACKUP_SKIP_INVALID_ROW;
+    public static volatile String DB_CLOSE_FAILED;
+    public static volatile String DB_STATE_CHECK_FAILED;
+    public static volatile String DB_PING_EXCEPTION;
+    public static volatile String DB_GET_PLAYER_FAILED;
+    public static volatile String DB_SAVE_PLAYER_FAILED;
+    public static volatile String DB_SAVE_PLAYER_SAFE_FAILED;
+    public static volatile String DB_EXISTS_FAILED;
+    public static volatile String DB_COUNT_FAILED;
+    public static volatile String DB_COUNT_PREMIUM_FAILED;
+    public static volatile String DB_MIGRATION_EXCEPTION;
+    public static volatile String CORE_INIT_PROXY;
+    public static volatile String CORE_INIT_STANDALONE;
+    public static volatile String CORE_SHUTDOWN_COMPLETE;
+
+    // --- API 相关 ---
+    public static volatile String API_OFFICIAL_AVAILABLE;
+    public static volatile String API_OFFICIAL_UNAVAILABLE;
+    public static volatile String API_FALLBACK_AVAILABLE;
+    public static volatile String API_FALLBACK_UNAVAILABLE;
+    public static volatile String API_ALL_DOWN;
+    public static volatile String API_OFFICIAL_COOLDOWN;
+    public static volatile String API_RATE_LIMIT_REACHED;
+    public static volatile String API_HIGH_FAILURE_RATE;
+    public static volatile String API_RECOVERED;
+    public static volatile String API_PROBE_START;
+    public static volatile String API_PARSE_FAILED;
+
+    // --- 认证流程 ---
+    public static volatile String AUTH_DATABASE_UNAVAILABLE;
+    public static volatile String AUTH_SERVICE_NOT_INITIALIZED;
+    public static volatile String AUTH_CONCURRENT_LOGIN_BLOCKED;
+    public static volatile String AUTH_SERVER_BUSY;
+    public static volatile String AUTH_USERNAME_CHECK_FAILED;
+    public static volatile String AUTH_PREMIUM_DETECTED;
+    public static volatile String AUTH_PREMIUM_IN_AUTHLIST;
+    public static volatile String AUTH_OFFLINE_ALLOWED;
+    public static volatile String AUTH_DOWNTIME_FLOW;
+    public static volatile String AUTH_PLAYER_ALLOWED;
+    public static volatile String AUTH_PLAYER_DENIED;
+    public static volatile String AUTH_HANDSHAKE_FAILED;
+    public static volatile String AUTH_INVALID_SESSION;
+    public static volatile String AUTH_MOJANG_VERIFY_PASSED;
+    public static volatile String AUTH_MOJANG_VERIFY_FAILED_PIRATE;
+    public static volatile String AUTH_MOJANG_UNREACHABLE;
+    public static volatile String AUTH_DOWNTIME_DENY;
+    public static volatile String AUTH_DOWNTIME_ALLOW_OFFLINE;
+    public static volatile String AUTH_UUID_MISMATCH;
+    public static volatile String AUTH_EXECUTOR_FULL;
+    public static volatile String AUTH_PLUGIN_DISABLED;
+    public static volatile String AUTH_VERIFY_UNEXPECTED_ERROR;
+    public static volatile String AUTH_LISTENER_UNREGISTERED_CLOSE;
+    public static volatile String AUTH_DENY_CLIENT_DISCONNECTED;
+    public static volatile String AUTH_DENY_SEND_DISCONNECT;
+    public static volatile String AUTH_NO_PACKETEVENT_VERIFY;
+    public static volatile String AUTH_VERIFY_FAILED_DENY;
+    public static volatile String AUTH_API_ONLY_MODE;
+    public static volatile String AUTH_NO_LOGIN_SUMMARY;
+    public static volatile String AUTH_ALLOW_WINS_DENY_IGNORED;
+    public static volatile String AUTH_CONCURRENCY_FULL;
+
+    // --- 离线玩家注册登录 ---
+    public static volatile String AUTH_REGISTER_PROMPT;
+    public static volatile String AUTH_LOGIN_PROMPT;
+    public static volatile String AUTH_REGISTER_SUCCESS;
+    public static volatile String AUTH_REGISTER_FAILED;
+    public static volatile String AUTH_REGISTER_ALREADY;
+    public static volatile String AUTH_REGISTER_PASSWORD_MISMATCH;
+    public static volatile String AUTH_REGISTER_PASSWORD_TOO_SHORT;
+    public static volatile String AUTH_REGISTER_PASSWORD_TOO_LONG;
+    public static volatile String AUTH_REGISTER_PASSWORD_EMPTY;
+    public static volatile String AUTH_LOGIN_SUCCESS;
+    public static volatile String AUTH_LOGIN_FAILED;
+    public static volatile String AUTH_LOGIN_NOT_REGISTERED;
+    public static volatile String AUTH_LOGIN_PROCESSING;
+    public static volatile String AUTH_LOGIN_ALREADY;
+    public static volatile String AUTH_CHANGEPASSWORD_SUCCESS;
+    public static volatile String AUTH_CHANGEPASSWORD_FAILED;
+    public static volatile String AUTH_CHANGEPASSWORD_WRONG_OLD;
+    public static volatile String AUTH_NOT_LOGGED_IN;
+    public static volatile String AUTH_RESTRICTED;
+    public static volatile String AUTH_LOGIN_TIMEOUT;
+    public static volatile String AUTH_REGISTER_TIMEOUT;
+    public static volatile String AUTH_UNREGISTER_SUCCESS;
+    public static volatile String AUTH_UNREGISTER_NOT_FOUND;
+    public static volatile String AUTH_INFO_FORMAT;
+    public static volatile String AUTH_INFO_PREMIUM_FORMAT;
+    public static volatile String AUTH_INFO_NEVER_LOGGED_IN;
+    public static volatile String AUTH_INFO_NOT_REGISTERED;
+    public static volatile String AUTH_MODULE_DISABLED;
+    public static volatile String AUTH_UNREGISTER_KICK;
+
+    // --- 安全增强消息 ---
+    public static volatile String AUTH_ACCOUNT_COOLDOWN;
+    public static volatile String AUTH_IP_COOLDOWN;
+    public static volatile String AUTH_LOGIN_TOO_MANY_FAILURES;
+    public static volatile String AUTH_ATTEMPTS_REMAINING;
+    public static volatile String AUTH_IP_ACCOUNT_LIMIT;
+    public static volatile String AUTH_IP_ONLINE_LIMIT;
+    public static volatile String AUTH_IP_CHANGE_WARNING;
+    public static volatile String AUTH_GEO_CROSS_COUNTRY;
+    public static volatile String AUTH_GEO_CROSS_CITY;
+    public static volatile String AUTH_GEO_REQUIRE_LOGIN;
+
+    // --- 日志参数：拒绝/放行原因与登录类型标签（可配置） ---
+    public static volatile String DENY_REASON_DB_UNAVAILABLE;
+    public static volatile String DENY_REASON_AUTHMANAGER_NOT_INITIALIZED;
+    public static volatile String DENY_REASON_CONCURRENT_LOGIN;
+    public static volatile String DENY_REASON_NO_ENC_RESPONSE;
+    public static volatile String ALLOW_REASON_NO_RECORD;
+    public static volatile String ALLOW_REASON_OFFLINE_RECORD;
+    public static volatile String ALLOW_REASON_PREMIUM_KEEP_OFFLINE_UUID;
+    public static volatile String ALLOW_REASON_UPGRADE_OFFLINE_TO_PREMIUM;
+    public static volatile String ALLOW_REASON_UUID_AUTOCORRECT_OFFLINE_TO_PREMIUM;
+    public static volatile String ALLOW_REASON_UUID_AUTOCORRECT_PREMIUM_TO_OFFLINE;
+    public static volatile String LOGIN_TYPE_PREMIUM;
+    public static volatile String LOGIN_TYPE_PREMIUM_OFFLINE_UUID;
+    public static volatile String LOGIN_TYPE_OFFLINE;
+    public static volatile String LOGIN_TYPE_PREMIUM_API_ONLY;
+    public static volatile String LOGIN_TYPE_OFFLINE_API_ONLY;
+    public static volatile String API_STATUS_RECOVERED;
+    public static volatile String API_SOURCE_OFFICIAL;
+    public static volatile String API_SOURCE_FALLBACK;
+    public static volatile String KICK_REJECTED_MESSAGE;
+    public static volatile String KICK_MESSAGE_SENT;
+    public static volatile String LOGIN_SUCCESS;
+    public static volatile String LOGIN_SUCCESS_PREMIUM;
+    public static volatile String LOGIN_SUCCESS_OFFLINE;
+    public static volatile String STATE_MISS;
+    public static volatile String PACKET_FAKE_LOGIN_START_KICK;
+
+    // --- 认证流程：宕机 / API-only 审计日志 ---
+    public static volatile String AUTH_AUDIT_HASJOINED_UNREACHABLE;
+    public static volatile String AUTH_AUDIT_DOWNTIME_NO_RECORD;
+    public static volatile String AUTH_AUDIT_DOWNTIME_PREMIUM_HISTORY;
+    public static volatile String AUTH_AUDIT_API_ONLY_AUTHLIST;
+    public static volatile String AUTH_AUDIT_API_ONLY_PREMIUM;
+
+    // --- 配置相关 ---
+    public static volatile String CONFIG_LOADED;
+    public static volatile String CONFIG_RELOADED;
+    public static volatile String CONFIG_RELOAD_SUCCESS;
+    public static volatile String CONFIG_RELOAD_FAILED;
+    public static volatile String CONFIG_LANG_CHANGED;
+    public static volatile String CONFIG_PROXY_CHANGE_RESTART;
+    public static volatile String CONFIG_DEFAULT_CREATED;
+    public static volatile String CONFIG_LOAD_FAILED;
+
+    // --- 插件相关 ---
+    public static volatile String PLUGIN_VELOCITY_INITIALIZED;
+    public static volatile String PLUGIN_VELOCITY_SHUTDOWN;
+    public static volatile String PLUGIN_PROXY_SWITCH_TRUE;
+    public static volatile String PLUGIN_PROXY_SWITCH_FALSE;
+    public static volatile String PLUGIN_API_ONLY_WARNING;
+    public static volatile String PLUGIN_PACKETEVENT_INSTALL_HINT;
+
+    // --- 数据包 / 加密握手（Spigot PacketEvents 模式） ---
+    public static volatile String PACKET_NO_VERIFY_CALLBACK;
+    public static volatile String PACKET_LOGIN_START_PARSE_FAILED;
+    public static volatile String PACKET_ENC_RESPONSE_PARSE_FAILED;
+    public static volatile String PACKET_ENC_REQUEST_WRAPPER_FAILED;
+    public static volatile String PACKET_FAKE_LOGIN_START_FAILED;
+    public static volatile String PACKET_FAKE_LOGIN_START_FALLBACK_FAILED;
+    public static volatile String PACKET_DISCONNECT_SEND_FAILED;
+    public static volatile String VERIFY_NO_PACKETEVENT;
+    public static volatile String VERIFY_HANDSHAKE_TIMEOUT;
+    public static volatile String VERIFY_ENC_RESPONSE_PARSE_FAILED;
+    public static volatile String VERIFY_ENC_RESPONSE_INTERRUPTED;
+    public static volatile String VERIFY_DECRYPT_FAILED;
+    public static volatile String VERIFY_AES_ANCHOR_MISSING;
+    public static volatile String VERIFY_HASJOINED_FAILED;
+    public static volatile String VERIFY_INBOUND_ANCHOR_MISSING;
+    public static volatile String VERIFY_OUTBOUND_ANCHOR_MISSING;
+    public static volatile String VERIFY_AES_ENABLE_FAILED;
+    public static volatile String VERIFY_SPOOFED_CONNECTION_MISSING;
+    public static volatile String VERIFY_SPOOFED_FIELD_MISSING;
+    public static volatile String VERIFY_SPOOFED_FAILED;
+    public static volatile String VERIFY_PACKET_HANDLER_MISSING;
+    public static volatile String VERIFY_CONNECTION_FAILED;
+    public static volatile String VERIFY_NMS_LOAD_FAILED;
+
+    // --- 命令相关 ---
+    public static volatile String CMD_HELP;
+    public static volatile String CMD_NO_PERMISSION;
+    public static volatile String CMD_STATUS;
+    public static volatile String CMD_RELOAD_SUCCESS;
+    public static volatile String CMD_RELOAD_FAILED;
+    public static volatile String CMD_MIGRATE_USAGE;
+    public static volatile String CMD_MIGRATE_SUCCESS;
+    public static volatile String CMD_MIGRATE_FAILED;
+    public static volatile String CMD_MIGRATE_INVALID_TYPE;
+    public static volatile String CMD_BACKUP_SUCCESS;
+    public static volatile String CMD_BACKUP_FAILED;
+    public static volatile String CMD_CORRUPTED_DB;
+    public static volatile String CMD_PLUGIN_INFO;
+    public static volatile String CMD_INFO_USAGE;
+    public static volatile String CMD_UNREGISTER_USAGE;
+    public static volatile String CMD_CHANGEPASSWORD_USAGE;
+    public static volatile String CMD_STATUS_PLAYER_TITLE;
+    public static volatile String CMD_MIGRATE_SAME_TYPE;
+    public static volatile String CMD_CHECK_CONSOLE;
+    public static volatile String CMD_MODE_PROXY;
+    public static volatile String CMD_MODE_DIRECT;
+    public static volatile String DB_STATUS_HEALTHY;
+    public static volatile String DB_STATUS_UNHEALTHY;
+    public static volatile String CMD_CORE_NOT_INITIALIZED;
+    public static volatile String CMD_MIGRATE_IN_PROGRESS;
+    public static volatile String CMD_BACKUP_IN_PROGRESS;
+    public static volatile String CMD_STATUS_TITLE;
+    public static volatile String CMD_STATUS_DB_TYPE;
+    public static volatile String CMD_STATUS_DB_STATUS;
+    public static volatile String CMD_STATUS_USE_MOJANG_UUID;
+    public static volatile String CMD_STATUS_AUTH_LIST;
+    public static volatile String CMD_STATUS_FALLBACK_API;
+    public static volatile String CMD_STATUS_FALLBACK_NOT_CONFIGURED;
+
+    // --- 会话相关 ---
+    public static volatile String SESSION_START;
+    public static volatile String SESSION_COMPLETE;
+    public static volatile String SESSION_DISCONNECT;
+    public static volatile String SESSION_JOIN_NOTIFY;
+    public static volatile String SESSION_HIJACK_WARNING;
+    public static volatile String SESSION_GAMEPROFILE_REJECTED;
+    public static volatile String SESSION_STATUS_NOTIFY;
+    public static volatile String SESSION_STATUS_LOG;
+
+    // --- 通用 ---
+    public static volatile String GENERIC_PREFIX;
+    public static volatile String GENERIC_PERMISSION_DENIED;
+    public static volatile String GENERIC_PLAYER_ONLY;
+    public static volatile String GENERIC_NUMBER_REQUIRED;
+    public static volatile String GENERIC_NO_PLAYER;
+    public static volatile String GENERIC_PLAYER_NOT_FOUND;
+    public static volatile String GENERIC_UNKNOWN;
+
+    // ==================== 初始化 ====================
+
+    /**
+     * 初始化消息系统。
+     *
+     * @param dataDirectory 插件数据目录
+     * @param lang          语言代码（如 "zh_cn"、"en_gb"）
+     */
+    public static void init(Path dataDirectory, String lang) {
+        langDir = dataDirectory.resolve("lang");
+        currentLang = (lang != null && !lang.isBlank()) ? lang : "zh_cn";
+
+        try {
+            Files.createDirectories(langDir);
+            extractBuiltinLanguages();
+            loadMessages(currentLang);
+            initialized = true;
+            LOGGER.info("Messages system initialized (lang=" + currentLang + ", dir=" + langDir + ")");
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to initialize messages system", e);
+        }
+    }
+
+    /**
+     * 重新加载指定语言的消息。
+     */
+    public static void reload(String lang) {
+        if (lang != null && !lang.isBlank()) {
+            currentLang = lang;
+        }
+        loadMessages(currentLang);
+        LOGGER.info("Messages reloaded (lang=" + currentLang + ")");
+    }
+
+    /**
+     * 获取指定键的消息，参数化替换 {0}, {1} 等占位符。
+     */
+    public static String get(String key, String... args) {
+        if (key == null) return "";
+        String template = messages.getOrDefault(key, key);
+        if (args.length == 0) {
+            return template;
+        }
+        StringBuilder result = new StringBuilder(template);
+        for (int i = 0; i < args.length; i++) {
+            result = new StringBuilder(result.toString().replace("{" + i + "}", String.valueOf(args[i])));
+        }
+        return result.toString();
+    }
+
+    /**
+     * 获取当前语言代码。
+     */
+    public static String getCurrentLang() {
+        return currentLang;
+    }
+
+    // ==================== 内部方法 ====================
+
+    /**
+     * 从 JAR 内置资源提取默认语言文件到数据目录
+     */
+    private static void extractBuiltinLanguages() throws IOException {
+        String[] builtins = {"zh_cn", "en_gb"};
+        for (String lang : builtins) {
+            Path target = langDir.resolve(lang + ".yml");
+            if (!Files.exists(target)) {
+                String resourcePath = RESOURCE_PREFIX + lang + ".yml";
+                try (InputStream in = Messages.class.getResourceAsStream(resourcePath)) {
+                    if (in != null) {
+                        Files.copy(in, target);
+                        LOGGER.info("Extracted builtin language: " + lang + " → " + target);
+                    } else {
+                        writeDefaultLanguageFile(lang, target);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 从外部文件加载消息
+     */
+    private static void loadMessages(String lang) {
+        messages.clear();
+        Path langFile = langDir.resolve(lang + ".yml");
+
+        // 尝试从文件加载
+        if (Files.exists(langFile)) {
+            loadFromYamlFile(langFile);
+        } else {
+            // 回退到内置资源
+            String resourcePath = RESOURCE_PREFIX + lang + ".yml";
+            try (InputStream in = Messages.class.getResourceAsStream(resourcePath)) {
+                if (in != null) {
+                    loadFromStream(in);
+                }
+            } catch (IOException e) {
+                LOGGER.warning("Failed to load resource " + resourcePath + ": " + e.getMessage());
+            }
+        }
+
+        // 验证所有键是否已加载
+        verifyKeys();
+
+        // volatile 写作为内存屏障：保证上方 verifyKeys() 中所有静态 String 字段赋值
+        // 对后续读取线程可见（reload 线程写、认证线程读的可见性问题）
+        messagesVersion++;
+    }
+
+    /**
+     * 从 YAML 文件加载（简化解析，支持 key: value 格式）
+     * 强制使用 UTF-8 编码读取，避免中文乱码。
+     */
+    private static void loadFromYamlFile(Path file) {
+        try {
+            String content = Files.readString(file, StandardCharsets.UTF_8);
+            loadFromString(content);
+            LOGGER.fine("Loaded " + messages.size() + " messages from " + file);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to load language file: " + file, e);
+        }
+    }
+
+    /**
+     * 从 InputStream 加载（UTF-8 编码）
+     */
+    private static void loadFromStream(InputStream in) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+                char[] buffer = new char[8192];
+                int len;
+                while ((len = reader.read(buffer)) != -1) {
+                    sb.append(buffer, 0, len);
+                }
+            }
+            loadFromString(sb.toString());
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to load language from stream", e);
+        }
+    }
+
+    /**
+     * 从字符串加载消息（简易 YAML key: value 解析）
+     * 跳过注释行（以 # 开头）和空行。
+     */
+    private static void loadFromString(String content) {
+        try (Reader reader = new StringReader(content)) {
+            Properties props = new Properties();
+            props.load(reader);
+            props.forEach((key, value) -> messages.put(key.toString(), value.toString()));
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to parse language content", e);
+        }
+    }
+
+    /**
+     * 验证所有静态字段对应的键是否已加载
+     */
+    private static void verifyKeys() {
+        // 自动将所有 static String 字段的值（作为键）从 messages map 赋回
+        // 这样 Messages.DB_INIT_FAILED 等字段自动获得对应翻译
+        DB_INIT_FAILED = messages.getOrDefault("db_init_failed", "[DB] Database initialization failed! All logins will be rejected.");
+        DB_CONNECTED = messages.getOrDefault("db_connected", "[DB] Database connected: {0}");
+        DB_PING_FAILED = messages.getOrDefault("db_ping_failed", "[DB] Database ping failed after connection!");
+        DB_HEARTBEAT_PING_FAILED = messages.getOrDefault("db_heartbeat_ping_failed", "[DB] Database heartbeat: ping failed, attempting reconnect...");
+        DB_HEARTBEAT_NOT_CONNECTED = messages.getOrDefault("db_heartbeat_not_connected", "[DB] Database heartbeat: not connected, attempting reconnect...");
+        DB_RECONNECTED = messages.getOrDefault("db_reconnected", "[DB] Database reconnected successfully");
+        DB_RECONNECT_FAILED = messages.getOrDefault("db_reconnect_failed", "[DB] Database reconnect failed: {0}");
+        DB_HEARTBEAT_ERROR = messages.getOrDefault("db_heartbeat_error", "[DB] Database heartbeat error: {0}");
+        DB_BACKUP_CREATED = messages.getOrDefault("db_backup_created", "[DB] Database backup created: {0}");
+        DB_BACKUP_FAILED = messages.getOrDefault("db_backup_failed", "[DB] Database backup failed: {0}");
+        DB_BACKUP_DELETED_OLD = messages.getOrDefault("db_backup_deleted_old", "[DB] Deleted old backup: {0}");
+        DB_MIGRATION_COMPLETE = messages.getOrDefault("db_migration_complete", "[DB] Migration complete: {0} records migrated to {1}");
+        DB_MIGRATION_FAILED = messages.getOrDefault("db_migration_failed", "[DB] Migration failed: {0}");
+        DB_UUID_REWRITE_WARNING = messages.getOrDefault("db_uuid_rewrite_warning", "[DB] Rewriting UUID for premium player {0}: {1} → {2}");
+        DB_CONNECTION_FAILED = messages.getOrDefault("db_connection_failed", "[DB] Database connection failed: {0}");
+        DB_REBUILD_CONNECTION = messages.getOrDefault("db_rebuild_connection", "[DB] Database config changed, rebuilding connection");
+        DB_BACKUP_CLEAN_FAILED = messages.getOrDefault("db_backup_clean_failed", "[DB] Failed to clean old backups: {0}");
+        DB_BACKUP_SKIP_INVALID_ROW = messages.getOrDefault("db_backup_skip_invalid_row", "[DB] Skipped invalid row during backup: username={0} uuid={1}");
+        DB_CLOSE_FAILED = messages.getOrDefault("db_close_failed", "[DB] Failed to close database connection");
+        DB_STATE_CHECK_FAILED = messages.getOrDefault("db_state_check_failed", "[DB] Database connection state check failed");
+        DB_PING_EXCEPTION = messages.getOrDefault("db_ping_exception", "[DB] Database ping failed");
+        DB_GET_PLAYER_FAILED = messages.getOrDefault("db_get_player_failed", "[DB] Failed to get player {0}");
+        DB_SAVE_PLAYER_FAILED = messages.getOrDefault("db_save_player_failed", "[DB] Failed to save player {0}");
+        DB_SAVE_PLAYER_SAFE_FAILED = messages.getOrDefault("db_save_player_safe_failed", "[DB] Failed to save player (safe) {0}");
+        DB_EXISTS_FAILED = messages.getOrDefault("db_exists_failed", "[DB] Failed to check existence for player {0}");
+        DB_COUNT_FAILED = messages.getOrDefault("db_count_failed", "[DB] Failed to count records");
+        DB_COUNT_PREMIUM_FAILED = messages.getOrDefault("db_count_premium_failed", "[DB] Failed to count premium records");
+        DB_MIGRATION_EXCEPTION = messages.getOrDefault("db_migration_exception", "[DB] Database migration failed");
+        CORE_INIT_PROXY = messages.getOrDefault("core_init_proxy", "Core initialized in PROXY mode (UUID verification via shared DB)");
+        CORE_INIT_STANDALONE = messages.getOrDefault("core_init_standalone", "Core initialized successfully (premium verification by this plugin)");
+        CORE_SHUTDOWN_COMPLETE = messages.getOrDefault("core_shutdown_complete", "Core shutdown complete");
+
+        API_OFFICIAL_AVAILABLE = messages.getOrDefault("api_official_available", "[API] Mojang official API availability: {0} (HTTP {1})");
+        API_OFFICIAL_UNAVAILABLE = messages.getOrDefault("api_official_unavailable", "[API] Mojang official API unreachable: {0}");
+        API_FALLBACK_AVAILABLE = messages.getOrDefault("api_fallback_available", "[API] Fallback API #{0}: {1} (HTTP {2})");
+        API_FALLBACK_UNAVAILABLE = messages.getOrDefault("api_fallback_unavailable", "[API] Fallback API #{0} unreachable: {1}");
+        API_ALL_DOWN = messages.getOrDefault("api_all_down", "[API] ALL Mojang APIs are unreachable! Premium verification will be rejected for premium players.");
+        API_OFFICIAL_COOLDOWN = messages.getOrDefault("api_official_cooldown", "[API] Mojang official API in cooldown ({0}s) after repeated failures, using fallback");
+        API_RATE_LIMIT_REACHED = messages.getOrDefault("api_rate_limit_reached", "[API] Mojang API rate limit reached (too many concurrent requests)");
+        API_HIGH_FAILURE_RATE = messages.getOrDefault("api_high_failure_rate", "[API] Mojang API high failure rate detected ({0}%), failing over to next available API...");
+        API_RECOVERED = messages.getOrDefault("api_recovered", "[API] Mojang API is back online - now using {0}");
+        API_PROBE_START = messages.getOrDefault("api_probe_start", "[API] Downtime recovery probe started (next probe window +{0}s)");
+        API_PARSE_FAILED = messages.getOrDefault("api_parse_failed", "[API] Failed to parse Mojang API response: {0} body={1}");
+
+        AUTH_DATABASE_UNAVAILABLE = messages.getOrDefault("auth_database_unavailable", "§cMultiAuth 数据库当前不可用，无法登录。");
+        AUTH_SERVICE_NOT_INITIALIZED = messages.getOrDefault("auth_service_not_initialized", "§c认证服务未初始化，请联系管理员。");
+        AUTH_CONCURRENT_LOGIN_BLOCKED = messages.getOrDefault("auth_concurrent_login_blocked", "§c该账号正在验证中，请稍后再试。");
+        AUTH_SERVER_BUSY = messages.getOrDefault("auth_server_busy", "§c服务器认证繁忙，请稍后重试。");
+        AUTH_USERNAME_CHECK_FAILED = messages.getOrDefault("auth_username_check_failed", "[AUTH] Player {0} username check failed: {1}");
+        AUTH_PREMIUM_DETECTED = messages.getOrDefault("auth_premium_detected", "[AUTH] Player {0} username is premium (UUID={1}) - requiring Mojang verification");
+        AUTH_PREMIUM_IN_AUTHLIST = messages.getOrDefault("auth_premium_in_authlist", "[AUTH] Player {0} not premium but in auth-list - requiring verification");
+        AUTH_OFFLINE_ALLOWED = messages.getOrDefault("auth_offline_allowed", "[AUTH] Player {0} not premium - allowing offline login");
+        AUTH_DOWNTIME_FLOW = messages.getOrDefault("auth_downtime_flow", "[AUTH] Player {0} - Mojang API unreachable, applying downtime flow");
+        AUTH_PLAYER_ALLOWED = messages.getOrDefault("auth_player_allowed", "[AUDIT] Player {0} ALLOWED - {1} (UUID: {2})");
+        AUTH_PLAYER_DENIED = messages.getOrDefault("auth_player_denied", "[AUDIT] Player {0} DENIED - {1}");
+        AUTH_HANDSHAKE_FAILED = messages.getOrDefault("auth_handshake_failed", "[AUDIT] Player {0} DENIED - Velocity handshake failed (pirate client or invalid session, GameProfileRequest never reached)");
+        AUTH_INVALID_SESSION = messages.getOrDefault("auth_invalid_session", "§c无效会话（可能是盗版客户端或正版未登录）\n§7请确认已通过正版启动器登录 Minecraft 账号，\n§7若仍失败请重启游戏及启动器后重试。");
+        AUTH_MOJANG_VERIFY_PASSED = messages.getOrDefault("auth_mojang_verify_passed", "[AUDIT] Player {0} Mojang verification PASSED - UUID: {1}");
+        AUTH_MOJANG_VERIFY_FAILED_PIRATE = messages.getOrDefault("auth_mojang_verify_failed_pirate", "[AUDIT] Player {0} Mojang verification FAILED - pirate client");
+        AUTH_MOJANG_UNREACHABLE = messages.getOrDefault("auth_mojang_unreachable", "[AUDIT] Player {0} - Mojang session server unreachable");
+        AUTH_DOWNTIME_DENY = messages.getOrDefault("auth_downtime_deny", "§6Mojang 认证服务器当前不可用。\n§7为保障账号安全，宕机期间已暂停所有登录。\n§7请稍后重试。");
+        AUTH_DOWNTIME_ALLOW_OFFLINE = messages.getOrDefault("auth_downtime_allow_offline", "[AUTH] Player {0} allowed offline login during Mojang downtime (offline history)");
+        AUTH_UUID_MISMATCH = messages.getOrDefault("auth_uuid_mismatch", "[AUDIT] Player {0} UUID mismatch! Expected: {1}, Got: {2} - possible session hijack!");
+        AUTH_EXECUTOR_FULL = messages.getOrDefault("auth_executor_full", "[AUTH] Verification thread pool full, rejecting player {0} (server overloaded, try again later)");
+        AUTH_PLUGIN_DISABLED = messages.getOrDefault("auth_plugin_disabled", "[AUTH] Plugin disabled, rejecting player {0}");
+        AUTH_VERIFY_UNEXPECTED_ERROR = messages.getOrDefault("auth_verify_unexpected_error", "[AUTH] Unexpected exception during verification of player {0}");
+        AUTH_LISTENER_UNREGISTERED_CLOSE = messages.getOrDefault("auth_listener_unregistered_close", "[AUTH] PacketEvents listener unregistered (proxy switch), closing connection of player {0}");
+        AUTH_DENY_CLIENT_DISCONNECTED = messages.getOrDefault("auth_deny_client_disconnected", "[AUTH] Player {0} verification failed and rejected (client already disconnected: offline login with premium name / pirate client), Disconnect packet cannot be delivered");
+        AUTH_DENY_SEND_DISCONNECT = messages.getOrDefault("auth_deny_send_disconnect", "[AUTH] Player {0} verification failed and rejected, sending Disconnect packet");
+        AUTH_NO_PACKETEVENT_VERIFY = messages.getOrDefault("auth_no_packetevent_verify", "[AUTH] Player {0} not verified by PacketEvents, rejecting login");
+        AUTH_VERIFY_FAILED_DENY = messages.getOrDefault("auth_verify_failed_deny", "[AUTH] Player {0} verification failed, rejecting login");
+        AUTH_API_ONLY_MODE = messages.getOrDefault("auth_api_only_mode", "[AUTH] PacketEvents not installed, proxy=false degraded to API-only (LAYER-1 username check only, premium players cannot complete encrypted verification)");
+        AUTH_NO_LOGIN_SUMMARY = messages.getOrDefault("auth_no_login_summary", "[AUTH] Player {0} has no pre-login summary (reload race), treating as passed");
+        AUTH_ALLOW_WINS_DENY_IGNORED = messages.getOrDefault("auth_allow_wins_deny_ignored", "[AUTH] Player {0} already has another connection verified (ALLOW), ignoring this DENY result from another connection");
+        AUTH_CONCURRENCY_FULL = messages.getOrDefault("auth_concurrency_full", "[AUTH] Login verification concurrency limit reached, rejecting player {0} (try again later)");
+
+        AUTH_REGISTER_PROMPT = messages.getOrDefault("auth_register_prompt", "§e请先注册账号！使用 §f/register <密码> <确认密码> §e注册");
+        AUTH_LOGIN_PROMPT = messages.getOrDefault("auth_login_prompt", "§e请先登录！使用 §f/login <密码> §e登录");
+        AUTH_REGISTER_SUCCESS = messages.getOrDefault("auth_register_success", "§a注册成功！请使用 §f/login <密码> §a登录");
+        AUTH_REGISTER_FAILED = messages.getOrDefault("auth_register_failed", "§c注册失败，请稍后重试或联系管理员。");
+        AUTH_REGISTER_ALREADY = messages.getOrDefault("auth_register_already", "§c您已注册，请使用 §f/login <密码> §c登录。");
+        AUTH_REGISTER_PASSWORD_MISMATCH = messages.getOrDefault("auth_register_password_mismatch", "§c两次输入的密码不一致。");
+        AUTH_REGISTER_PASSWORD_TOO_SHORT = messages.getOrDefault("auth_register_password_too_short", "§c密码长度不能少于 {0} 个字符。");
+        AUTH_REGISTER_PASSWORD_TOO_LONG = messages.getOrDefault("auth_register_password_too_long", "§c密码长度不能超过 {0} 个字符。");
+        AUTH_REGISTER_PASSWORD_EMPTY = messages.getOrDefault("auth_register_password_empty", "§c密码不能为空。");
+        AUTH_LOGIN_SUCCESS = messages.getOrDefault("auth_login_success", "§a登录成功！");
+        AUTH_LOGIN_FAILED = messages.getOrDefault("auth_login_failed", "§c登录失败：密码错误。");
+        AUTH_LOGIN_NOT_REGISTERED = messages.getOrDefault("auth_login_not_registered", "§c您尚未注册，请先使用 §f/register §c注册。");
+        AUTH_LOGIN_PROCESSING = messages.getOrDefault("auth_login_processing", "§e正在验证中，请稍候...");
+        AUTH_LOGIN_ALREADY = messages.getOrDefault("auth_login_already", "§a您已登录。");
+        AUTH_CHANGEPASSWORD_SUCCESS = messages.getOrDefault("auth_changepassword_success", "§a密码修改成功！");
+        AUTH_CHANGEPASSWORD_FAILED = messages.getOrDefault("auth_changepassword_failed", "§c密码修改失败，请稍后重试。");
+        AUTH_CHANGEPASSWORD_WRONG_OLD = messages.getOrDefault("auth_changepassword_wrong_old", "§c旧密码错误。");
+        AUTH_NOT_LOGGED_IN = messages.getOrDefault("auth_not_logged_in", "§c您尚未登录，请先使用 §f/login §c登录。");
+        AUTH_RESTRICTED = messages.getOrDefault("auth_restricted", "§c请先登录后再进行操作。");
+        AUTH_LOGIN_TIMEOUT = messages.getOrDefault("auth_login_timeout", "§c登录超时，您已被踢出服务器。");
+        AUTH_REGISTER_TIMEOUT = messages.getOrDefault("auth_register_timeout", "§c注册超时，您已被踢出服务器。");
+        AUTH_UNREGISTER_SUCCESS = messages.getOrDefault("auth_unregister_success", "§a已删除玩家 {0} 的账号。");
+        AUTH_UNREGISTER_NOT_FOUND = messages.getOrDefault("auth_unregister_not_found", "§c未找到玩家 {0} 的注册信息。");
+        AUTH_INFO_FORMAT = messages.getOrDefault("auth_info_format", "§6玩家 {0} 的账号信息：\n§7注册时间: §f{1}\n§7最后登录: §f{2}\n§7最后IP: §f{3}");
+        AUTH_INFO_PREMIUM_FORMAT = messages.getOrDefault("auth_info_premium_format", "§6玩家 {0} 的信息：\n§7类型: §b正版\n§7UUID: §f{1}\n§7最后登录: §f{2}");
+        AUTH_INFO_NEVER_LOGGED_IN = messages.getOrDefault("auth_info_never_logged_in", "从未登录");
+        AUTH_INFO_NOT_REGISTERED = messages.getOrDefault("auth_info_not_registered", "§c该玩家尚未注册。");
+        AUTH_MODULE_DISABLED = messages.getOrDefault("auth_module_disabled", "§c认证模块已禁用。");
+        AUTH_UNREGISTER_KICK = messages.getOrDefault("auth_unregister_kick", "§c您的账号已被管理员删除，请重新注册。");
+        // 安全增强消息
+        AUTH_ACCOUNT_COOLDOWN = messages.getOrDefault("auth_account_cooldown", "§c账户冷却中，请等待 §f{0} §c秒后再试。");
+        AUTH_IP_COOLDOWN = messages.getOrDefault("auth_ip_cooldown", "§c该 IP 被临时封禁，请等待 §f{0} §c秒。");
+        AUTH_LOGIN_TOO_MANY_FAILURES = messages.getOrDefault("auth_login_too_many_failures", "§c登录失败次数过多，已被踢出。");
+        AUTH_ATTEMPTS_REMAINING = messages.getOrDefault("auth_attempts_remaining", "§c密码错误。剩余尝试次数：§f{0}");
+        AUTH_IP_ACCOUNT_LIMIT = messages.getOrDefault("auth_ip_account_limit", "§c该 IP 注册的账号数已达上限。");
+        AUTH_IP_ONLINE_LIMIT = messages.getOrDefault("auth_ip_online_limit", "§c该 IP 的在线账号数已达上限。");
+        AUTH_IP_CHANGE_WARNING = messages.getOrDefault("auth_ip_change_warning", "§e警告：检测到 IP 变更（上次：§f{0}§e，当前：§f{1}§e）。");
+        AUTH_GEO_CROSS_COUNTRY = messages.getOrDefault("auth_geo_cross_country", "§e警告：检测到跨国登录（上次：§f{0}§e，当前：§f{1}§e）。");
+        AUTH_GEO_CROSS_CITY = messages.getOrDefault("auth_geo_cross_city", "§e警告：检测到跨城市登录（上次：§f{0}§e，当前：§f{1}§e）。");
+        AUTH_GEO_REQUIRE_LOGIN = messages.getOrDefault("auth_geo_require_login", "§e检测到异地登录，需重新输入密码验证。");
+        DENY_REASON_DB_UNAVAILABLE = messages.getOrDefault("deny_reason_db_unavailable", "database unavailable");
+        DENY_REASON_AUTHMANAGER_NOT_INITIALIZED = messages.getOrDefault("deny_reason_authmanager_not_initialized", "AuthManager not initialized");
+        DENY_REASON_CONCURRENT_LOGIN = messages.getOrDefault("deny_reason_concurrent_login", "concurrent login blocked");
+        DENY_REASON_NO_ENC_RESPONSE = messages.getOrDefault("deny_reason_no_enc_response", "no encryption response (pirate client?)");
+        ALLOW_REASON_NO_RECORD = messages.getOrDefault("allow_reason_no_record", "no record (first join via proxy)");
+        ALLOW_REASON_OFFLINE_RECORD = messages.getOrDefault("allow_reason_offline_record", "offline record");
+        ALLOW_REASON_PREMIUM_KEEP_OFFLINE_UUID = messages.getOrDefault("allow_reason_premium_keep_offline_uuid", "premium UUID forwarded but use-mojang-uuid=false (keep offline record)");
+        ALLOW_REASON_UPGRADE_OFFLINE_TO_PREMIUM = messages.getOrDefault("allow_reason_upgrade_offline_to_premium", "upgrading offline record to premium (UUID={0})");
+        ALLOW_REASON_UUID_AUTOCORRECT_OFFLINE_TO_PREMIUM = messages.getOrDefault("allow_reason_uuid_autocorrect_offline_to_premium", "UUID auto-correct (offline to premium): {0}");
+        ALLOW_REASON_UUID_AUTOCORRECT_PREMIUM_TO_OFFLINE = messages.getOrDefault("allow_reason_uuid_autocorrect_premium_to_offline", "UUID auto-correct (premium to offline): {0}");
+        LOGIN_TYPE_PREMIUM = messages.getOrDefault("login_type_premium", "premium");
+        LOGIN_TYPE_PREMIUM_OFFLINE_UUID = messages.getOrDefault("login_type_premium_offline_uuid", "premium(offline UUID)");
+        LOGIN_TYPE_OFFLINE = messages.getOrDefault("login_type_offline", "offline");
+        LOGIN_TYPE_PREMIUM_API_ONLY = messages.getOrDefault("login_type_premium_api_only", "premium(API-only)");
+        LOGIN_TYPE_OFFLINE_API_ONLY = messages.getOrDefault("login_type_offline_api_only", "offline(API-only)");
+        API_STATUS_RECOVERED = messages.getOrDefault("api_status_recovered", "recovered");
+        API_SOURCE_OFFICIAL = messages.getOrDefault("api_source_official", "official");
+        API_SOURCE_FALLBACK = messages.getOrDefault("api_source_fallback", "fallback #{0}");
+        KICK_REJECTED_MESSAGE = messages.getOrDefault("kick_rejected_message", "[KICK] Player {0} rejected, message: {1}");
+        KICK_MESSAGE_SENT = messages.getOrDefault("kick_message_sent", "[KICK] Player {0} received message: {1}");
+        LOGIN_SUCCESS = messages.getOrDefault("login_success", "[LOGIN] Player {0} login success [{1}] UUID={2} IP={3}");
+        LOGIN_SUCCESS_PREMIUM = messages.getOrDefault("login_success_premium", "[LOGIN] Player {0} login success [premium] UUID={1} IP={2}");
+        LOGIN_SUCCESS_OFFLINE = messages.getOrDefault("login_success_offline", "[LOGIN] Player {0} login success [offline] UUID={1} IP={2}");
+        STATE_MISS = messages.getOrDefault("state_miss", "[STATE-MISS] Player {0} has no PreLogin decision cache (plugin reload race?), inferred identity={1}, record written");
+        PACKET_FAKE_LOGIN_START_KICK = messages.getOrDefault("packet_fake_login_start_kick", "§cLogin verification succeeded, but login packet injection failed, please reconnect");
+
+        AUTH_AUDIT_HASJOINED_UNREACHABLE = messages.getOrDefault("auth_audit_hasjoined_unreachable",
+                "[AUDIT] Player {0} DENIED - hasJoined verification failed (Mojang session server unreachable), premium verification cannot complete");
+        AUTH_AUDIT_DOWNTIME_NO_RECORD = messages.getOrDefault("auth_audit_downtime_no_record",
+                "[AUDIT] Player {0} DENIED - all LAYER-1 APIs unreachable with no history record, cannot determine premium status, login paused during downtime");
+        AUTH_AUDIT_DOWNTIME_PREMIUM_HISTORY = messages.getOrDefault("auth_audit_downtime_premium_history",
+                "[AUDIT] Player {0} DENIED - all LAYER-1 APIs unreachable and account has premium history (UUID={1}), login paused during downtime");
+        AUTH_AUDIT_API_ONLY_AUTHLIST = messages.getOrDefault("auth_audit_api_only_authlist",
+                "[AUDIT] Player {0} DENIED - auth-list forced verification cannot be satisfied in API-only mode");
+        AUTH_AUDIT_API_ONLY_PREMIUM = messages.getOrDefault("auth_audit_api_only_premium",
+                "[AUDIT] Player {0} DENIED - premium username cannot complete encrypted verification in API-only mode");
+
+        CONFIG_LOADED = messages.getOrDefault("config_loaded", "Config loaded: proxy={0}, db-type={1}");
+        CONFIG_RELOADED = messages.getOrDefault("config_reloaded", "Reloading config...");
+        CONFIG_RELOAD_SUCCESS = messages.getOrDefault("config_reload_success", "Config reloaded successfully");
+        CONFIG_RELOAD_FAILED = messages.getOrDefault("config_reload_failed", "Failed to reload config: {0}");
+        CONFIG_LANG_CHANGED = messages.getOrDefault("config_lang_changed", "Language changed to: {0}");
+        CONFIG_PROXY_CHANGE_RESTART = messages.getOrDefault("config_proxy_change_restart",
+                "§cProxy mode changed to {0} - please restart the server for the change to fully take effect!");
+        CONFIG_DEFAULT_CREATED = messages.getOrDefault("config_default_created", "Default config.toml created");
+        CONFIG_LOAD_FAILED = messages.getOrDefault("config_load_failed", "Failed to load config.toml, using defaults: {0}");
+
+        PLUGIN_VELOCITY_INITIALIZED = messages.getOrDefault("plugin_velocity_initialized", "MultiAuth Velocity plugin initialized");
+        PLUGIN_VELOCITY_SHUTDOWN = messages.getOrDefault("plugin_velocity_shutdown", "MultiAuth Velocity plugin shutdown");
+        PLUGIN_PROXY_SWITCH_TRUE = messages.getOrDefault("plugin_proxy_switch_true", "[MultiAuth] proxy switched to true, PacketEvents interception unregistered (verification handled by Velocity)");
+        PLUGIN_PROXY_SWITCH_FALSE = messages.getOrDefault("plugin_proxy_switch_false", "[MultiAuth] proxy switched to false, PacketEvents interception enabled");
+        PLUGIN_API_ONLY_WARNING = messages.getOrDefault("plugin_api_only_warning", "[MultiAuth] PacketEvents not installed, proxy=false degraded to API-only (LAYER-1 username check only, premium players cannot login)");
+        PLUGIN_PACKETEVENT_INSTALL_HINT = messages.getOrDefault("plugin_packetevent_install_hint", "[MultiAuth] Please install the PacketEvents plugin to enable encrypted handshake verification");
+
+        PACKET_NO_VERIFY_CALLBACK = messages.getOrDefault("packet_no_verify_callback", "[PACKET][LOGIN_START] No verification callback set, user {0} cannot login");
+        PACKET_LOGIN_START_PARSE_FAILED = messages.getOrDefault("packet_login_start_parse_failed", "[PACKET][LOGIN_START] Parse failed: {0}");
+        PACKET_ENC_RESPONSE_PARSE_FAILED = messages.getOrDefault("packet_enc_response_parse_failed", "[PACKET][ENCRYPTION_RESPONSE] Parse failed: {0}");
+        PACKET_ENC_REQUEST_WRAPPER_FAILED = messages.getOrDefault("packet_enc_request_wrapper_failed", "[PACKET][ENCRYPTION_REQUEST] Wrapper failed, falling back to raw write: {0}");
+        PACKET_FAKE_LOGIN_START_FAILED = messages.getOrDefault("packet_fake_login_start_failed", "[PACKET][FAKE_LOGIN_START] Send failed: {0}");
+        PACKET_FAKE_LOGIN_START_FALLBACK_FAILED = messages.getOrDefault("packet_fake_login_start_fallback_failed", "[PACKET][FAKE_LOGIN_START] Fallback also failed, kicking player {0}: {1}");
+        PACKET_DISCONNECT_SEND_FAILED = messages.getOrDefault("packet_disconnect_send_failed", "[PACKET][DISCONNECT] Send failed, closing channel directly: {0}");
+        VERIFY_NO_PACKETEVENT = messages.getOrDefault("verify_no_packetevent", "[VERIFY][{0}] PacketEvents unavailable, cannot complete encrypted handshake verification, rejecting");
+        VERIFY_HANDSHAKE_TIMEOUT = messages.getOrDefault("verify_handshake_timeout", "[VERIFY][{0}] Encryption handshake timeout (no EncryptionResponse within 5s, likely pirate client)");
+        VERIFY_ENC_RESPONSE_PARSE_FAILED = messages.getOrDefault("verify_enc_response_parse_failed", "[VERIFY][{0}] EncryptionResponse parse failed (client sent invalid encryption response): {1}");
+        VERIFY_ENC_RESPONSE_INTERRUPTED = messages.getOrDefault("verify_enc_response_interrupted", "[VERIFY][{0}] Waiting for EncryptionResponse was interrupted");
+        VERIFY_DECRYPT_FAILED = messages.getOrDefault("verify_decrypt_failed", "[VERIFY][{0}] sharedSecret decryption failed (verifyToken mismatch): {1}");
+        VERIFY_AES_ANCHOR_MISSING = messages.getOrDefault("verify_aes_anchor_missing", "[VERIFY][{0}] AES encryption enable failed (pipeline anchor not found), rejecting login: sending LoginSuccess unencrypted would disconnect the client");
+        VERIFY_HASJOINED_FAILED = messages.getOrDefault("verify_hasjoined_failed", "[VERIFY][{0}] hasJoined failed: {1}");
+        VERIFY_INBOUND_ANCHOR_MISSING = messages.getOrDefault("verify_inbound_anchor_missing", "[VERIFY] Inbound anchor handler not found (splitter/decompress/decoder), AES encryption enable failed");
+        VERIFY_OUTBOUND_ANCHOR_MISSING = messages.getOrDefault("verify_outbound_anchor_missing", "[VERIFY] Outbound anchor handler not found (prepender/compress/encoder), AES encryption enable failed");
+        VERIFY_AES_ENABLE_FAILED = messages.getOrDefault("verify_aes_enable_failed", "[VERIFY] Netty AES encryption enable failed: {0}");
+        VERIFY_SPOOFED_CONNECTION_MISSING = messages.getOrDefault("verify_spoofed_connection_missing", "[VERIFY] Cannot set spoofedUUID: Connection not found");
+        VERIFY_SPOOFED_FIELD_MISSING = messages.getOrDefault("verify_spoofed_field_missing", "[VERIFY] spoofedUUID field not found (non-Spigot/Paper environment?)");
+        VERIFY_SPOOFED_FAILED = messages.getOrDefault("verify_spoofed_failed", "[VERIFY] Setting spoofedUUID failed: {0}");
+        VERIFY_PACKET_HANDLER_MISSING = messages.getOrDefault("verify_packet_handler_missing", "[VERIFY] packet_handler not found");
+        VERIFY_CONNECTION_FAILED = messages.getOrDefault("verify_connection_failed", "[VERIFY] Failed to get Connection: {0}");
+        VERIFY_NMS_LOAD_FAILED = messages.getOrDefault("verify_nms_load_failed", "[VERIFY] NMS class load failed: {0}");
+
+        CMD_HELP = messages.getOrDefault("cmd_help", "MultiAuth Commands:\n  /multiauth reload  - Reload config\n  /multiauth status  - Show plugin status\n  /multiauth backup  - Force database backup\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)");
+        CMD_NO_PERMISSION = messages.getOrDefault("cmd_no_permission", "§cYou don't have permission to use this command.");
+        CMD_STATUS = messages.getOrDefault("cmd_status", "MultiAuth Status:\n  Database: {0}\n  Mojang API: {1}\n  Premium Players: {2}\n  Total Records: {3}");
+        CMD_RELOAD_SUCCESS = messages.getOrDefault("cmd_reload_success", "§aConfig reloaded successfully");
+        CMD_RELOAD_FAILED = messages.getOrDefault("cmd_reload_failed", "§cFailed to reload config: {0}");
+        CMD_MIGRATE_USAGE = messages.getOrDefault("cmd_migrate_usage", "§cUsage: /multiauth migrate <sqlite|mysql>");
+        CMD_MIGRATE_SUCCESS = messages.getOrDefault("cmd_migrate_success", "§aMigration complete: {0} records migrated to {1}");
+        CMD_MIGRATE_FAILED = messages.getOrDefault("cmd_migrate_failed", "§cMigration failed: {0}");
+        CMD_MIGRATE_INVALID_TYPE = messages.getOrDefault("cmd_migrate_invalid_type", "§cInvalid database type. Use: sqlite, mysql");
+        CMD_BACKUP_SUCCESS = messages.getOrDefault("cmd_backup_success", "§a数据库备份已成功创建");
+        CMD_BACKUP_FAILED = messages.getOrDefault("cmd_backup_failed", "§c数据库备份失败，请查看控制台了解详情");
+        CMD_CORRUPTED_DB = messages.getOrDefault("cmd_corrupted_db", "§cDatabase appears corrupted. Migration may help.");
+        CMD_PLUGIN_INFO = messages.getOrDefault("cmd_plugin_info", "§6MultiAuth v{0} - Player authentication plugin");
+        CMD_INFO_USAGE = messages.getOrDefault("cmd_info_usage", "§e用法：/multiauth info <玩家>");
+        CMD_UNREGISTER_USAGE = messages.getOrDefault("cmd_unregister_usage", "§e用法：/multiauth unregister <玩家>");
+        CMD_CHANGEPASSWORD_USAGE = messages.getOrDefault("cmd_changepassword_usage", "§e用法：/changepassword <旧密码> <新密码>");
+        CMD_STATUS_PLAYER_TITLE = messages.getOrDefault("cmd_status_player_title", "§6===== 认证状态 - {0} =====");
+        CMD_MIGRATE_SAME_TYPE = messages.getOrDefault("cmd_migrate_same_type", "目标类型与当前相同，无需迁移");
+        CMD_CHECK_CONSOLE = messages.getOrDefault("cmd_check_console", "请查看控制台了解详情");
+        CMD_MODE_PROXY = messages.getOrDefault("cmd_mode_proxy", "代理模式");
+        CMD_MODE_DIRECT = messages.getOrDefault("cmd_mode_direct", "直连模式");
+        DB_STATUS_HEALTHY = messages.getOrDefault("db_status_healthy", "健康");
+        DB_STATUS_UNHEALTHY = messages.getOrDefault("db_status_unhealthy", "异常");
+        CMD_CORE_NOT_INITIALIZED = messages.getOrDefault("cmd_core_not_initialized", "§cCore 未初始化，无法执行此命令。");
+        CMD_MIGRATE_IN_PROGRESS = messages.getOrDefault("cmd_migrate_in_progress", "§7正在迁移数据到 {0} ...");
+        CMD_BACKUP_IN_PROGRESS = messages.getOrDefault("cmd_backup_in_progress", "§7正在创建数据库备份...");
+        CMD_STATUS_TITLE = messages.getOrDefault("cmd_status_title", "§6=== MultiAuth 状态 ===");
+        CMD_STATUS_DB_TYPE = messages.getOrDefault("cmd_status_db_type", "§7数据库类型: §f{0}");
+        CMD_STATUS_DB_STATUS = messages.getOrDefault("cmd_status_db_status", "§7数据库状态: {0}");
+        CMD_STATUS_USE_MOJANG_UUID = messages.getOrDefault("cmd_status_use_mojang_uuid", "§7使用 Mojang UUID: §f{0}");
+        CMD_STATUS_AUTH_LIST = messages.getOrDefault("cmd_status_auth_list", "§7认证列表: §f{0}");
+        CMD_STATUS_FALLBACK_API = messages.getOrDefault("cmd_status_fallback_api", "§7备用 API: §f{0}");
+        CMD_STATUS_FALLBACK_NOT_CONFIGURED = messages.getOrDefault("cmd_status_fallback_not_configured", "(未配置)");
+
+        SESSION_START = messages.getOrDefault("session_start", "[SESSION] Player {0} connecting - starting {1} verification");
+        SESSION_COMPLETE = messages.getOrDefault("session_complete", "[SESSION] Player {0} authentication complete - {1}");
+        SESSION_DISCONNECT = messages.getOrDefault("session_disconnect", "[SESSION] Player {0} disconnected - cleaning up auth state");
+        SESSION_JOIN_NOTIFY = messages.getOrDefault("session_join_notify", "[SESSION] Player {0} joined the server (UUID: {1}, Premium: {2})");
+        SESSION_HIJACK_WARNING = messages.getOrDefault("session_hijack_warning", "§c[SECURITY WARNING] UUID mismatch for {0}! Session hijack suspected!");
+        SESSION_GAMEPROFILE_REJECTED = messages.getOrDefault("session_gameprofile_rejected", "[AUDIT] Player {0} gameprofile rejected (UUID mismatch)");
+        SESSION_STATUS_NOTIFY = messages.getOrDefault("session_status_notify",
+                "§e您当前为{0}登录状态\n§7UUID: {1}");
+        SESSION_STATUS_LOG = messages.getOrDefault("session_status_log",
+                "[SESSION] Player {0} login status: {1} (UUID: {2})");
+
+        GENERIC_PREFIX = messages.getOrDefault("generic_prefix", "§6[MultiAuth] ");
+        GENERIC_PERMISSION_DENIED = messages.getOrDefault("generic_permission_denied", "§cYou don't have permission to use this command.");
+        GENERIC_PLAYER_ONLY = messages.getOrDefault("generic_player_only", "§cThis command can only be used by players.");
+        GENERIC_NUMBER_REQUIRED = messages.getOrDefault("generic_number_required", "§cPlease enter a valid number.");
+        GENERIC_NO_PLAYER = messages.getOrDefault("generic_no_player", "§cNo player specified.");
+        GENERIC_PLAYER_NOT_FOUND = messages.getOrDefault("generic_player_not_found", "§cPlayer not found: {0}");
+        GENERIC_UNKNOWN = messages.getOrDefault("generic_unknown", "未知");
+
+        LOGGER.info("Messages verified: " + messages.size() + " entries loaded for lang=" + currentLang);
+    }
+
+    /**
+     * 当语言文件不存在时，写入默认内容
+     */
+    private static void writeDefaultLanguageFile(String lang, Path target) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("# MultiAuth Language File\n");
+        sb.append("# Language: ").append(lang).append("\n");
+        sb.append("# Auto-generated by MultiAuth plugin\n\n");
+
+        if ("zh_cn".equals(lang)) {
+            sb.append("# 数据库相关\n");
+            sb.append("db_init_failed=[DB] 数据库初始化失败！所有登录将被拒绝。\n");
+            sb.append("db_connected=[DB] 数据库已连接：{0}\n");
+            sb.append("db_ping_failed=[DB] 数据库连接后 Ping 失败！\n");
+            sb.append("db_heartbeat_ping_failed=[DB] 数据库心跳：Ping 失败，尝试重连...\n");
+            sb.append("db_heartbeat_not_connected=[DB] 数据库心跳：未连接，尝试重连...\n");
+            sb.append("db_reconnected=[DB] 数据库重连成功\n");
+            sb.append("db_reconnect_failed=[DB] 数据库重连失败：{0}\n");
+            sb.append("db_heartbeat_error=[DB] 数据库心跳错误：{0}\n");
+            sb.append("db_backup_created=[DB] 数据库备份已创建：{0}\n");
+            sb.append("db_backup_failed=[DB] 数据库备份失败：{0}\n");
+            sb.append("db_backup_deleted_old=[DB] 已删除旧备份：{0}\n");
+            sb.append("db_migration_complete=[DB] 迁移完成：{0} 条记录已迁移到 {1}\n");
+            sb.append("db_migration_failed=[DB] 迁移失败：{0}\n");
+            sb.append("db_uuid_rewrite_warning=[DB] 正在重写正版玩家 {0} 的 UUID：{1} → {2}\n");
+            sb.append("db_connection_failed=[DB] 数据库连接失败：{0}\n");
+            sb.append("db_rebuild_connection=[DB] 数据库配置已变更，重建数据库连接\n");
+            sb.append("db_backup_clean_failed=[DB] 清理旧备份失败：{0}\n");
+            sb.append("db_backup_skip_invalid_row=[DB] 备份时跳过无效记录: username={0} uuid={1}\n");
+            sb.append("db_close_failed=[DB] 关闭数据库连接失败\n");
+            sb.append("db_state_check_failed=[DB] 数据库连接状态检查失败\n");
+            sb.append("db_ping_exception=[DB] 数据库 Ping 失败\n");
+            sb.append("db_get_player_failed=[DB] 获取玩家 {0} 失败\n");
+            sb.append("db_save_player_failed=[DB] 保存玩家 {0} 失败\n");
+            sb.append("db_save_player_safe_failed=[DB] 条件保存玩家 {0} 失败\n");
+            sb.append("db_exists_failed=[DB] 检查玩家 {0} 是否存在失败\n");
+            sb.append("db_count_failed=[DB] 统计记录数失败\n");
+            sb.append("db_count_premium_failed=[DB] 统计正版记录数失败\n");
+            sb.append("db_migration_exception=[DB] 数据库迁移失败\n");
+            sb.append("core_init_proxy=Core 以 PROXY 模式初始化（通过共享数据库校验 UUID）\n");
+            sb.append("core_init_standalone=Core 初始化成功（本插件进行正版验证）\n");
+            sb.append("core_shutdown_complete=Core 关闭完成\n\n");
+
+            sb.append("# API 相关\n");
+            sb.append("api_official_available=[API] Mojang 官方 API 可用性：{0} (HTTP {1})\n");
+            sb.append("api_official_unavailable=[API] Mojang 官方 API 不可达：{0}\n");
+            sb.append("api_fallback_available=[API] 备用 API #{0}：{1} (HTTP {2})\n");
+            sb.append("api_fallback_unavailable=[API] 备用 API #{0} 不可达：{1}\n");
+            sb.append("api_all_down=[API] 所有 Mojang API 均不可达！正版验证将被拒绝。\n");
+            sb.append("api_official_cooldown=[API] Mojang 官方 API 冷却中（{0}s），使用备用 API\n");
+            sb.append("api_rate_limit_reached=[API] Mojang API 已达速率限制（并发请求过多）\n");
+            sb.append("api_high_failure_rate=[API] Mojang API 高失败率（{0}%），切换到下一个可用 API...\n");
+            sb.append("api_recovered=[API] Mojang API 已恢复 - 现在使用 {0}\n");
+            sb.append("api_probe_start=[API] 宕机恢复探测开始（下一次探测窗口 +{0}s）\n");
+            sb.append("api_parse_failed=[API] Mojang API 响应解析失败: {0} body={1}\n\n");
+
+            sb.append("# 认证流程\n");
+            sb.append("auth_database_unavailable=§cMultiAuth 数据库当前不可用，无法登录。\n");
+            sb.append("auth_service_not_initialized=§c认证服务未初始化，请联系管理员。\n");
+            sb.append("auth_concurrent_login_blocked=§c该账号正在验证中，请稍后再试。\n");
+            sb.append("auth_server_busy=§c服务器认证繁忙，请稍后重试。\n");
+            sb.append("auth_username_check_failed=[AUTH] 玩家 {0} 用户名检查失败：{1}\n");
+            sb.append("auth_premium_detected=[AUTH] 玩家 {0} 用户名为正版（UUID={1}）- 需要 Mojang 验证\n");
+            sb.append("auth_premium_in_authlist=[AUTH] 玩家 {0} 非正版但在验证列表中 - 需要验证\n");
+            sb.append("auth_offline_allowed=[AUTH] 玩家 {0} 非正版 - 允许离线登录\n");
+            sb.append("auth_downtime_flow=[AUTH] 玩家 {0} - Mojang API 不可达，执行宕机流程\n");
+            sb.append("auth_player_allowed=[AUDIT] 玩家 {0} 放行 - {1}（UUID: {2}）\n");
+            sb.append("auth_player_denied=[AUDIT] 玩家 {0} 拒绝 - {1}\n");
+            sb.append("auth_handshake_failed=[AUDIT] 玩家 {0} 拒绝 - Velocity 握手失败（盗版客户端或无效会话，GameProfileRequest 未触发）\n");
+            sb.append("auth_invalid_session=§c无效会话（可能是盗版客户端或正版未登录）\\n§7请确认已通过正版启动器登录 Minecraft 账号，\\n§7若仍失败请重启游戏及启动器后重试。\n");
+            sb.append("auth_mojang_verify_passed=[AUDIT] 玩家 {0} Mojang 验证通过 - UUID: {1}\n");
+            sb.append("auth_mojang_verify_failed_pirate=[AUDIT] 玩家 {0} Mojang 验证失败 - 盗版客户端\n");
+            sb.append("auth_mojang_unreachable=[AUDIT] 玩家 {0} - Mojang 会话服务器不可达\n");
+            sb.append("auth_downtime_deny=§6Mojang 会话服务器当前不可用。\\n§7为保障账号安全，宕机期间已暂停所有登录。\\n§7请稍后重试。\n");
+            sb.append("auth_downtime_allow_offline=[AUTH] 玩家 {0} 在 Mojang 宕机期间以离线登录\n");
+            sb.append("auth_uuid_mismatch=[AUDIT] 玩家 {0} UUID 不匹配！预期：{1}，实际：{2} - 可能的会话劫持！\n");
+            sb.append("auth_executor_full=[AUTH] 验证线程池已满，拒绝玩家 {0}（服务器过载，请稍后重试）\n");
+            sb.append("auth_plugin_disabled=[AUTH] 插件已禁用，拒绝玩家 {0} 的登录\n");
+            sb.append("auth_verify_unexpected_error=[AUTH] 玩家 {0} 验证过程中发生未预期异常\n");
+            sb.append("auth_listener_unregistered_close=[AUTH] PacketEvents 监听器已注销（proxy 切换），关闭玩家 {0} 连接\n");
+            sb.append("auth_deny_client_disconnected=[AUTH] 玩家 {0} 验证失败被拒（客户端已断开：正版名离线登录/盗版客户端），Disconnect 包无法送达\n");
+            sb.append("auth_deny_send_disconnect=[AUTH] 玩家 {0} 验证失败被拒，发送 Disconnect 包\n");
+            sb.append("auth_no_packetevent_verify=[AUTH] 玩家 {0} 未经 PacketEvents 验证，拒绝登录\n");
+            sb.append("auth_verify_failed_deny=[AUTH] 玩家 {0} 验证失败，拒绝登录\n");
+            sb.append("auth_api_only_mode=[AUTH] PacketEvents 未安装，proxy=false 降级为 API-only（仅 LAYER-1 用户名检查，正版玩家无法完成加密验证）\n");
+            sb.append("auth_no_login_summary=[AUTH] 玩家 {0} 无预登录摘要（reload 竞态），视为通过\n");
+            sb.append("auth_allow_wins_deny_ignored=[AUTH] 玩家 {0} 已有其他连接验证通过（ALLOW），忽略来自其他连接的本次 DENY 结果\n");
+            sb.append("auth_concurrency_full=[AUTH] 登录验证并发已满，拒绝玩家 {0}（请稍后重试）\n");
+            sb.append("# 离线玩家注册登录\n");
+            sb.append("auth_register_prompt=§e请先注册账号！使用 §f/register <密码> <确认密码> §e注册\n");
+            sb.append("auth_login_prompt=§e请先登录！使用 §f/login <密码> §e登录\n");
+            sb.append("auth_register_success=§a注册成功！请使用 §f/login <密码> §a登录\n");
+            sb.append("auth_register_failed=§c注册失败，请稍后重试或联系管理员。\n");
+            sb.append("auth_register_already=§c您已注册，请使用 §f/login <密码> §c登录。\n");
+            sb.append("auth_register_password_mismatch=§c两次输入的密码不一致。\n");
+            sb.append("auth_register_password_too_short=§c密码长度不能少于 {0} 个字符。\n");
+            sb.append("auth_register_password_too_long=§c密码长度不能超过 {0} 个字符。\n");
+            sb.append("auth_register_password_empty=§c密码不能为空。\n");
+            sb.append("auth_login_success=§a登录成功！\n");
+            sb.append("auth_login_failed=§c登录失败：密码错误。\n");
+            sb.append("auth_login_not_registered=§c您尚未注册，请先使用 §f/register §c注册。\n");
+            sb.append("auth_login_processing=§e正在验证中，请稍候...\n");
+            sb.append("auth_login_already=§a您已登录。\n");
+            sb.append("auth_changepassword_success=§a密码修改成功！\n");
+            sb.append("auth_changepassword_failed=§c密码修改失败，请稍后重试。\n");
+            sb.append("auth_changepassword_wrong_old=§c旧密码错误。\n");
+            sb.append("auth_not_logged_in=§c您尚未登录，请先使用 §f/login §c登录。\n");
+            sb.append("auth_restricted=§c请先登录后再进行操作。\n");
+            sb.append("auth_login_timeout=§c登录超时，您已被踢出服务器。\n");
+            sb.append("auth_register_timeout=§c注册超时，您已被踢出服务器。\n");
+            sb.append("auth_unregister_success=§a已删除玩家 {0} 的账号。\n");
+            sb.append("auth_unregister_not_found=§c未找到玩家 {0} 的注册信息。\n");
+            sb.append("auth_info_format=§6玩家 {0} 的账号信息：\\n§7注册时间: §f{1}\\n§7最后登录: §f{2}\\n§7最后IP: §f{3}\n");
+            sb.append("auth_info_never_logged_in=从未登录\n");
+            sb.append("auth_info_not_registered=§c该玩家尚未注册。\n");
+            sb.append("auth_module_disabled=§c认证模块已禁用。\n");
+            sb.append("auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。\n\n");
+            sb.append("deny_reason_db_unavailable=数据库不可用\n");
+            sb.append("deny_reason_authmanager_not_initialized=AuthManager 未初始化\n");
+            sb.append("deny_reason_concurrent_login=并发登录被阻止\n");
+            sb.append("deny_reason_no_enc_response=无加密响应（盗版客户端？）\n");
+            sb.append("allow_reason_no_record=无记录（首次经代理加入）\n");
+            sb.append("allow_reason_offline_record=离线记录\n");
+            sb.append("allow_reason_premium_keep_offline_uuid=转发的正版 UUID 但 use-mojang-uuid=false（保留离线记录）\n");
+            sb.append("allow_reason_upgrade_offline_to_premium=升级离线记录为正版（UUID={0}）\n");
+            sb.append("allow_reason_uuid_autocorrect_offline_to_premium=UUID 自动修正（离线→正版）：{0}\n");
+            sb.append("allow_reason_uuid_autocorrect_premium_to_offline=UUID 自动修正（正版→离线）：{0}\n");
+            sb.append("login_type_premium=正版\n");
+            sb.append("login_type_premium_offline_uuid=正版(离线UUID)\n");
+            sb.append("login_type_offline=离线\n");
+            sb.append("login_type_premium_api_only=正版(API-only)\n");
+            sb.append("login_type_offline_api_only=离线(API-only)\n");
+            sb.append("api_status_recovered=已恢复\n");
+            sb.append("api_source_official=官方\n");
+            sb.append("api_source_fallback=备用 #{0}\n");
+            sb.append("kick_rejected_message=[KICK] 玩家 {0} 被拒，消息：{1}\n");
+            sb.append("kick_message_sent=[KICK] 玩家 {0} 收到消息：{1}\n");
+            sb.append("login_success=[LOGIN] 玩家 {0} 登录成功 [{1}] UUID={2} IP={3}\n");
+            sb.append("login_success_premium=[LOGIN] 玩家 {0} 登录成功 [正版] UUID={1} IP={2}\n");
+            sb.append("login_success_offline=[LOGIN] 玩家 {0} 登录成功 [离线] UUID={1} IP={2}\n");
+            sb.append("state_miss=[STATE-MISS] 玩家 {0} 无 PreLogin 决策缓存（插件 reload 竞态？），推断身份={1}，已写入记录\n");
+            sb.append("packet_fake_login_start_kick=§c登录验证成功，但登录包注入失败，请重新连接\n\n");
+
+            sb.append("# 宕机 / API-only 审计日志\n");
+            sb.append("auth_audit_hasjoined_unreachable=[AUDIT] 拒绝玩家 {0}：第二层 hasJoined 验证失败（Mojang 会话服务器不可达），正版验证无法完成\n");
+            sb.append("auth_audit_downtime_no_record=[AUDIT] 拒绝玩家 {0}：第一层 API 全部不可达且无历史记录，无法判断正盗版身份，宕机期间禁止登录\n");
+            sb.append("auth_audit_downtime_premium_history=[AUDIT] 拒绝玩家 {0}：第一层 API 全部不可达，账号有正版历史记录（UUID={1}），宕机期间禁止登录\n");
+            sb.append("auth_audit_api_only_authlist=[AUDIT] 拒绝玩家 {0}：auth-list 强制验证在 API-only 模式下无法满足\n");
+            sb.append("auth_audit_api_only_premium=[AUDIT] 拒绝玩家 {0}：API-only 降级模式下正版用户名无法完成加密验证\n\n");
+
+            sb.append("# 配置相关\n");
+            sb.append("config_loaded=配置已加载：proxy={0}, 数据库类型={1}\n");
+            sb.append("config_reloaded=正在重新加载配置...\n");
+            sb.append("config_reload_success=配置重新加载成功\n");
+            sb.append("config_reload_failed=重新加载配置失败：{0}\n");
+            sb.append("config_lang_changed=语言已更改：{0}\n");
+            sb.append("config_proxy_change_restart=§c代理模式已变更为 {0}，请重启服务端使配置完全生效！\n");
+            sb.append("config_default_created=默认 config.toml 已创建\n");
+            sb.append("config_load_failed=config.toml 加载失败，使用默认配置：{0}\n\n");
+
+            sb.append("# 插件相关\n");
+            sb.append("plugin_velocity_initialized=MultiAuth Velocity 插件已初始化\n");
+            sb.append("plugin_velocity_shutdown=MultiAuth Velocity 插件已关闭\n");
+            sb.append("plugin_proxy_switch_true=[MultiAuth] proxy 已切换为 true，PacketEvents 拦截已注销（验证由 Velocity 完成）\n");
+            sb.append("plugin_proxy_switch_false=[MultiAuth] proxy 已切换为 false，PacketEvents 拦截已启用\n");
+            sb.append("plugin_api_only_warning=[MultiAuth] PacketEvents 未安装，proxy=false 降级为 API-only（仅 LAYER-1 用户名检查，正版玩家无法登录）\n");
+            sb.append("plugin_packetevent_install_hint=[MultiAuth] 请安装 PacketEvents 插件以启用加密握手验证\n\n");
+
+            sb.append("# 数据包 / 加密握手\n");
+            sb.append("packet_no_verify_callback=[PACKET][LOGIN_START] 未设置验证回调，用户 {0} 将无法登录\n");
+            sb.append("packet_login_start_parse_failed=[PACKET][LOGIN_START] 解析失败：{0}\n");
+            sb.append("packet_enc_response_parse_failed=[PACKET][ENCRYPTION_RESPONSE] 解析失败：{0}\n");
+            sb.append("packet_enc_request_wrapper_failed=[PACKET][ENCRYPTION_REQUEST] Wrapper 失败，回退到原始写入：{0}\n");
+            sb.append("packet_fake_login_start_failed=[PACKET][FAKE_LOGIN_START] 发送失败：{0}\n");
+            sb.append("packet_fake_login_start_fallback_failed=[PACKET][FAKE_LOGIN_START] 回退也失败，踢出玩家 {0}：{1}\n");
+            sb.append("packet_disconnect_send_failed=[PACKET][DISCONNECT] 发送失败，直接关闭 channel：{0}\n");
+            sb.append("verify_no_packetevent=[VERIFY][{0}] PacketEvents 不可用，无法完成加密握手验证，拒绝\n");
+            sb.append("verify_handshake_timeout=[VERIFY][{0}] 加密握手超时（5s 内未收到 EncryptionResponse，疑似盗版客户端）\n");
+            sb.append("verify_enc_response_parse_failed=[VERIFY][{0}] EncryptionResponse 解析失败（客户端发送了非法加密响应）：{1}\n");
+            sb.append("verify_enc_response_interrupted=[VERIFY][{0}] 等待 EncryptionResponse 被中断\n");
+            sb.append("verify_decrypt_failed=[VERIFY][{0}] 解密 sharedSecret 失败（verifyToken 不匹配）：{1}\n");
+            sb.append("verify_aes_anchor_missing=[VERIFY][{0}] 启用 AES 加密失败（找不到 pipeline 锚点），拒绝登录：未加密状态下发送 LoginSuccess 会导致客户端断开\n");
+            sb.append("verify_hasjoined_failed=[VERIFY][{0}] hasJoined 失败：{1}\n");
+            sb.append("verify_inbound_anchor_missing=[VERIFY] 找不到入站锚点 handler（splitter/decompress/decoder），AES 加密启用失败\n");
+            sb.append("verify_outbound_anchor_missing=[VERIFY] 找不到出站锚点 handler（prepender/compress/encoder），AES 加密启用失败\n");
+            sb.append("verify_aes_enable_failed=[VERIFY] Netty AES 加密启用失败：{0}\n");
+            sb.append("verify_spoofed_connection_missing=[VERIFY] 无法设置 spoofedUUID：Connection 未找到\n");
+            sb.append("verify_spoofed_field_missing=[VERIFY] spoofedUUID 字段未找到（非 Spigot/Paper 环境？）\n");
+            sb.append("verify_spoofed_failed=[VERIFY] 设置 spoofedUUID 失败：{0}\n");
+            sb.append("verify_packet_handler_missing=[VERIFY] packet_handler 未找到\n");
+            sb.append("verify_connection_failed=[VERIFY] 获取 Connection 失败：{0}\n");
+            sb.append("verify_nms_load_failed=[VERIFY] NMS 类加载失败：{0}\n\n");
+
+            sb.append("# 命令相关\n");
+            sb.append("cmd_help=MultiAuth 命令：\\n  /multiauth reload  - 重载配置\\n  /multiauth status  - 查看插件状态\\n  /multiauth backup  - 强制备份数据库\\n  /multiauth migrate <type> - 迁移数据库 (sqlite|mysql)\\n  /multiauth info <玩家> - 查看离线玩家账号信息\\n  /multiauth unregister <玩家> - 删除离线玩家账号\n");
+            sb.append("cmd_no_permission=§c你没有权限执行此命令。\n");
+            sb.append("cmd_status=MultiAuth 状态：\\n  数据库：{0}\\n  Mojang API：{1}\\n  正版玩家数：{2}\\n  总记录数：{3}\n");
+            sb.append("cmd_reload_success=§a配置重新加载成功\n");
+            sb.append("cmd_reload_failed=§c重新加载配置失败：{0}\n");
+            sb.append("cmd_migrate_usage=§c用法：/multiauth migrate <sqlite|mysql>\n");
+            sb.append("cmd_migrate_success=§a迁移完成：{0} 条记录已迁移到 {1}\n");
+            sb.append("cmd_migrate_failed=§c迁移失败：{0}\n");
+            sb.append("cmd_migrate_invalid_type=§c无效的数据库类型。请使用：sqlite, mysql\n");
+            sb.append("cmd_backup_success=§a数据库备份已成功创建\n");
+            sb.append("cmd_backup_failed=§c数据库备份失败，请查看控制台了解详情\n");
+            sb.append("cmd_corrupted_db=§c数据库似乎已损坏。迁移可能有帮助。\n");
+            sb.append("cmd_plugin_info=§6MultiAuth v{0} - 玩家认证插件\n");
+            sb.append("cmd_info_usage=§e用法：/multiauth info <玩家>\n");
+            sb.append("cmd_unregister_usage=§e用法：/multiauth unregister <玩家>\n");
+            sb.append("cmd_changepassword_usage=§e用法：/changepassword <旧密码> <新密码>\n");
+            sb.append("cmd_status_player_title=§6===== 认证状态 - {0} =====\n");
+            sb.append("cmd_migrate_same_type=目标类型与当前相同，无需迁移\n");
+            sb.append("cmd_check_console=请查看控制台了解详情\n");
+            sb.append("cmd_mode_proxy=代理模式\n");
+            sb.append("cmd_mode_direct=直连模式\n");
+            sb.append("db_status_healthy=健康\n");
+            sb.append("db_status_unhealthy=异常\n");
+            sb.append("cmd_core_not_initialized=§cCore 未初始化，无法执行此命令。\n");
+            sb.append("cmd_migrate_in_progress=§7正在迁移数据到 {0} ...\n");
+            sb.append("cmd_backup_in_progress=§7正在创建数据库备份...\n");
+            sb.append("cmd_status_title=§6=== MultiAuth 状态 ===\n");
+            sb.append("cmd_status_db_type=§7数据库类型: §f{0}\n");
+            sb.append("cmd_status_db_status=§7数据库状态: {0}\n");
+            sb.append("cmd_status_use_mojang_uuid=§7使用 Mojang UUID: §f{0}\n");
+            sb.append("cmd_status_auth_list=§7认证列表: §f{0}\n");
+            sb.append("cmd_status_fallback_api=§7备用 API: §f{0}\n");
+            sb.append("cmd_status_fallback_not_configured=(未配置)\n\n");
+
+            sb.append("# 会话相关\n");
+            sb.append("session_start=[SESSION] 玩家 {0} 连接中 - 开始 {1} 验证\n");
+            sb.append("session_complete=[SESSION] 玩家 {0} 认证完成 - {1}\n");
+            sb.append("session_disconnect=[SESSION] 玩家 {0} 断开连接 - 清理认证状态\n");
+            sb.append("session_join_notify=[SESSION] 玩家 {0} 加入服务器（UUID: {1}，正版: {2}）\n");
+            sb.append("session_hijack_warning=§c[安全警告] {0} 的 UUID 不匹配！怀疑会话劫持！\n");
+            sb.append("session_gameprofile_rejected=[AUDIT] 玩家 {0} 的 GameProfile 被拒绝（UUID 不匹配）\n");
+            sb.append("session_status_notify=§e您当前为{0}登录状态\\n§7UUID: {1}\n");
+            sb.append("session_status_log=[SESSION] 玩家 {0} 登录状态：{1}（UUID: {2}）\n\n");
+
+            sb.append("# 通用\n");
+            sb.append("generic_prefix=§6[MultiAuth] \n");
+            sb.append("generic_permission_denied=§c你没有权限使用此命令。\n");
+            sb.append("generic_player_only=§c此命令只能由玩家使用。\n");
+            sb.append("generic_number_required=§c请输入有效的数字。\n");
+            sb.append("generic_no_player=§c未指定玩家。\n");
+            sb.append("generic_player_not_found=§c未找到玩家：{0}\n");
+            sb.append("generic_unknown=未知\n");
+        } else {
+            // en_gb
+            sb.append("# Database\n");
+            sb.append("db_init_failed=[DB] Database initialization failed! All logins will be rejected.\n");
+            sb.append("db_connected=[DB] Database connected: {0}\n");
+            sb.append("db_ping_failed=[DB] Database ping failed after connection!\n");
+            sb.append("db_heartbeat_ping_failed=[DB] Database heartbeat: ping failed, attempting reconnect...\n");
+            sb.append("db_heartbeat_not_connected=[DB] Database heartbeat: not connected, attempting reconnect...\n");
+            sb.append("db_reconnected=[DB] Database reconnected successfully\n");
+            sb.append("db_reconnect_failed=[DB] Database reconnect failed: {0}\n");
+            sb.append("db_heartbeat_error=[DB] Database heartbeat error: {0}\n");
+            sb.append("db_backup_created=[DB] Database backup created: {0}\n");
+            sb.append("db_backup_failed=[DB] Database backup failed: {0}\n");
+            sb.append("db_backup_deleted_old=[DB] Deleted old backup: {0}\n");
+            sb.append("db_migration_complete=[DB] Migration complete: {0} records migrated to {1}\n");
+            sb.append("db_migration_failed=[DB] Migration failed: {0}\n");
+            sb.append("db_uuid_rewrite_warning=[DB] Rewriting UUID for premium player {0}: {1} → {2}\n");
+            sb.append("db_connection_failed=[DB] Database connection failed: {0}\n");
+            sb.append("db_rebuild_connection=[DB] Database config changed, rebuilding connection\n");
+            sb.append("db_backup_clean_failed=[DB] Failed to clean old backups: {0}\n");
+            sb.append("db_backup_skip_invalid_row=[DB] Skipped invalid row during backup: username={0} uuid={1}\n");
+            sb.append("db_close_failed=[DB] Failed to close database connection\n");
+            sb.append("db_state_check_failed=[DB] Database connection state check failed\n");
+            sb.append("db_ping_exception=[DB] Database ping failed\n");
+            sb.append("db_get_player_failed=[DB] Failed to get player {0}\n");
+            sb.append("db_save_player_failed=[DB] Failed to save player {0}\n");
+            sb.append("db_save_player_safe_failed=[DB] Failed to save player (safe) {0}\n");
+            sb.append("db_exists_failed=[DB] Failed to check existence for player {0}\n");
+            sb.append("db_count_failed=[DB] Failed to count records\n");
+            sb.append("db_count_premium_failed=[DB] Failed to count premium records\n");
+            sb.append("db_migration_exception=[DB] Database migration failed\n");
+            sb.append("core_init_proxy=Core initialized in PROXY mode (UUID verification via shared DB)\n");
+            sb.append("core_init_standalone=Core initialized successfully (premium verification by this plugin)\n");
+            sb.append("core_shutdown_complete=Core shutdown complete\n\n");
+
+            sb.append("# API\n");
+            sb.append("api_official_available=[API] Mojang official API: {0} (HTTP {1})\n");
+            sb.append("api_official_unavailable=[API] Mojang official API unreachable: {0}\n");
+            sb.append("api_fallback_available=[API] Fallback API #{0}: {1} (HTTP {2})\n");
+            sb.append("api_fallback_unavailable=[API] Fallback API #{0} unreachable: {1}\n");
+            sb.append("api_all_down=[API] ALL Mojang APIs are unreachable! Premium verification will be rejected.\n");
+            sb.append("api_official_cooldown=[API] Mojang official API in cooldown ({0}s) after repeated failures, using fallback\n");
+            sb.append("api_rate_limit_reached=[API] Mojang API rate limit reached (too many concurrent requests)\n");
+            sb.append("api_high_failure_rate=[API] Mojang API high failure rate ({0}%), failing over to next available API...\n");
+            sb.append("api_recovered=[API] Mojang API recovered - now using {0}\n");
+            sb.append("api_probe_start=[API] Downtime recovery probe started (next probe window +{0}s)\n");
+            sb.append("api_parse_failed=[API] Failed to parse Mojang API response: {0} body={1}\n\n");
+
+            sb.append("# Auth\n");
+            sb.append("auth_database_unavailable=§cMultiAuth database is currently unavailable, login not possible.\n");
+            sb.append("auth_service_not_initialized=§cAuthentication service not initialized, please contact admin.\n");
+            sb.append("auth_concurrent_login_blocked=§cThis account is being verified, please try again later.\n");
+            sb.append("auth_server_busy=§cAuthentication is busy, please try again later.\n");
+            sb.append("auth_username_check_failed=[AUTH] Player {0} username check failed: {1}\n");
+            sb.append("auth_premium_detected=[AUTH] Player {0} username is premium (UUID={1}) - requiring Mojang verification\n");
+            sb.append("auth_premium_in_authlist=[AUTH] Player {0} not premium but in auth-list - requiring verification\n");
+            sb.append("auth_offline_allowed=[AUTH] Player {0} not premium - allowing offline login\n");
+            sb.append("auth_downtime_flow=[AUTH] Player {0} - Mojang API unreachable, applying downtime flow\n");
+            sb.append("auth_player_allowed=[AUDIT] Player {0} ALLOWED - {1} (UUID: {2})\n");
+            sb.append("auth_player_denied=[AUDIT] Player {0} DENIED - {1}\n");
+            sb.append("auth_handshake_failed=[AUDIT] Player {0} DENIED - Velocity handshake failed (pirate client or invalid session, GameProfileRequest never reached)\n");
+            sb.append("auth_invalid_session=§cInvalid session (pirate client or not logged into Microsoft account)\n§7Please ensure you are logged into your Minecraft account via the official launcher,\n§7if still failing please restart your game and launcher.\n");
+            sb.append("auth_mojang_verify_passed=[AUDIT] Player {0} Mojang verification PASSED - UUID: {1}\n");
+            sb.append("auth_mojang_verify_failed_pirate=[AUDIT] Player {0} Mojang verification FAILED - pirate client\n");
+            sb.append("auth_mojang_unreachable=[AUDIT] Player {0} - Mojang session server unreachable\n");
+            sb.append("auth_downtime_deny=§6Mojang authentication servers are currently unavailable.\n§7For account security, all logins have been temporarily paused during the downtime.\n§7Please try again later.\n");
+            sb.append("auth_downtime_allow_offline=[AUTH] Player {0} allowed offline login during Mojang downtime (offline history)\n");
+            sb.append("auth_uuid_mismatch=[AUDIT] Player {0} UUID mismatch! Expected: {1}, Got: {2} - possible session hijack!\n");
+            sb.append("auth_executor_full=[AUTH] Verification thread pool full, rejecting player {0} (server overloaded, try again later)\n");
+            sb.append("auth_plugin_disabled=[AUTH] Plugin disabled, rejecting player {0}\n");
+            sb.append("auth_verify_unexpected_error=[AUTH] Unexpected exception during verification of player {0}\n");
+            sb.append("auth_listener_unregistered_close=[AUTH] PacketEvents listener unregistered (proxy switch), closing connection of player {0}\n");
+            sb.append("auth_deny_client_disconnected=[AUTH] Player {0} verification failed and rejected (client already disconnected: offline login with premium name / pirate client), Disconnect packet cannot be delivered\n");
+            sb.append("auth_deny_send_disconnect=[AUTH] Player {0} verification failed and rejected, sending Disconnect packet\n");
+            sb.append("auth_no_packetevent_verify=[AUTH] Player {0} not verified by PacketEvents, rejecting login\n");
+            sb.append("auth_verify_failed_deny=[AUTH] Player {0} verification failed, rejecting login\n");
+            sb.append("auth_api_only_mode=[AUTH] PacketEvents not installed, proxy=false degraded to API-only (LAYER-1 username check only, premium players cannot complete encrypted verification)\n");
+            sb.append("auth_no_login_summary=[AUTH] Player {0} has no pre-login summary (reload race), treating as passed\n");
+            sb.append("auth_allow_wins_deny_ignored=[AUTH] Player {0} already has another connection verified (ALLOW), ignoring this DENY result from another connection\n");
+            sb.append("auth_concurrency_full=[AUTH] Login verification concurrency limit reached, rejecting player {0} (try again later)\n");
+            sb.append("# Offline player register/login\n");
+            sb.append("auth_register_prompt=§ePlease register first! Use §f/register <password> <confirm> §eto register\n");
+            sb.append("auth_login_prompt=§ePlease login first! Use §f/login <password> §eto login\n");
+            sb.append("auth_register_success=§aRegistered successfully! Use §f/login <password> §ato login\n");
+            sb.append("auth_register_failed=§cRegistration failed, please try again later or contact admin.\n");
+            sb.append("auth_register_already=§cYou are already registered, use §f/login <password> §cto login.\n");
+            sb.append("auth_register_password_mismatch=§cThe two passwords do not match.\n");
+            sb.append("auth_register_password_too_short=§cPassword must be at least {0} characters long.\n");
+            sb.append("auth_register_password_too_long=§cPassword must not exceed {0} characters.\n");
+            sb.append("auth_register_password_empty=§cPassword cannot be empty.\n");
+            sb.append("auth_login_success=§aLogin successful!\n");
+            sb.append("auth_login_failed=§cLogin failed: wrong password.\n");
+            sb.append("auth_login_not_registered=§cYou are not registered, use §f/register §cto register first.\n");
+            sb.append("auth_login_processing=§eVerifying, please wait...\n");
+            sb.append("auth_login_already=§aYou are already logged in.\n");
+            sb.append("auth_changepassword_success=§aPassword changed successfully!\n");
+            sb.append("auth_changepassword_failed=§cFailed to change password, please try again later.\n");
+            sb.append("auth_changepassword_wrong_old=§cWrong old password.\n");
+            sb.append("auth_not_logged_in=§cYou are not logged in, use §f/login §cto login first.\n");
+            sb.append("auth_restricted=§cPlease login before performing any actions.\n");
+            sb.append("auth_login_timeout=§cLogin timeout, you have been kicked from the server.\n");
+            sb.append("auth_register_timeout=§cRegistration timeout, you have been kicked from the server.\n");
+            sb.append("auth_unregister_success=§aAccount deleted for player {0}.\n");
+            sb.append("auth_unregister_not_found=§cNo registration found for player {0}.\n");
+            sb.append("auth_info_format=§6Account info for {0}:\\n§7Registered: §f{1}\\n§7Last login: §f{2}\\n§7Last IP: §f{3}\n");
+            sb.append("auth_info_never_logged_in=Never logged in\n");
+            sb.append("auth_info_not_registered=§cThis player is not registered.\n");
+            sb.append("auth_module_disabled=§cAuth module is disabled.\n");
+            sb.append("auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.\n\n");
+            sb.append("deny_reason_db_unavailable=database unavailable\n");
+            sb.append("deny_reason_authmanager_not_initialized=AuthManager not initialized\n");
+            sb.append("deny_reason_concurrent_login=concurrent login blocked\n");
+            sb.append("deny_reason_no_enc_response=no encryption response (pirate client?)\n");
+            sb.append("allow_reason_no_record=no record (first join via proxy)\n");
+            sb.append("allow_reason_offline_record=offline record\n");
+            sb.append("allow_reason_premium_keep_offline_uuid=premium UUID forwarded but use-mojang-uuid=false (keep offline record)\n");
+            sb.append("allow_reason_upgrade_offline_to_premium=upgrading offline record to premium (UUID={0})\n");
+            sb.append("allow_reason_uuid_autocorrect_offline_to_premium=UUID auto-correct (offline to premium): {0}\n");
+            sb.append("allow_reason_uuid_autocorrect_premium_to_offline=UUID auto-correct (premium to offline): {0}\n");
+            sb.append("login_type_premium=premium\n");
+            sb.append("login_type_premium_offline_uuid=premium(offline UUID)\n");
+            sb.append("login_type_offline=offline\n");
+            sb.append("login_type_premium_api_only=premium(API-only)\n");
+            sb.append("login_type_offline_api_only=offline(API-only)\n");
+            sb.append("api_status_recovered=recovered\n");
+            sb.append("api_source_official=official\n");
+            sb.append("api_source_fallback=fallback #{0}\n");
+            sb.append("kick_rejected_message=[KICK] Player {0} rejected, message: {1}\n");
+            sb.append("kick_message_sent=[KICK] Player {0} received message: {1}\n");
+            sb.append("login_success=[LOGIN] Player {0} login success [{1}] UUID={2} IP={3}\n");
+            sb.append("login_success_premium=[LOGIN] Player {0} login success [premium] UUID={1} IP={2}\n");
+            sb.append("login_success_offline=[LOGIN] Player {0} login success [offline] UUID={1} IP={2}\n");
+            sb.append("state_miss=[STATE-MISS] Player {0} has no PreLogin decision cache (plugin reload race?), inferred identity={1}, record written\n");
+            sb.append("packet_fake_login_start_kick=§cLogin verification succeeded, but login packet injection failed, please reconnect\n\n");
+
+            sb.append("# Downtime / API-only audit logs\n");
+            sb.append("auth_audit_hasjoined_unreachable=[AUDIT] Player {0} DENIED - hasJoined verification failed (Mojang session server unreachable), premium verification cannot complete\n");
+            sb.append("auth_audit_downtime_no_record=[AUDIT] Player {0} DENIED - all LAYER-1 APIs unreachable with no history record, cannot determine premium status, login paused during downtime\n");
+            sb.append("auth_audit_downtime_premium_history=[AUDIT] Player {0} DENIED - all LAYER-1 APIs unreachable and account has premium history (UUID={1}), login paused during downtime\n");
+            sb.append("auth_audit_api_only_authlist=[AUDIT] Player {0} DENIED - auth-list forced verification cannot be satisfied in API-only mode\n");
+            sb.append("auth_audit_api_only_premium=[AUDIT] Player {0} DENIED - premium username cannot complete encrypted verification in API-only mode\n\n");
+
+            sb.append("# Config\n");
+            sb.append("config_loaded=Config loaded: proxy={0}, db-type={1}\n");
+            sb.append("config_reloaded=Reloading config...\n");
+            sb.append("config_reload_success=Config reloaded successfully\n");
+            sb.append("config_reload_failed=Failed to reload config: {0}\n");
+            sb.append("config_lang_changed=Language changed to: {0}\n");
+            sb.append("config_proxy_change_restart=§cProxy mode changed to {0} - please restart the server for the change to fully take effect!\n");
+            sb.append("config_default_created=Default config.toml created\n");
+            sb.append("config_load_failed=Failed to load config.toml, using defaults: {0}\n\n");
+
+            sb.append("# Plugin\n");
+            sb.append("plugin_velocity_initialized=MultiAuth Velocity plugin initialized\n");
+            sb.append("plugin_velocity_shutdown=MultiAuth Velocity plugin shutdown\n");
+            sb.append("plugin_proxy_switch_true=[MultiAuth] proxy switched to true, PacketEvents interception unregistered (verification handled by Velocity)\n");
+            sb.append("plugin_proxy_switch_false=[MultiAuth] proxy switched to false, PacketEvents interception enabled\n");
+            sb.append("plugin_api_only_warning=[MultiAuth] PacketEvents not installed, proxy=false degraded to API-only (LAYER-1 username check only, premium players cannot login)\n");
+            sb.append("plugin_packetevent_install_hint=[MultiAuth] Please install the PacketEvents plugin to enable encrypted handshake verification\n\n");
+
+            sb.append("# Packet / Encryption handshake\n");
+            sb.append("packet_no_verify_callback=[PACKET][LOGIN_START] No verification callback set, user {0} cannot login\n");
+            sb.append("packet_login_start_parse_failed=[PACKET][LOGIN_START] Parse failed: {0}\n");
+            sb.append("packet_enc_response_parse_failed=[PACKET][ENCRYPTION_RESPONSE] Parse failed: {0}\n");
+            sb.append("packet_enc_request_wrapper_failed=[PACKET][ENCRYPTION_REQUEST] Wrapper failed, falling back to raw write: {0}\n");
+            sb.append("packet_fake_login_start_failed=[PACKET][FAKE_LOGIN_START] Send failed: {0}\n");
+            sb.append("packet_fake_login_start_fallback_failed=[PACKET][FAKE_LOGIN_START] Fallback also failed, kicking player {0}: {1}\n");
+            sb.append("packet_disconnect_send_failed=[PACKET][DISCONNECT] Send failed, closing channel directly: {0}\n");
+            sb.append("verify_no_packetevent=[VERIFY][{0}] PacketEvents unavailable, cannot complete encrypted handshake verification, rejecting\n");
+            sb.append("verify_handshake_timeout=[VERIFY][{0}] Encryption handshake timeout (no EncryptionResponse within 5s, likely pirate client)\n");
+            sb.append("verify_enc_response_parse_failed=[VERIFY][{0}] EncryptionResponse parse failed (client sent invalid encryption response): {1}\n");
+            sb.append("verify_enc_response_interrupted=[VERIFY][{0}] Waiting for EncryptionResponse was interrupted\n");
+            sb.append("verify_decrypt_failed=[VERIFY][{0}] sharedSecret decryption failed (verifyToken mismatch): {1}\n");
+            sb.append("verify_aes_anchor_missing=[VERIFY][{0}] AES encryption enable failed (pipeline anchor not found), rejecting login: sending LoginSuccess unencrypted would disconnect the client\n");
+            sb.append("verify_hasjoined_failed=[VERIFY][{0}] hasJoined failed: {1}\n");
+            sb.append("verify_inbound_anchor_missing=[VERIFY] Inbound anchor handler not found (splitter/decompress/decoder), AES encryption enable failed\n");
+            sb.append("verify_outbound_anchor_missing=[VERIFY] Outbound anchor handler not found (prepender/compress/encoder), AES encryption enable failed\n");
+            sb.append("verify_aes_enable_failed=[VERIFY] Netty AES encryption enable failed: {0}\n");
+            sb.append("verify_spoofed_connection_missing=[VERIFY] Cannot set spoofedUUID: Connection not found\n");
+            sb.append("verify_spoofed_field_missing=[VERIFY] spoofedUUID field not found (non-Spigot/Paper environment?)\n");
+            sb.append("verify_spoofed_failed=[VERIFY] Setting spoofedUUID failed: {0}\n");
+            sb.append("verify_packet_handler_missing=[VERIFY] packet_handler not found\n");
+            sb.append("verify_connection_failed=[VERIFY] Failed to get Connection: {0}\n");
+            sb.append("verify_nms_load_failed=[VERIFY] NMS class load failed: {0}\n\n");
+
+            sb.append("# Commands\n");
+            sb.append("cmd_help=MultiAuth Commands:\\n  /multiauth reload  - Reload config\\n  /multiauth status  - Show plugin status\\n  /multiauth backup  - Force database backup\\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)\\n  /multiauth info <player> - View offline player account info\\n  /multiauth unregister <player> - Delete offline player account\n");
+            sb.append("cmd_no_permission=§cYou don't have permission to use this command.\n");
+            sb.append("cmd_status=MultiAuth Status:\\n  Database: {0}\\n  Mojang API: {1}\\n  Premium Players: {2}\\n  Total Records: {3}\n");
+            sb.append("cmd_reload_success=§aConfig reloaded successfully\n");
+            sb.append("cmd_reload_failed=§cFailed to reload config: {0}\n");
+            sb.append("cmd_migrate_usage=§cUsage: /multiauth migrate <sqlite|mysql>\n");
+            sb.append("cmd_migrate_success=§aMigration complete: {0} records migrated to {1}\n");
+            sb.append("cmd_migrate_failed=§cMigration failed: {0}\n");
+            sb.append("cmd_migrate_invalid_type=§cInvalid database type. Use: sqlite, mysql\n");
+            sb.append("cmd_backup_success=§aDatabase backup created successfully\n");
+            sb.append("cmd_backup_failed=§cDatabase backup failed. Check console for details.\n");
+            sb.append("cmd_corrupted_db=§cDatabase appears corrupted. Migration may help.\n");
+            sb.append("cmd_plugin_info=§6MultiAuth v{0} - Player authentication plugin\n");
+            sb.append("cmd_info_usage=§eUsage: /multiauth info <player>\n");
+            sb.append("cmd_unregister_usage=§eUsage: /multiauth unregister <player>\n");
+            sb.append("cmd_changepassword_usage=§eUsage: /changepassword <oldPassword> <newPassword>\n");
+            sb.append("cmd_status_player_title=§6===== Auth Status - {0} =====\n");
+            sb.append("cmd_migrate_same_type=Target type is the same as current, no migration needed\n");
+            sb.append("cmd_check_console=check console for details\n");
+            sb.append("cmd_mode_proxy=Proxy mode\n");
+            sb.append("cmd_mode_direct=Direct\n");
+            sb.append("db_status_healthy=Healthy\n");
+            sb.append("db_status_unhealthy=Unhealthy\n");
+            sb.append("cmd_core_not_initialized=§cCore not initialized, cannot execute this command.\n");
+            sb.append("cmd_migrate_in_progress=§7Migrating data to {0} ...\n");
+            sb.append("cmd_backup_in_progress=§7Creating database backup...\n");
+            sb.append("cmd_status_title=§6=== MultiAuth Status ===\n");
+            sb.append("cmd_status_db_type=§7Database type: §f{0}\n");
+            sb.append("cmd_status_db_status=§7Database status: {0}\n");
+            sb.append("cmd_status_use_mojang_uuid=§7Use Mojang UUID: §f{0}\n");
+            sb.append("cmd_status_auth_list=§7Auth list: §f{0}\n");
+            sb.append("cmd_status_fallback_api=§7Fallback API: §f{0}\n");
+            sb.append("cmd_status_fallback_not_configured=(not configured)\n\n");
+
+            sb.append("# Session\n");
+            sb.append("session_start=[SESSION] Player {0} connecting - starting {1} verification\n");
+            sb.append("session_complete=[SESSION] Player {0} authentication complete - {1}\n");
+            sb.append("session_disconnect=[SESSION] Player {0} disconnected - cleaning up auth state\n");
+            sb.append("session_join_notify=[SESSION] Player {0} joined the server (UUID: {1}, Premium: {2})\n");
+            sb.append("session_hijack_warning=§c[SECURITY WARNING] UUID mismatch for {0}! Session hijack suspected!\n");
+            sb.append("session_gameprofile_rejected=[AUDIT] Player {0} gameprofile rejected (UUID mismatch)\n");
+            sb.append("session_status_notify=§eYour current login status: {0}\\n§7UUID: {1}\n");
+            sb.append("session_status_log=[SESSION] Player {0} login status: {1} (UUID: {2})\n\n");
+
+            sb.append("# Generic\n");
+            sb.append("generic_prefix=§6[MultiAuth] \n");
+            sb.append("generic_permission_denied=§cYou don't have permission to use this command.\n");
+            sb.append("generic_player_only=§cThis command can only be used by players.\n");
+            sb.append("generic_number_required=§cPlease enter a valid number.\n");
+            sb.append("generic_no_player=§cNo player specified.\n");
+            sb.append("generic_player_not_found=§cPlayer not found: {0}\n");
+            sb.append("generic_unknown=unknown\n");
+        }
+
+        Files.writeString(target, sb.toString(), StandardCharsets.UTF_8);
+        LOGGER.info("Created default language file: " + target);
+    }
+}

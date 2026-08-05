@@ -1,0 +1,10 @@
+{
+  "id": "multiauth",
+  "name": "multiauth",
+  "version": "${project.version}",
+  "description": "Login authenticated players and other players.",
+  "url": "https://github.com/lonlf",
+  "authors": ["lonlf"],
+  "dependencies": [],
+  "main": "com.lonleaf.multiauth.MultiAuth"
+}

@@ -1,0 +1,242 @@
+# MultiAuth Language File - English (UK)
+# Language: en_gb
+# You can customize all plugin messages in this file
+
+# Database
+db_init_failed=[DB] Database initialization failed! All logins will be rejected.
+db_connected=[DB] Database connected: {0}
+db_ping_failed=[DB] Database ping failed after connection!
+db_heartbeat_ping_failed=[DB] Database heartbeat: ping failed, attempting reconnect...
+db_heartbeat_not_connected=[DB] Database heartbeat: not connected, attempting reconnect...
+db_reconnected=[DB] Database reconnected successfully
+db_reconnect_failed=[DB] Database reconnect failed: {0}
+db_heartbeat_error=[DB] Database heartbeat error: {0}
+db_backup_created=[DB] Database backup created: {0}
+db_backup_failed=[DB] Database backup failed: {0}
+db_backup_deleted_old=[DB] Deleted old backup: {0}
+db_migration_complete=[DB] Migration complete: {0} records migrated to {1}
+db_migration_failed=[DB] Migration failed: {0}
+db_uuid_rewrite_warning=[DB] Rewriting UUID for premium player {0}: {1} → {2}
+db_connection_failed=[DB] Database connection failed: {0}
+db_rebuild_connection=[DB] Database config changed, rebuilding connection
+db_backup_clean_failed=[DB] Failed to clean old backups: {0}
+db_backup_skip_invalid_row=[DB] Skipped invalid row during backup: username={0} uuid={1}
+db_close_failed=[DB] Failed to close database connection
+db_state_check_failed=[DB] Database connection state check failed
+db_ping_exception=[DB] Database ping failed
+db_get_player_failed=[DB] Failed to get player {0}
+db_save_player_failed=[DB] Failed to save player {0}
+db_save_player_safe_failed=[DB] Failed to save player (safe) {0}
+db_exists_failed=[DB] Failed to check existence for player {0}
+db_count_failed=[DB] Failed to count records
+db_count_premium_failed=[DB] Failed to count premium records
+db_migration_exception=[DB] Database migration failed
+core_init_proxy=Core initialized in PROXY mode (UUID verification via shared DB)
+core_init_standalone=Core initialized successfully (premium verification by this plugin)
+core_shutdown_complete=Core shutdown complete
+
+# API
+api_official_available=[API] Mojang official API: {0} (HTTP {1})
+api_official_unavailable=[API] Mojang official API unreachable: {0}
+api_fallback_available=[API] Fallback API #{0}: {1} (HTTP {2})
+api_fallback_unavailable=[API] Fallback API #{0} unreachable: {1}
+api_all_down=[API] ALL Mojang APIs are unreachable! Premium verification will be rejected.
+api_official_cooldown=[API] Mojang official API in cooldown ({0}s) after repeated failures, using fallback
+api_rate_limit_reached=[API] Mojang API rate limit reached (too many concurrent requests)
+api_high_failure_rate=[API] Mojang API high failure rate ({0}%), failing over to next available API...
+api_recovered=[API] Mojang API recovered - now using {0}
+api_probe_start=[API] Downtime recovery probe started (next probe window +{0}s)
+api_parse_failed=[API] Failed to parse Mojang API response: {0} body={1}
+
+# Auth
+auth_database_unavailable=§cMultiAuth database is currently unavailable, login not possible.
+auth_service_not_initialized=§cAuthentication service not initialized, please contact admin.
+auth_concurrent_login_blocked=§cThis account is being verified, please try again later.
+auth_server_busy=§cAuthentication is busy, please try again later.
+auth_username_check_failed=[AUTH] Player {0} username check failed: {1}
+auth_premium_detected=[AUTH] Player {0} username is premium (UUID={1}) - requiring Mojang verification
+auth_premium_in_authlist=[AUTH] Player {0} not premium but in auth-list - requiring verification
+auth_offline_allowed=[AUTH] Player {0} not premium - allowing offline login
+auth_downtime_flow=[AUTH] Player {0} - Mojang API unreachable, applying downtime flow
+auth_player_allowed=[AUDIT] Player {0} ALLOWED - {1} (UUID: {2})
+auth_player_denied=[AUDIT] Player {0} DENIED - {1}
+auth_handshake_failed=[AUDIT] Player {0} DENIED - Velocity handshake failed (pirate client or invalid session, GameProfileRequest never reached)
+auth_invalid_session=§cInvalid session (pirate client or not logged into Microsoft account)\n§7Please ensure you are logged into your Minecraft account via the official launcher,\n§7if still failing please restart your game and launcher.
+auth_mojang_verify_passed=[AUDIT] Player {0} Mojang verification PASSED - UUID: {1}
+auth_mojang_verify_failed_pirate=[AUDIT] Player {0} Mojang verification FAILED - pirate client
+auth_mojang_unreachable=[AUDIT] Player {0} - Mojang session server unreachable
+auth_downtime_deny=§6Mojang authentication servers are currently unavailable.\n§7For account security, all logins have been temporarily paused during the downtime.\n§7Please try again later.
+auth_downtime_allow_offline=[AUTH] Player {0} allowed offline login during Mojang downtime (offline history)
+auth_uuid_mismatch=[AUDIT] Player {0} UUID mismatch! Expected: {1}, Got: {2} - possible session hijack!
+auth_executor_full=[AUTH] Verification thread pool full, rejecting player {0} (server overloaded, try again later)
+auth_plugin_disabled=[AUTH] Plugin disabled, rejecting player {0}
+auth_verify_unexpected_error=[AUTH] Unexpected exception during verification of player {0}
+auth_listener_unregistered_close=[AUTH] PacketEvents listener unregistered (proxy switch), closing connection of player {0}
+auth_deny_client_disconnected=[AUTH] Player {0} verification failed and rejected (client already disconnected: offline login with premium name / pirate client), Disconnect packet cannot be delivered
+auth_deny_send_disconnect=[AUTH] Player {0} verification failed and rejected, sending Disconnect packet
+auth_no_packetevent_verify=[AUTH] Player {0} not verified by PacketEvents, rejecting login
+auth_verify_failed_deny=[AUTH] Player {0} verification failed, rejecting login
+auth_api_only_mode=[AUTH] PacketEvents not installed, proxy=false degraded to API-only (LAYER-1 username check only, premium players cannot complete encrypted verification)
+auth_no_login_summary=[AUTH] Player {0} has no pre-login summary (reload race), treating as passed
+auth_allow_wins_deny_ignored=[AUTH] Player {0} already has another connection verified (ALLOW), ignoring this DENY result from another connection
+auth_concurrency_full=[AUTH] Login verification concurrency limit reached, rejecting player {0} (try again later)
+deny_reason_db_unavailable=database unavailable
+deny_reason_authmanager_not_initialized=AuthManager not initialized
+deny_reason_concurrent_login=concurrent login blocked
+deny_reason_no_enc_response=no encryption response (pirate client?)
+allow_reason_no_record=no record (first join via proxy)
+allow_reason_offline_record=offline record
+allow_reason_premium_keep_offline_uuid=premium UUID forwarded but use-mojang-uuid=false (keep offline record)
+allow_reason_upgrade_offline_to_premium=upgrading offline record to premium (UUID={0})
+allow_reason_uuid_autocorrect_offline_to_premium=UUID auto-correct (offline to premium): {0}
+allow_reason_uuid_autocorrect_premium_to_offline=UUID auto-correct (premium to offline): {0}
+login_type_premium=premium
+login_type_premium_offline_uuid=premium(offline UUID)
+login_type_offline=offline
+login_type_premium_api_only=premium(API-only)
+login_type_offline_api_only=offline(API-only)
+api_status_recovered=recovered
+api_source_official=official
+api_source_fallback=fallback #{0}
+kick_rejected_message=[KICK] Player {0} rejected, message: {1}
+kick_message_sent=[KICK] Player {0} received message: {1}
+login_success=[LOGIN] Player {0} login success [{1}] UUID={2} IP={3}
+login_success_premium=[LOGIN] Player {0} login success [premium] UUID={1} IP={2}
+login_success_offline=[LOGIN] Player {0} login success [offline] UUID={1} IP={2}
+state_miss=[STATE-MISS] Player {0} has no PreLogin decision cache (plugin reload race?), inferred identity={1}, record written
+packet_fake_login_start_kick=§cLogin verification succeeded, but login packet injection failed, please reconnect
+
+# Downtime / API-only audit logs
+auth_audit_hasjoined_unreachable=[AUDIT] Player {0} DENIED - hasJoined verification failed (Mojang session server unreachable), premium verification cannot complete
+auth_audit_downtime_no_record=[AUDIT] Player {0} DENIED - all LAYER-1 APIs unreachable with no history record, cannot determine premium status, login paused during downtime
+auth_audit_downtime_premium_history=[AUDIT] Player {0} DENIED - all LAYER-1 APIs unreachable and account has premium history (UUID={1}), login paused during downtime
+auth_audit_api_only_authlist=[AUDIT] Player {0} DENIED - auth-list forced verification cannot be satisfied in API-only mode
+auth_audit_api_only_premium=[AUDIT] Player {0} DENIED - premium username cannot complete encrypted verification in API-only mode
+
+# Config
+config_loaded=Config loaded: proxy={0}, db-type={1}
+config_reloaded=Reloading config...
+config_reload_success=Config reloaded successfully
+config_reload_failed=Failed to reload config: {0}
+config_lang_changed=Language changed to: {0}
+config_proxy_change_restart=§cProxy mode changed to {0} - please restart the server for the change to fully take effect!
+config_default_created=Default config.toml created
+config_load_failed=Failed to load config.toml, using defaults: {0}
+
+# Plugin
+plugin_velocity_initialized=MultiAuth Velocity plugin initialized
+plugin_velocity_shutdown=MultiAuth Velocity plugin shutdown
+plugin_proxy_switch_true=[MultiAuth] proxy switched to true, PacketEvents interception unregistered (verification handled by Velocity)
+plugin_proxy_switch_false=[MultiAuth] proxy switched to false, PacketEvents interception enabled
+plugin_api_only_warning=[MultiAuth] PacketEvents not installed, proxy=false degraded to API-only (LAYER-1 username check only, premium players cannot login)
+plugin_packetevent_install_hint=[MultiAuth] Please install the PacketEvents plugin to enable encrypted handshake verification
+
+# Packet / Encryption handshake
+packet_no_verify_callback=[PACKET][LOGIN_START] No verification callback set, user {0} cannot login
+packet_login_start_parse_failed=[PACKET][LOGIN_START] Parse failed: {0}
+packet_enc_response_parse_failed=[PACKET][ENCRYPTION_RESPONSE] Parse failed: {0}
+packet_enc_request_wrapper_failed=[PACKET][ENCRYPTION_REQUEST] Wrapper failed, falling back to raw write: {0}
+packet_fake_login_start_failed=[PACKET][FAKE_LOGIN_START] Send failed: {0}
+packet_fake_login_start_fallback_failed=[PACKET][FAKE_LOGIN_START] Fallback also failed, kicking player {0}: {1}
+packet_disconnect_send_failed=[PACKET][DISCONNECT] Send failed, closing channel directly: {0}
+verify_no_packetevent=[VERIFY][{0}] PacketEvents unavailable, cannot complete encrypted handshake verification, rejecting
+verify_handshake_timeout=[VERIFY][{0}] Encryption handshake timeout (no EncryptionResponse within 5s, likely pirate client)
+verify_enc_response_parse_failed=[VERIFY][{0}] EncryptionResponse parse failed (client sent invalid encryption response): {1}
+verify_enc_response_interrupted=[VERIFY][{0}] Waiting for EncryptionResponse was interrupted
+verify_decrypt_failed=[VERIFY][{0}] sharedSecret decryption failed (verifyToken mismatch): {1}
+verify_aes_anchor_missing=[VERIFY][{0}] AES encryption enable failed (pipeline anchor not found), rejecting login: sending LoginSuccess unencrypted would disconnect the client
+verify_hasjoined_failed=[VERIFY][{0}] hasJoined failed: {1}
+verify_inbound_anchor_missing=[VERIFY] Inbound anchor handler not found (splitter/decompress/decoder), AES encryption enable failed
+verify_outbound_anchor_missing=[VERIFY] Outbound anchor handler not found (prepender/compress/encoder), AES encryption enable failed
+verify_aes_enable_failed=[VERIFY] Netty AES encryption enable failed: {0}
+verify_spoofed_connection_missing=[VERIFY] Cannot set spoofedUUID: Connection not found
+verify_spoofed_field_missing=[VERIFY] spoofedUUID field not found (non-Spigot/Paper environment?)
+verify_spoofed_failed=[VERIFY] Setting spoofedUUID failed: {0}
+verify_packet_handler_missing=[VERIFY] packet_handler not found
+verify_connection_failed=[VERIFY] Failed to get Connection: {0}
+verify_nms_load_failed=[VERIFY] NMS class load failed: {0}
+
+# Commands
+cmd_help=MultiAuth Commands:\n  /multiauth reload  - Reload config\n  /multiauth status  - Show plugin status\n  /multiauth backup  - Force database backup\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)\n  /multiauth info <player> - View offline player account info\n  /multiauth unregister <player> - Delete offline player account
+cmd_no_permission=§cYou don't have permission to use this command.
+cmd_status=MultiAuth Status:\n  Database: {0}\n  Mojang API: {1}\n  Premium Players: {2}\n  Total Records: {3}
+cmd_reload_success=§aConfig reloaded successfully
+cmd_reload_failed=§cFailed to reload config: {0}
+cmd_migrate_usage=§cUsage: /multiauth migrate <sqlite|mysql>
+cmd_migrate_success=§aMigration complete: {0} records migrated to {1}
+cmd_migrate_failed=§cMigration failed: {0}
+cmd_migrate_invalid_type=§cInvalid database type. Use: sqlite, mysql
+cmd_backup_success=§aDatabase backup created successfully
+cmd_backup_failed=§cDatabase backup failed. Check console for details.
+cmd_corrupted_db=§cDatabase appears corrupted. Migration may help.
+cmd_plugin_info=§6MultiAuth v{0} - Player authentication plugin
+cmd_info_usage=§eUsage: /multiauth info <player>
+cmd_unregister_usage=§eUsage: /multiauth unregister <player>
+cmd_changepassword_usage=§eUsage: /changepassword <oldPassword> <newPassword>
+cmd_status_player_title=§6===== Auth Status - {0} =====
+cmd_migrate_same_type=Target type is the same as current, no migration needed
+cmd_check_console=check console for details
+cmd_mode_proxy=Proxy mode
+cmd_mode_direct=Direct
+db_status_healthy=Healthy
+db_status_unhealthy=Unhealthy
+cmd_core_not_initialized=§cCore not initialized, cannot execute this command.
+cmd_migrate_in_progress=§7Migrating data to {0} ...
+cmd_backup_in_progress=§7Creating database backup...
+cmd_status_title=§6=== MultiAuth Status ===
+cmd_status_db_type=§7Database type: §f{0}
+cmd_status_db_status=§7Database status: {0}
+cmd_status_use_mojang_uuid=§7Use Mojang UUID: §f{0}
+cmd_status_auth_list=§7Auth list: §f{0}
+cmd_status_fallback_api=§7Fallback API: §f{0}
+cmd_status_fallback_not_configured=(not configured)
+
+# Session
+session_start=[SESSION] Player {0} connecting - starting {1} verification
+session_complete=[SESSION] Player {0} authentication complete - {1}
+session_disconnect=[SESSION] Player {0} disconnected - cleaning up auth state
+session_join_notify=[SESSION] Player {0} joined the server (UUID: {1}, Premium: {2})
+session_hijack_warning=§c[SECURITY WARNING] UUID mismatch for {0}! Session hijack suspected!
+session_gameprofile_rejected=[AUDIT] Player {0} gameprofile rejected (UUID mismatch)
+session_status_notify=§eYour current login status: {0}\n§7UUID: {1}
+session_status_log=[SESSION] Player {0} login status: {1} (UUID: {2})
+
+# Generic
+generic_prefix=§6[MultiAuth] 
+generic_permission_denied=§cYou don't have permission to use this command.
+generic_player_only=§cThis command can only be used by players.
+generic_number_required=§cPlease enter a valid number.
+generic_no_player=§cNo player specified.
+generic_player_not_found=§cPlayer not found: {0}
+generic_unknown=unknown
+
+# Offline player register/login
+auth_register_prompt=§ePlease register first! Use §f/register <password> <confirm> §eto register
+auth_login_prompt=§ePlease login first! Use §f/login <password> §eto login
+auth_register_success=§aRegistered successfully! You are now logged in.
+auth_register_failed=§cRegistration failed, please try again later or contact admin.
+auth_register_already=§cYou are already registered, use §f/login <password> §cto login.
+auth_register_password_mismatch=§cThe two passwords do not match.
+auth_register_password_too_short=§cPassword must be at least {0} characters long.
+auth_register_password_too_long=§cPassword must not exceed {0} characters.
+auth_register_password_empty=§cPassword cannot be empty.
+auth_login_success=§aLogin successful!
+auth_login_failed=§cLogin failed: wrong password.
+auth_login_not_registered=§cYou are not registered. Use §f/register §cto register first.
+auth_login_processing=§eVerifying, please wait...
+auth_login_already=§aYou are already logged in.
+auth_changepassword_success=§aPassword changed successfully!
+auth_changepassword_failed=§cFailed to change password, please try again later.
+auth_changepassword_wrong_old=§cWrong old password.
+auth_not_logged_in=§cYou are not logged in. Use §f/login §cto login first.
+auth_restricted=§cPlease login first before performing any action.
+auth_login_timeout=§cLogin timeout, you have been kicked from the server.
+auth_register_timeout=§cRegistration timeout, you have been kicked from the server.
+auth_unregister_success=§aAccount deleted for player {0}.
+auth_unregister_not_found=§cNo registration found for player {0}.
+auth_info_format=§6Account info for {0}:\n§7Registered: §f{1}\n§7Last login: §f{2}\n§7Last IP: §f{3}
+auth_info_premium_format=§6Player {0} info:\n§7Type: §bPremium\n§7UUID: §f{1}\n§7Last login: §f{2}
+auth_info_never_logged_in=Never logged in
+auth_info_not_registered=§cThis player is not registered.
+auth_module_disabled=§cAuth module is disabled.
+auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.

@@ -1,0 +1,242 @@
+# MultiAuth 语言文件 - 简体中文
+# Language: zh_cn
+# 可在此文件中自定义所有插件消息
+
+# 数据库相关
+db_init_failed=[DB] 数据库初始化失败！所有登录将被拒绝。
+db_connected=[DB] 数据库已连接：{0}
+db_ping_failed=[DB] 数据库连接后 Ping 失败！
+db_heartbeat_ping_failed=[DB] 数据库心跳：Ping 失败，尝试重连...
+db_heartbeat_not_connected=[DB] 数据库心跳：未连接，尝试重连...
+db_reconnected=[DB] 数据库重连成功
+db_reconnect_failed=[DB] 数据库重连失败：{0}
+db_heartbeat_error=[DB] 数据库心跳错误：{0}
+db_backup_created=[DB] 数据库备份已创建：{0}
+db_backup_failed=[DB] 数据库备份失败：{0}
+db_backup_deleted_old=[DB] 已删除旧备份：{0}
+db_migration_complete=[DB] 迁移完成：{0} 条记录已迁移到 {1}
+db_migration_failed=[DB] 迁移失败：{0}
+db_uuid_rewrite_warning=[DB] 正在重写正版玩家 {0} 的 UUID：{1} → {2}
+db_connection_failed=[DB] 数据库连接失败：{0}
+db_rebuild_connection=[DB] 数据库配置已变更，重建数据库连接
+db_backup_clean_failed=[DB] 清理旧备份失败：{0}
+db_backup_skip_invalid_row=[DB] 备份时跳过无效记录: username={0} uuid={1}
+db_close_failed=[DB] 关闭数据库连接失败
+db_state_check_failed=[DB] 数据库连接状态检查失败
+db_ping_exception=[DB] 数据库 Ping 失败
+db_get_player_failed=[DB] 获取玩家 {0} 失败
+db_save_player_failed=[DB] 保存玩家 {0} 失败
+db_save_player_safe_failed=[DB] 条件保存玩家 {0} 失败
+db_exists_failed=[DB] 检查玩家 {0} 是否存在失败
+db_count_failed=[DB] 统计记录数失败
+db_count_premium_failed=[DB] 统计正版记录数失败
+db_migration_exception=[DB] 数据库迁移失败
+core_init_proxy=Core 以 PROXY 模式初始化（通过共享数据库校验 UUID）
+core_init_standalone=Core 初始化成功（本插件进行正版验证）
+core_shutdown_complete=Core 关闭完成
+
+# API 相关
+api_official_available=[API] Mojang 官方 API 可用性：{0} (HTTP {1})
+api_official_unavailable=[API] Mojang 官方 API 不可达：{0}
+api_fallback_available=[API] 备用 API #{0}：{1} (HTTP {2})
+api_fallback_unavailable=[API] 备用 API #{0} 不可达：{1}
+api_all_down=[API] 所有 Mojang API 均不可达！正版验证将被拒绝。
+api_official_cooldown=[API] Mojang 官方 API 冷却中（{0}s），使用备用 API
+api_rate_limit_reached=[API] Mojang API 已达速率限制（并发请求过多）
+api_high_failure_rate=[API] Mojang API 高失败率（{0}%），切换到下一个可用 API...
+api_recovered=[API] Mojang API 已恢复 - 现在使用 {0}
+api_probe_start=[API] 宕机恢复探测开始（下一次探测窗口 +{0}s）
+api_parse_failed=[API] Mojang API 响应解析失败: {0} body={1}
+
+# 认证流程
+auth_database_unavailable=§cMultiAuth 数据库当前不可用，无法登录。
+auth_service_not_initialized=§c认证服务未初始化，请联系管理员。
+auth_concurrent_login_blocked=§c该账号正在验证中，请稍后再试。
+auth_server_busy=§c服务器认证繁忙，请稍后重试。
+auth_username_check_failed=[AUTH] 玩家 {0} 用户名检查失败：{1}
+auth_premium_detected=[AUTH] 玩家 {0} 用户名为正版（UUID={1}）- 需要 Mojang 验证
+auth_premium_in_authlist=[AUTH] 玩家 {0} 非正版但在验证列表中 - 需要验证
+auth_offline_allowed=[AUTH] 玩家 {0} 非正版 - 允许离线登录
+auth_downtime_flow=[AUTH] 玩家 {0} - Mojang API 不可达，执行宕机流程
+auth_player_allowed=[AUDIT] 玩家 {0} 放行 - {1}（UUID: {2}）
+auth_player_denied=[AUDIT] 玩家 {0} 拒绝 - {1}
+auth_handshake_failed=[AUDIT] 玩家 {0} 拒绝 - Velocity 握手失败（盗版客户端或无效会话，GameProfileRequest 未触发）
+auth_invalid_session=§c无效会话（可能是盗版客户端或正版未登录）\n§7请确认已通过正版启动器登录 Minecraft 账号，\n§7若仍失败请重启游戏及启动器后重试。
+auth_mojang_verify_passed=[AUDIT] 玩家 {0} Mojang 验证通过 - UUID: {1}
+auth_mojang_verify_failed_pirate=[AUDIT] 玩家 {0} Mojang 验证失败 - 盗版客户端
+auth_mojang_unreachable=[AUDIT] 玩家 {0} - Mojang 会话服务器不可达
+auth_downtime_deny=§6Mojang 认证服务器当前不可用。\n§7为保障账号安全，宕机期间已暂停所有登录。\n§7请稍后重试。
+auth_downtime_allow_offline=[AUTH] 玩家 {0} 在 Mojang 宕机期间以离线身份登录（存在离线历史记录）
+auth_uuid_mismatch=[AUDIT] 玩家 {0} UUID 不匹配！预期：{1}，实际：{2} - 可能的会话劫持！
+auth_executor_full=[AUTH] 验证线程池已满，拒绝玩家 {0}（服务器过载，请稍后重试）
+auth_plugin_disabled=[AUTH] 插件已禁用，拒绝玩家 {0} 的登录
+auth_verify_unexpected_error=[AUTH] 玩家 {0} 验证过程中发生未预期异常
+auth_listener_unregistered_close=[AUTH] PacketEvents 监听器已注销（proxy 切换），关闭玩家 {0} 连接
+auth_deny_client_disconnected=[AUTH] 玩家 {0} 验证失败被拒（客户端已断开：正版名离线登录/盗版客户端），Disconnect 包无法送达
+auth_deny_send_disconnect=[AUTH] 玩家 {0} 验证失败被拒，发送 Disconnect 包
+auth_no_packetevent_verify=[AUTH] 玩家 {0} 未经 PacketEvents 验证，拒绝登录
+auth_verify_failed_deny=[AUTH] 玩家 {0} 验证失败，拒绝登录
+auth_api_only_mode=[AUTH] PacketEvents 未安装，proxy=false 降级为 API-only（仅 LAYER-1 用户名检查，正版玩家无法完成加密验证）
+auth_no_login_summary=[AUTH] 玩家 {0} 无预登录摘要（reload 竞态），视为通过
+auth_allow_wins_deny_ignored=[AUTH] 玩家 {0} 已有其他连接验证通过（ALLOW），忽略来自其他连接的本次 DENY 结果
+auth_concurrency_full=[AUTH] 登录验证并发已满，拒绝玩家 {0}（请稍后重试）
+deny_reason_db_unavailable=数据库不可用
+deny_reason_authmanager_not_initialized=AuthManager 未初始化
+deny_reason_concurrent_login=并发登录被阻止
+deny_reason_no_enc_response=无加密响应（盗版客户端？）
+allow_reason_no_record=无记录（首次经代理加入）
+allow_reason_offline_record=离线记录
+allow_reason_premium_keep_offline_uuid=转发的正版 UUID 但 use-mojang-uuid=false（保留离线记录）
+allow_reason_upgrade_offline_to_premium=升级离线记录为正版（UUID={0}）
+allow_reason_uuid_autocorrect_offline_to_premium=UUID 自动修正（离线→正版）：{0}
+allow_reason_uuid_autocorrect_premium_to_offline=UUID 自动修正（正版→离线）：{0}
+login_type_premium=正版
+login_type_premium_offline_uuid=正版(离线UUID)
+login_type_offline=离线
+login_type_premium_api_only=正版(API-only)
+login_type_offline_api_only=离线(API-only)
+api_status_recovered=已恢复
+api_source_official=官方
+api_source_fallback=备用 #{0}
+kick_rejected_message=[KICK] 玩家 {0} 被拒，消息：{1}
+kick_message_sent=[KICK] 玩家 {0} 收到消息：{1}
+login_success=[LOGIN] 玩家 {0} 登录成功 [{1}] UUID={2} IP={3}
+login_success_premium=[LOGIN] 玩家 {0} 登录成功 [正版] UUID={1} IP={2}
+login_success_offline=[LOGIN] 玩家 {0} 登录成功 [离线] UUID={1} IP={2}
+state_miss=[STATE-MISS] 玩家 {0} 无 PreLogin 决策缓存（插件 reload 竞态？），推断身份={1}，已写入记录
+packet_fake_login_start_kick=§c登录验证成功，但登录包注入失败，请重新连接
+
+# 宕机 / API-only 审计日志
+auth_audit_hasjoined_unreachable=[AUDIT] 拒绝玩家 {0}：第二层 hasJoined 验证失败（Mojang 会话服务器不可达），正版验证无法完成
+auth_audit_downtime_no_record=[AUDIT] 拒绝玩家 {0}：第一层 API 全部不可达且无历史记录，无法判断正盗版身份，宕机期间禁止登录
+auth_audit_downtime_premium_history=[AUDIT] 拒绝玩家 {0}：第一层 API 全部不可达，账号有正版历史记录（UUID={1}），宕机期间禁止登录
+auth_audit_api_only_authlist=[AUDIT] 拒绝玩家 {0}：auth-list 强制验证在 API-only 模式下无法满足
+auth_audit_api_only_premium=[AUDIT] 拒绝玩家 {0}：API-only 降级模式下正版用户名无法完成加密验证
+
+# 配置相关
+config_loaded=配置已加载：proxy={0}, 数据库类型={1}
+config_reloaded=正在重新加载配置...
+config_reload_success=配置重新加载成功
+config_reload_failed=重新加载配置失败：{0}
+config_lang_changed=语言已更改：{0}
+config_proxy_change_restart=§c代理模式已变更为 {0}，请重启服务端使配置完全生效！
+config_default_created=默认 config.toml 已创建
+config_load_failed=config.toml 加载失败，使用默认配置：{0}
+
+# 插件相关
+plugin_velocity_initialized=MultiAuth Velocity 插件已初始化
+plugin_velocity_shutdown=MultiAuth Velocity 插件已关闭
+plugin_proxy_switch_true=[MultiAuth] proxy 已切换为 true，PacketEvents 拦截已注销（验证由 Velocity 完成）
+plugin_proxy_switch_false=[MultiAuth] proxy 已切换为 false，PacketEvents 拦截已启用
+plugin_api_only_warning=[MultiAuth] PacketEvents 未安装，proxy=false 降级为 API-only（仅 LAYER-1 用户名检查，正版玩家无法登录）
+plugin_packetevent_install_hint=[MultiAuth] 请安装 PacketEvents 插件以启用加密握手验证
+
+# 数据包 / 加密握手
+packet_no_verify_callback=[PACKET][LOGIN_START] 未设置验证回调，用户 {0} 将无法登录
+packet_login_start_parse_failed=[PACKET][LOGIN_START] 解析失败：{0}
+packet_enc_response_parse_failed=[PACKET][ENCRYPTION_RESPONSE] 解析失败：{0}
+packet_enc_request_wrapper_failed=[PACKET][ENCRYPTION_REQUEST] Wrapper 失败，回退到原始写入：{0}
+packet_fake_login_start_failed=[PACKET][FAKE_LOGIN_START] 发送失败：{0}
+packet_fake_login_start_fallback_failed=[PACKET][FAKE_LOGIN_START] 回退也失败，踢出玩家 {0}：{1}
+packet_disconnect_send_failed=[PACKET][DISCONNECT] 发送失败，直接关闭 channel：{0}
+verify_no_packetevent=[VERIFY][{0}] PacketEvents 不可用，无法完成加密握手验证，拒绝
+verify_handshake_timeout=[VERIFY][{0}] 加密握手超时（5s 内未收到 EncryptionResponse，疑似盗版客户端）
+verify_enc_response_parse_failed=[VERIFY][{0}] EncryptionResponse 解析失败（客户端发送了非法加密响应）：{1}
+verify_enc_response_interrupted=[VERIFY][{0}] 等待 EncryptionResponse 被中断
+verify_decrypt_failed=[VERIFY][{0}] 解密 sharedSecret 失败（verifyToken 不匹配）：{1}
+verify_aes_anchor_missing=[VERIFY][{0}] 启用 AES 加密失败（找不到 pipeline 锚点），拒绝登录：未加密状态下发送 LoginSuccess 会导致客户端断开
+verify_hasjoined_failed=[VERIFY][{0}] hasJoined 失败：{1}
+verify_inbound_anchor_missing=[VERIFY] 找不到入站锚点 handler（splitter/decompress/decoder），AES 加密启用失败
+verify_outbound_anchor_missing=[VERIFY] 找不到出站锚点 handler（prepender/compress/encoder），AES 加密启用失败
+verify_aes_enable_failed=[VERIFY] Netty AES 加密启用失败：{0}
+verify_spoofed_connection_missing=[VERIFY] 无法设置 spoofedUUID：Connection 未找到
+verify_spoofed_field_missing=[VERIFY] spoofedUUID 字段未找到（非 Spigot/Paper 环境？）
+verify_spoofed_failed=[VERIFY] 设置 spoofedUUID 失败：{0}
+verify_packet_handler_missing=[VERIFY] packet_handler 未找到
+verify_connection_failed=[VERIFY] 获取 Connection 失败：{0}
+verify_nms_load_failed=[VERIFY] NMS 类加载失败：{0}
+
+# 命令相关
+cmd_help=MultiAuth 命令：\n  /multiauth reload  - 重载配置\n  /multiauth status  - 查看插件状态\n  /multiauth backup  - 强制备份数据库\n  /multiauth migrate <type> - 迁移数据库 (sqlite|mysql)\n  /multiauth info <玩家> - 查看离线玩家账号信息\n  /multiauth unregister <玩家> - 删除离线玩家账号
+cmd_no_permission=§c你没有权限执行此命令。
+cmd_status=MultiAuth 状态：\n  数据库：{0}\n  Mojang API：{1}\n  正版玩家数：{2}\n  总记录数：{3}
+cmd_reload_success=§a配置重新加载成功
+cmd_reload_failed=§c重新加载配置失败：{0}
+cmd_migrate_usage=§c用法：/multiauth migrate <sqlite|mysql>
+cmd_migrate_success=§a迁移完成：{0} 条记录已迁移到 {1}
+cmd_migrate_failed=§c迁移失败：{0}
+cmd_migrate_invalid_type=§c无效的数据库类型。请使用：sqlite, mysql
+cmd_backup_success=§a数据库备份已成功创建
+cmd_backup_failed=§c数据库备份失败，请查看控制台了解详情
+cmd_corrupted_db=§c数据库似乎已损坏。迁移可能有帮助。
+cmd_plugin_info=§6MultiAuth v{0} - 玩家认证插件
+cmd_info_usage=§e用法：/multiauth info <玩家>
+cmd_unregister_usage=§e用法：/multiauth unregister <玩家>
+cmd_changepassword_usage=§e用法：/changepassword <旧密码> <新密码>
+cmd_status_player_title=§6===== 认证状态 - {0} =====
+cmd_migrate_same_type=目标类型与当前相同，无需迁移
+cmd_check_console=请查看控制台了解详情
+cmd_mode_proxy=代理模式
+cmd_mode_direct=直连模式
+db_status_healthy=健康
+db_status_unhealthy=异常
+cmd_core_not_initialized=§cCore 未初始化，无法执行此命令。
+cmd_migrate_in_progress=§7正在迁移数据到 {0} ...
+cmd_backup_in_progress=§7正在创建数据库备份...
+cmd_status_title=§6=== MultiAuth 状态 ===
+cmd_status_db_type=§7数据库类型: §f{0}
+cmd_status_db_status=§7数据库状态: {0}
+cmd_status_use_mojang_uuid=§7使用 Mojang UUID: §f{0}
+cmd_status_auth_list=§7认证列表: §f{0}
+cmd_status_fallback_api=§7备用 API: §f{0}
+cmd_status_fallback_not_configured=(未配置)
+
+# 会话相关
+session_start=[SESSION] 玩家 {0} 连接中 - 开始 {1} 验证
+session_complete=[SESSION] 玩家 {0} 认证完成 - {1}
+session_disconnect=[SESSION] 玩家 {0} 断开连接 - 清理认证状态
+session_join_notify=[SESSION] 玩家 {0} 加入服务器（UUID: {1}，正版: {2}）
+session_hijack_warning=§c[安全警告] {0} 的 UUID 不匹配！怀疑会话劫持！
+session_gameprofile_rejected=[AUDIT] 玩家 {0} 的 GameProfile 被拒绝（UUID 不匹配）
+session_status_notify=§e您当前为{0}登录状态\n§7UUID: {1}
+session_status_log=[SESSION] 玩家 {0} 登录状态：{1}（UUID: {2}）
+
+# 通用
+generic_prefix=§6[MultiAuth] 
+generic_permission_denied=§c你没有权限使用此命令。
+generic_player_only=§c此命令只能由玩家使用。
+generic_number_required=§c请输入有效的数字。
+generic_no_player=§c未指定玩家。
+generic_player_not_found=§c未找到玩家：{0}
+generic_unknown=未知
+
+# 离线玩家注册/登录
+auth_register_prompt=§e请先注册账号！使用 §f/register <密码> <确认密码> §e注册
+auth_login_prompt=§e请先登录！使用 §f/login <密码> §e登录
+auth_register_success=§a注册成功！已自动登录。
+auth_register_failed=§c注册失败，请稍后重试或联系管理员。
+auth_register_already=§c您已注册，请使用 §f/login <密码> §c登录。
+auth_register_password_mismatch=§c两次输入的密码不一致。
+auth_register_password_too_short=§c密码长度不能少于 {0} 个字符。
+auth_register_password_too_long=§c密码长度不能超过 {0} 个字符。
+auth_register_password_empty=§c密码不能为空。
+auth_login_success=§a登录成功！
+auth_login_failed=§c登录失败：密码错误。
+auth_login_not_registered=§c您尚未注册，请先使用 §f/register §c注册。
+auth_login_processing=§e正在验证中，请稍候...
+auth_login_already=§a您已登录。
+auth_changepassword_success=§a密码修改成功！
+auth_changepassword_failed=§c密码修改失败，请稍后重试。
+auth_changepassword_wrong_old=§c旧密码错误。
+auth_not_logged_in=§c您尚未登录，请先使用 §f/login §c登录。
+auth_restricted=§c请先登录后再进行操作。
+auth_login_timeout=§c登录超时，您已被踢出服务器。
+auth_register_timeout=§c注册超时，您已被踢出服务器。
+auth_unregister_success=§a已删除玩家 {0} 的账号。
+auth_unregister_not_found=§c未找到玩家 {0} 的注册信息。
+auth_info_format=§6玩家 {0} 的账号信息：\n§7注册时间: §f{1}\n§7最后登录: §f{2}\n§7最后IP: §f{3}
+auth_info_premium_format=§6玩家 {0} 的信息：\n§7类型: §b正版\n§7UUID: §f{1}\n§7最后登录: §f{2}
+auth_info_never_logged_in=从未登录
+auth_info_not_registered=§c该玩家尚未注册。
+auth_module_disabled=§c认证模块已禁用。
+auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。

@@ -1,0 +1,75 @@
+# MultiAuth Velocity 配置文件
+#
+# 重要：Velocity 的 velocity.toml 中必须设置 online-mode = true
+# 插件通过 forceOfflineMode() 实现正版/非正版混合验证：
+#   - 正版玩家：Velocity 自动执行加密握手 + hasJoined 验证
+#   - 非正版玩家：插件设置 forceOfflineMode() 跳过验证，使用离线 UUID
+# 如果 online-mode = false，所有玩家都会以离线模式登录，正版验证不生效
+
+# 语言设置
+# 插件启动时会生成 lang/ 文件夹，内含多种语言文件
+# 修改此项后执行 /multiauth reload 即可生效
+# 支持: zh_cn (简体中文), en_gb (英语)
+language = "zh_cn"
+
+# 调试模式
+# false = 仅输出生产环境必要日志（启动/停止/验证结果/错误/审计）
+# true  = 输出详细调试日志（握手步骤/决策细节等，便于排查问题）
+debug = false
+
+# 认证列表（玩家名列表，不区分大小写）
+# 所有玩家连接后先尝试 Mojang 正版验证：
+#   验证成功 → 使用正版 UUID 进入服务器
+#   验证失败 → 若玩家名在此列表中则踢出，否则以离线模式登录
+auth-list = [
+    "Notch",
+    "jeb_"
+]
+
+# Mojang API 配置
+[mojang-api]
+# 备用 API 地址列表（官方 API 宕机时依次尝试，留空则不启用备用）
+# 占位符 {username} 会被替换为玩家名
+# 当所有 API 均不可用时，会拒绝所有玩家登录（日志中会有详细提示）
+# 官方 Mojang API: https://api.mojang.com/users/profiles/minecraft/{username}
+# 常见备用 API:
+#   - "https://api.minetools.eu/uuid/{username}"
+#   - "https://mojang-api.arktech.ca/uuid/{username}"
+#   - "https://api.minecraft-services.net/api/v1/uuid/{username}"
+fallback-urls = [
+    # "https://api.minetools.eu/uuid/{username}",
+    # "https://mojang-api.arktech.ca/uuid/{username}",
+    # "https://api.minecraft-services.net/api/v1/uuid/{username}",
+]
+
+# 数据库配置
+[database]
+# 数据库类型: sqlite 或 mysql
+type = "sqlite"
+
+# SQLite 配置（type = sqlite 时生效）
+sqlite-file = "multiauth.db"
+
+# MySQL 配置（type = mysql 时生效）
+mysql-host = "localhost"
+mysql-port = 3306
+mysql-database = "multiauth"
+mysql-username = "root"
+mysql-password = ""
+mysql-table-prefix = "multiauth_"
+# 是否使用 SSL 连接 MySQL 数据库（建议生产环境开启）
+mysql-use-ssl = false
+
+# 心跳间隔（秒），定期检查数据库连接是否存活
+heartbeat-interval = 60
+
+# 备份配置
+[backup]
+# 是否启用定时备份
+enabled = true
+# 备份间隔（小时）
+interval-hours = 24
+# 备份文件存放目录（相对于插件数据目录）
+dir = "backups"
+# 最大备份数量，超出后自动清理最旧的
+max-count = 7
