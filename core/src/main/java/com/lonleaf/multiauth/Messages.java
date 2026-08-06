@@ -744,7 +744,7 @@ public class Messages {
         SESSION_SYNC_PARSE_ERROR = messages.getOrDefault("session_sync_parse_error",
                 "[AUTH] Failed to parse cross-server session sync message: {0}");
         SESSION_SYNC_REJECT_CLIENT = messages.getOrDefault("session_sync_reject_client",
-                "[AUTH] Rejected forged cross-server session sync message from client (only Velocity proxy messages accepted)");
+                "[AUTH] Blocked client-forged cross-server session sync message (forward to backend rejected)");
         SESSION_SYNC_TTL_REMOVED = messages.getOrDefault("session_sync_ttl_removed",
                 "[SESSION] Removed expired session record (TTL): {0} (UUID: {1})");
         CONFIG_LOADED_DEBUG = messages.getOrDefault("config_loaded_debug",
@@ -1354,7 +1354,7 @@ public class Messages {
             sb.append("session_sync_login=[AUTH] Player {0} logged in via Velocity cross-server sync (IP: {1}, Premium: {2})\n");
             sb.append("session_sync_logout=[AUTH] Player {0} logged out via Velocity cross-server sync\n");
             sb.append("session_sync_parse_error=[AUTH] Failed to parse cross-server session sync message: {0}\n");
-            sb.append("session_sync_reject_client=[AUTH] Rejected forged cross-server session sync message from client (only Velocity proxy messages accepted)\n");
+            sb.append("session_sync_reject_client=[AUTH] Blocked client-forged cross-server session sync message (forward to backend rejected)\n");
             sb.append("session_sync_ttl_removed=[SESSION] Removed expired session record (TTL): {0} (UUID: {1})\n");
             sb.append("config_loaded_debug=[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}\n");
             sb.append("config_reloading=[Config] Reloading config...\n");

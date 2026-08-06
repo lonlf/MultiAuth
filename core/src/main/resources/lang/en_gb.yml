@@ -197,7 +197,7 @@ session_sync_receiver_registered=[MultiAuth] Cross-server session sync receiver 
 session_sync_login=[AUTH] Player {0} logged in via Velocity cross-server sync (IP: {1}, Premium: {2})
 session_sync_logout=[AUTH] Player {0} logged out via Velocity cross-server sync
 session_sync_parse_error=[AUTH] Failed to parse cross-server session sync message: {0}
-session_sync_reject_client=[AUTH] Rejected forged cross-server session sync message from client (only Velocity proxy messages accepted)
+session_sync_reject_client=[AUTH] Blocked client-forged cross-server session sync message (forward to backend rejected)
 session_sync_ttl_removed=[SESSION] Removed expired session record (TTL): {0} (UUID: {1})
 config_loaded_debug=[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}
 config_reloading=[Config] Reloading config...

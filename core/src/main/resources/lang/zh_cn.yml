@@ -197,7 +197,7 @@ session_sync_receiver_registered=[MultiAuth] 跨服会话同步接收器已注�
 session_sync_login=[AUTH] 玩家 {0} 通过 Velocity 跨服会话同步登录（IP: {1}, 正版: {2}）
 session_sync_logout=[AUTH] 玩家 {0} 通过 Velocity 跨服会话同步登出
 session_sync_parse_error=[AUTH] 解析跨服会话同步消息失败: {0}
-session_sync_reject_client=[AUTH] 拒绝客户端伪造的跨服会话同步消息（仅接受 Velocity 代理消息）
+session_sync_reject_client=[AUTH] 拦截客户端伪造的跨服会话同步消息（已阻止转发到后端）
 session_sync_ttl_removed=[SESSION] 清理过期会话记录（TTL）: {0} (UUID: {1})
 config_loaded_debug=[Config] 已加载: proxy={0}, useMojangUuid={1}, debug={2}
 config_reloading=[Config] 正在重载配置...

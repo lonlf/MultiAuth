@@ -1,5 +1,7 @@
 package com.lonleaf.multiauth.auth;
 
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -46,8 +48,24 @@ public class SessionSyncManager {
         this.debug = debug;
         if (enabled) {
             server.getChannelRegistrar().register(CHANNEL);
+            server.getEventManager().register(plugin, this);
             scheduleCleanup();
             debug(Messages.get(Messages.SESSION_SYNC_ENABLED, SessionSyncProtocol.CHANNEL_ID));
+        }
+    }
+
+    /**
+     * 拦截客户端伪造的会话同步消息：客户端（模组）发送的 multiauth:session 消息默认会被
+     * Velocity 转发到后端（文档明确警告：转发后玩家可伪装成代理向后端发送消息），
+     * 必须在此标记 handled() 阻止转发，否则盗版客户端可绕过注册/登录限制。
+     * 后端无法通过 player 参数区分来源（Velocity 主动发送也是经玩家连接），故在代理层拦截。
+     */
+    @Subscribe
+    public void onPluginMessage(PluginMessageEvent event) {
+        if (!CHANNEL.equals(event.getIdentifier())) return;
+        if (event.getSource() instanceof Player) {
+            event.setResult(PluginMessageEvent.ForwardResult.handled());
+            logger.warn(Messages.get(Messages.SESSION_SYNC_REJECT_CLIENT));
         }
     }
 
