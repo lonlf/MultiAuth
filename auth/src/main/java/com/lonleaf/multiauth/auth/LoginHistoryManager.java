@@ -1,5 +1,6 @@
 package com.lonleaf.multiauth.auth;
 
+import com.lonleaf.multiauth.Messages;
 import com.lonleaf.multiauth.config.AuthConfig;
 import com.lonleaf.multiauth.db.DatabaseManager;
 import com.lonleaf.multiauth.db.LoginHistoryRecord;
@@ -46,8 +47,8 @@ public class LoginHistoryManager {
                 database.trimLoginHistory(username, config.getSecLoginHistoryMaxRecords());
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[HISTORY] Failed to record login history for "
-                    + username + ": " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.HISTORY_RECORD_FAILED,
+                    username, e.getMessage()), e);
         }
     }
 
@@ -60,8 +61,8 @@ public class LoginHistoryManager {
             }
             return list.get(0);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[HISTORY] Failed to get last login for "
-                    + username + ": " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.HISTORY_GET_LAST_FAILED,
+                    username, e.getMessage()), e);
             return null;
         }
     }
@@ -72,8 +73,8 @@ public class LoginHistoryManager {
             List<LoginHistoryRecord> list = database.getRecentLoginHistory(username, limit);
             return list != null ? list : Collections.emptyList();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[HISTORY] Failed to get login history for "
-                    + username + ": " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.HISTORY_GET_FAILED,
+                    username, e.getMessage()), e);
             return Collections.emptyList();
         }
     }

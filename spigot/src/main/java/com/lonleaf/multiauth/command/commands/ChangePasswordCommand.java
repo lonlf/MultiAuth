@@ -50,7 +50,7 @@ public class ChangePasswordCommand implements Command {
                 .thenAccept(result -> plugin.getServer().getScheduler().runTask(plugin, () ->
                         player.sendMessage(result.message())))
                 .exceptionally(e -> {
-                    plugin.getLogger().warning("[AUTH] Change password command failed for " + username + ": " + e.getMessage());
+                    plugin.getLogger().warning(Messages.get(Messages.AUTH_CHANGEPASSWORD_COMMAND_FAILED_LOG, username, e.getMessage()));
                     plugin.getServer().getScheduler().runTask(plugin, () ->
                             player.sendMessage(Messages.AUTH_CHANGEPASSWORD_FAILED));
                     return null;

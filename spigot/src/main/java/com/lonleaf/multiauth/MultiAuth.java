@@ -119,8 +119,7 @@ public final class MultiAuth extends JavaPlugin {
 
         // proxy=false 模式检查：要求 online-mode=false
         if (!config.isProxy() && getServer().getOnlineMode()) {
-            getLogger().warning(Messages.get(Messages.CONFIG_RELOAD_FAILED, "proxy=false requires server.properties online-mode=false"));
-            getLogger().warning(Messages.get(Messages.CONFIG_RELOAD_FAILED, "online-mode=true detected, Spigot Mojang verification will not work"));
+            getLogger().warning(Messages.get(Messages.CONFIG_ONLINE_MODE_INCOMPATIBLE_WARN));
         }
 
         // 注册命令（CommandManager 内部完成 executor/tabCompleter 注册）
@@ -219,7 +218,7 @@ public final class MultiAuth extends JavaPlugin {
             Path dataDirectory = getDataFolder().toPath();
             this.ipGeoService = new IpGeoService(config.getConfig(), dataDirectory, julLogger);
             this.authService.setSecurityServices(loginSecurityManager, loginHistoryManager, ipGeoService);
-            julLogger.info("[MultiAuth] 安全增强服务已按新配置重新加载");
+            julLogger.info(Messages.get(Messages.SEC_SERVICES_RELOADED_LOG));
         }
         // 无论 auth 是否启用，只要 authService 存在就更新配置引用，
         // 确保 session.timeout 等配置在 reload 后立即生效（auth 从启用切到禁用时也保持引用一致）

@@ -204,10 +204,6 @@ public class MySQLManager implements DatabaseManager {
         return "UPDATE " + ipStatsTableName + " SET account_count = account_count - 1 WHERE ip = ? AND account_count > 0";
     }
 
-    private String updateIpFailureStatsSql() {
-        return "INSERT INTO " + ipStatsTableName + " (ip, account_count, failed_attempts, last_failure_time, cooldown_until) VALUES (?, 0, ?, ?, ?) ON DUPLICATE KEY UPDATE failed_attempts = VALUES(failed_attempts), last_failure_time = VALUES(last_failure_time), cooldown_until = VALUES(cooldown_until)";
-    }
-
     @Override
     public synchronized void connect() throws SQLException {
         if (dataSource != null && !dataSource.isClosed()) {
@@ -217,7 +213,7 @@ public class MySQLManager implements DatabaseManager {
             }
             // ping 失败，关闭旧池重建（不递归调用 connect，避免无限循环）
             try { dataSource.close(); } catch (Exception e) {
-                logger.fine("Failed to close data source: " + e.getMessage());
+                logger.fine(Messages.get(Messages.DB_CLOSE_DATA_SOURCE_FAILED, e.getMessage()));
             }
             dataSource = null;
         }
@@ -424,7 +420,7 @@ public class MySQLManager implements DatabaseManager {
                 stmt.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnType);
             }
         } catch (SQLException e) {
-            logger.fine("Already exists or not needed: " + e.getMessage());
+            logger.fine(Messages.get(Messages.DB_COLUMN_EXISTS, e.getMessage()));
         }
     }
 
@@ -583,7 +579,7 @@ public class MySQLManager implements DatabaseManager {
                 try {
                     stmt.execute(createAuthIndexSql());
                 } catch (SQLException e) {
-                    logger.fine("Index already exists: " + e.getMessage());
+                    logger.fine(Messages.get(Messages.DB_INDEX_EXISTS, e.getMessage()));
                 }
             }
         } catch (SQLException e) {
@@ -699,12 +695,12 @@ public class MySQLManager implements DatabaseManager {
                 try {
                     stmt.execute(createLoginHistoryIndexUserTimeSql());
                 } catch (SQLException e) {
-                    logger.fine("Index already exists: " + e.getMessage());
+                    logger.fine(Messages.get(Messages.DB_INDEX_EXISTS, e.getMessage()));
                 }
                 try {
                     stmt.execute(createLoginHistoryIndexIpSql());
                 } catch (SQLException e) {
-                    logger.fine("Index already exists: " + e.getMessage());
+                    logger.fine(Messages.get(Messages.DB_INDEX_EXISTS, e.getMessage()));
                 }
             }
         } catch (SQLException e) {
@@ -829,22 +825,6 @@ public class MySQLManager implements DatabaseManager {
             }
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_DECREMENT_IP_ACCOUNT_FAILED, ip), e);
-        }
-    }
-
-    @Override
-    public void updateIpFailureStats(String ip, int failedAttempts, long lastFailureTime, long cooldownUntil) {
-        try (Connection conn = borrowConnection()) {
-            if (conn == null) return;
-            try (PreparedStatement ps = conn.prepareStatement(updateIpFailureStatsSql())) {
-                ps.setString(1, ip);
-                ps.setInt(2, failedAttempts);
-                ps.setLong(3, lastFailureTime);
-                ps.setLong(4, cooldownUntil);
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_IP_FAILURE_STATS_FAILED, ip), e);
         }
     }
 }

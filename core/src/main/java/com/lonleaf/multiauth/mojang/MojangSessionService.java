@@ -2,6 +2,7 @@ package com.lonleaf.multiauth.mojang;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.lonleaf.multiauth.Messages;
 
 import java.io.IOException;
 import java.net.URI;
@@ -115,7 +116,7 @@ public class MojangSessionService {
 
             return Optional.of(new MojangProfile(uuid, name, properties));
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[MOJANG] Malformed response from hasJoined: " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.MOJANG_MALFORMED_HASJOINED_WARN, e.getMessage()), e);
             return Optional.empty();
         }
     }

@@ -1,6 +1,5 @@
 package com.lonleaf.multiauth;
 
-import com.lonleaf.multiauth.auth.AuthCrypto;
 import com.lonleaf.multiauth.auth.AuthManager;
 import com.lonleaf.multiauth.config.AuthConfig;
 import com.lonleaf.multiauth.db.DatabaseManager;
@@ -29,7 +28,6 @@ public class Core {
     private volatile MojangSessionService mojangService;
     private volatile MojangApiService mojangApiService;
     private volatile AuthManager authManager;
-    private AuthCrypto globalCrypto;
     private final Logger logger;
     private final Path dataDirectory;
 
@@ -49,10 +47,6 @@ public class Core {
     public boolean init() {
         // 根据配置设置日志级别：debug=false 仅 INFO+，debug=true 输出 FINE 调试日志
         applyLogLevel();
-
-        // 初始化全局 RSA 密钥对（2048 位，复用于所有加密握手）
-        this.globalCrypto = new AuthCrypto();
-        logger.fine(Messages.get(Messages.CORE_RSA_KEY_INIT));
 
         // 初始化数据库
         if (!initDatabase()) {
@@ -296,7 +290,7 @@ public class Core {
                 try {
                     database.disconnect();
                 } catch (Exception e) {
-                    logger.fine("Cleanup error: " + e.getMessage());
+                    logger.fine(Messages.get(Messages.CORE_CLEANUP_ERROR, e.getMessage()));
                 }
             }
             databaseHealthy = false;
@@ -343,14 +337,14 @@ public class Core {
             try {
                 oldMojangService.close();
             } catch (Exception e) {
-                logger.fine("Cleanup error: " + e.getMessage());
+                logger.fine(Messages.get(Messages.CORE_CLEANUP_ERROR, e.getMessage()));
             }
         }
         if (oldMojangApiService != null) {
             try {
                 oldMojangApiService.close();
             } catch (Exception e) {
-                logger.fine("Cleanup error: " + e.getMessage());
+                logger.fine(Messages.get(Messages.CORE_CLEANUP_ERROR, e.getMessage()));
             }
         }
 

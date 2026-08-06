@@ -1,5 +1,6 @@
 package com.lonleaf.multiauth.geo;
 
+import com.lonleaf.multiauth.Messages;
 import com.lonleaf.multiauth.config.AuthConfig;
 import org.lionsoul.ip2region.service.Config;
 import org.lionsoul.ip2region.service.Ip2Region;
@@ -51,7 +52,7 @@ public class IpGeoService {
         }
 
         if (!v4Enabled && !v6Enabled) {
-            logger.warning("[GEO] Both v4 and v6 query are disabled, geo service disabled");
+            logger.warning(Messages.get(Messages.GEO_V4V6_DISABLED_WARN));
             this.ready = false;
             return;
         }
@@ -71,13 +72,13 @@ public class IpGeoService {
             try {
                 initIp2Region(v4Path, v6Path, cachePolicy, searchers);
                 this.ready = true;
-                logger.info("[GEO] ip2region service initialized successfully");
+                logger.info(Messages.get(Messages.GEO_INIT_SUCCESS));
             } catch (Exception e) {
-                logger.log(Level.WARNING, "[GEO] Failed to initialize ip2region: " + e.getMessage(), e);
+                logger.log(Level.WARNING, Messages.get(Messages.GEO_INIT_FAILED, e.getMessage()), e);
                 this.ready = false;
             }
         } else if (autoDownload) {
-            logger.info("[GEO] xdb file(s) missing, starting async download...");
+            logger.info(Messages.get(Messages.GEO_XDB_MISSING_DOWNLOAD));
             final Path finalV4Path = v4Path;
             final Path finalV6Path = v6Path;
             final boolean finalV4Ready = v4Ready;
@@ -91,16 +92,16 @@ public class IpGeoService {
                     try {
                         initIp2Region(finalV4Path, finalV6Path, finalCachePolicy, finalSearchers);
                         this.ready = true;
-                        logger.info("[GEO] ip2region service initialized successfully after download");
+                        logger.info(Messages.get(Messages.GEO_INIT_SUCCESS_AFTER_DOWNLOAD));
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "[GEO] Failed to initialize ip2region after download: " + e.getMessage(), e);
+                        logger.log(Level.WARNING, Messages.get(Messages.GEO_INIT_FAILED_AFTER_DOWNLOAD, e.getMessage()), e);
                     }
                 } else {
-                    logger.warning("[GEO] Failed to download xdb files, geo service remains disabled");
+                    logger.warning(Messages.get(Messages.GEO_DOWNLOAD_FAILED_DISABLED));
                 }
             });
         } else {
-            logger.warning("[GEO] xdb file(s) missing and auto-download disabled, geo service disabled");
+            logger.warning(Messages.get(Messages.GEO_XDB_MISSING_NO_DOWNLOAD));
             this.ready = false;
         }
     }
@@ -130,7 +131,7 @@ public class IpGeoService {
 
         boolean isV6 = ip.contains(":");
         if (isV6 && !v6Enabled) {
-            logger.warning("[GEO] Player connected via IPv6 but v6 query is disabled, skipping");
+            logger.warning(Messages.get(Messages.GEO_IPV6_SKIPPED));
             return null;
         }
         if (!isV6 && !v4Enabled) {
@@ -144,7 +145,7 @@ public class IpGeoService {
             }
             return parseRegion(region);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[GEO] Failed to query IP " + ip + ": " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.GEO_QUERY_FAILED, ip, e.getMessage()), e);
             return null;
         }
     }
@@ -156,7 +157,7 @@ public class IpGeoService {
             try {
                 ip2Region.close();
             } catch (Exception e) {
-                logger.log(Level.WARNING, "[GEO] Failed to close ip2region: " + e.getMessage(), e);
+                logger.log(Level.WARNING, Messages.get(Messages.GEO_CLOSE_FAILED, e.getMessage()), e);
             } finally {
                 ip2Region = null;
             }
@@ -254,11 +255,12 @@ public class IpGeoService {
         for (int attempt = 1; attempt <= DOWNLOAD_MAX_RETRIES; attempt++) {
             try {
                 downloadFile(url, target);
-                logger.info("[GEO] Downloaded xdb file: " + target.getFileName());
+                logger.info(Messages.get(Messages.GEO_DOWNLOADED_FILE, target.getFileName().toString()));
                 return true;
             } catch (Exception e) {
-                logger.warning("[GEO] Download attempt " + attempt + "/" + DOWNLOAD_MAX_RETRIES
-                        + " failed for " + target.getFileName() + ": " + e.getMessage());
+                logger.warning(Messages.get(Messages.GEO_DOWNLOAD_ATTEMPT_FAILED,
+                        String.valueOf(attempt), String.valueOf(DOWNLOAD_MAX_RETRIES),
+                        target.getFileName().toString(), e.getMessage()));
                 if (attempt < DOWNLOAD_MAX_RETRIES) {
                     try {
                         Thread.sleep(DOWNLOAD_RETRY_INTERVAL_MS);

@@ -48,7 +48,7 @@ public class AuthService {
         try {
             database.createAuthTable();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[AUTH] Failed to create auth table: " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.AUTH_CREATE_AUTH_TABLE_FAILED_LOG, e.getMessage()), e);
         }
     }
 
@@ -70,7 +70,7 @@ public class AuthService {
             database.createLoginHistoryTable();
             database.createIpStatsTable();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[AUTH] Failed to create security tables: " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.AUTH_CREATE_SECURITY_TABLES_FAILED_LOG, e.getMessage()), e);
         }
     }
 
@@ -155,8 +155,8 @@ public class AuthService {
                 ipLockAcquired = true;
                 // 安全检查：单 IP 账号数量限制
                 if (config.isSecIpLimitsEnabled() && !securityManager.canRegister(finalIp)) {
-                    logger.warning("[SEC] Registration blocked for " + username + ": IP " + finalIp
-                            + " reached account limit (" + config.getSecMaxAccountsPerIp() + ")");
+                    logger.warning(Messages.get(Messages.SEC_REGISTRATION_BLOCKED_LOG,
+                            username, finalIp, String.valueOf(config.getSecMaxAccountsPerIp())));
                     securityManager.releaseIpRegistration(finalIp);
                     return new RegisterPreflight(false, Messages.AUTH_IP_ACCOUNT_LIMIT, false);
                 }
@@ -182,7 +182,8 @@ public class AuthService {
                 // 同步异常（如 executor 已关闭）：直接释放锁，避免泄漏
                 registeringUsernames.remove(username);
                 if (ipLockAcquired) securityManager.releaseIpRegistration(finalIp);
-                logger.log(Level.WARNING, "[AUTH] Password hash submission failed for " + username + ": " + syncEx.getMessage(), syncEx);
+                logger.log(Level.WARNING, Messages.get(Messages.AUTH_HASH_SUBMISSION_FAILED_LOG,
+                        username, syncEx.getMessage()), syncEx);
                 return CompletableFuture.completedFuture(new AuthResult(false, Messages.AUTH_REGISTER_FAILED));
             }
             return hashFuture.thenApply(hash -> {
@@ -193,10 +194,11 @@ public class AuthService {
                     if (securityManager != null) {
                         securityManager.onRegisterSuccess(finalIp);
                     }
-                    logger.info("[AUTH] Player " + username + " registered successfully (IP=" + finalIp + ")");
+                    logger.info(Messages.get(Messages.AUTH_REGISTER_SUCCESS_LOG, username, finalIp));
                     return new AuthResult(true, Messages.AUTH_REGISTER_SUCCESS);
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "[AUTH] Failed to save auth account for " + username + ": " + e.getMessage(), e);
+                    logger.log(Level.WARNING, Messages.get(Messages.AUTH_SAVE_ACCOUNT_FAILED_LOG,
+                            username, e.getMessage()), e);
                     return new AuthResult(false, Messages.AUTH_REGISTER_FAILED);
                 } finally {
                     registeringUsernames.remove(username);
@@ -206,11 +208,13 @@ public class AuthService {
                 // 哈希失败：释放锁
                 registeringUsernames.remove(username);
                 if (ipLockAcquired) securityManager.releaseIpRegistration(finalIp);
-                logger.log(Level.WARNING, "[AUTH] Password hash failed for " + username + ": " + e.getMessage(), e);
+                logger.log(Level.WARNING, Messages.get(Messages.AUTH_HASH_FAILED_LOG,
+                        username, e.getMessage()), e);
                 return new AuthResult(false, Messages.AUTH_REGISTER_FAILED);
             });
         }).exceptionally(e -> {
-            logger.log(Level.WARNING, "[AUTH] Register failed for " + username + ": " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.AUTH_REGISTER_FAILED_LOG,
+                    username, e.getMessage()), e);
             return new AuthResult(false, Messages.AUTH_REGISTER_FAILED);
         });
     }
@@ -284,7 +288,8 @@ public class AuthService {
                     GeoInfo cg = geoService != null ? geoService.search(finalIp) : null;
                     return new GeoContext(pi, pg, cg);
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "[AUTH] Geo/history query failed for " + username + ": " + ex.getMessage(), ex);
+                    logger.log(Level.WARNING, Messages.get(Messages.AUTH_GEO_HISTORY_QUERY_FAILED_LOG,
+                            username, ex.getMessage()), ex);
                     return new GeoContext(null, null, null);
                 }
             });
@@ -331,8 +336,8 @@ public class AuthService {
                                     warnings.add(Messages.get(Messages.AUTH_IP_CHANGE_WARNING,
                                             prevIp, finalIp));
                                 }
-                                logger.info("[SEC] Player " + username + " IP changed: "
-                                        + prevIp + " -> " + finalIp);
+                                logger.info(Messages.get(Messages.SEC_IP_CHANGED_LOG,
+                                        username, prevIp, finalIp));
                             }
                             // 地理位置变化检测
                             if (geoService != null && geoService.isReady()
@@ -340,7 +345,7 @@ public class AuthService {
                                 geoKick = checkGeoChange(prevGeo, currGeo, warnings, username);
                             }
 
-                            logger.info("[AUTH] Player " + username + " logged in successfully (IP=" + finalIp + ")");
+                            logger.info(Messages.get(Messages.AUTH_LOGIN_SUCCESS_LOG, username, finalIp));
                             return new AuthResult(true, Messages.AUTH_LOGIN_SUCCESS, geoKick, warnings);
                         } else {
                             // 密码错误：记录失败尝试
@@ -352,14 +357,16 @@ public class AuthService {
                                 if (fr.shouldKick()) {
                                     shouldKick = true;
                                     failMsg = Messages.AUTH_LOGIN_TOO_MANY_FAILURES;
-                                    logger.warning("[SEC] Player " + username + " kicked for too many failed attempts (IP=" + finalIp + ")");
+                                    logger.warning(Messages.get(Messages.SEC_TOO_MANY_FAILURES_KICK_LOG,
+                                            username, finalIp));
                                 } else if (fr.remainingAttempts() >= 0
                                         && fr.remainingAttempts() != Integer.MAX_VALUE) {
                                     failMsg = Messages.get(Messages.AUTH_ATTEMPTS_REMAINING,
                                             String.valueOf(fr.remainingAttempts()));
                                 }
                             }
-                            logger.warning("[AUTH] Player " + username + " login failed: wrong password (IP=" + finalIp + ")");
+                            logger.warning(Messages.get(Messages.AUTH_LOGIN_WRONG_PASSWORD_LOG,
+                                    username, finalIp));
                             // 记录失败的登录历史
                             if (historyManager != null && config.isSecLoginHistoryEnabled()) {
                                 String country = currGeo != null ? currGeo.country() : null;
@@ -369,7 +376,8 @@ public class AuthService {
                             return new AuthResult(false, failMsg, shouldKick, Collections.emptyList());
                         }
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "[AUTH] Failed to update login for " + username + ": " + e.getMessage(), e);
+                        logger.log(Level.WARNING, Messages.get(Messages.AUTH_LOGIN_UPDATE_FAILED_LOG,
+                                username, e.getMessage()), e);
                         return new AuthResult(false, Messages.AUTH_LOGIN_FAILED);
                     } finally {
                         sessionManager.endProcessing(uuid);
@@ -377,12 +385,14 @@ public class AuthService {
                 })
                 .exceptionally(e -> {
                     sessionManager.endProcessing(uuid);
-                    logger.log(Level.WARNING, "[AUTH] Password verify failed for " + username + ": " + e.getMessage(), e);
+                    logger.log(Level.WARNING, Messages.get(Messages.AUTH_PASSWORD_VERIFY_FAILED_LOG,
+                            username, e.getMessage()), e);
                     return new AuthResult(false, Messages.AUTH_LOGIN_FAILED);
                 });
         })
         .exceptionally(e -> {
-            logger.log(Level.WARNING, "[AUTH] Login failed for " + username + ": " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.AUTH_LOGIN_FAILED_LOG,
+                    username, e.getMessage()), e);
             return new AuthResult(false, Messages.AUTH_LOGIN_FAILED);
         });
     }
@@ -417,14 +427,13 @@ public class AuthService {
             case "kick":
                 // 将消息加入 warnings，并返回 true 表示应踢出
                 warnings.add(msg);
-                logger.warning("[SEC] Player " + username + " " + type
-                        + " login detected, will be kicked");
+                logger.warning(Messages.get(Messages.SEC_GEO_KICK_LOG, username, type));
                 return true;
             case "require-login":
             case "warn":
             default:
                 warnings.add(msg);
-                logger.info("[SEC] Player " + username + " " + type + " login warning sent");
+                logger.info(Messages.get(Messages.SEC_GEO_WARN_LOG, username, type));
                 return false;
         }
     }
@@ -499,17 +508,14 @@ public class AuthService {
         if (action == null) action = "warn";
         switch (action.toLowerCase()) {
             case "kick":
-                logger.warning("[SEC] Player " + username + " " + type
-                        + " login detected during session resume, will be kicked");
+                logger.warning(Messages.get(Messages.SEC_SESSION_RESUME_KICK_LOG, username, type));
                 return new SessionResumeCheck(false, true, List.of(msg));
             case "require-login":
-                logger.info("[SEC] Player " + username + " " + type
-                        + " login detected during session resume, requiring fresh login");
+                logger.info(Messages.get(Messages.SEC_SESSION_RESUME_REQUIRE_LOGIN_LOG, username, type));
                 return new SessionResumeCheck(false, false, List.of(msg));
             case "warn":
             default:
-                logger.info("[SEC] Player " + username + " " + type
-                        + " login warning sent during session resume");
+                logger.info(Messages.get(Messages.SEC_SESSION_RESUME_WARN_LOG, username, type));
                 return new SessionResumeCheck(true, false, List.of(msg));
         }
     }
@@ -558,17 +564,19 @@ public class AuthService {
                                         .thenApply(hash -> {
                                             try {
                                                 database.updateAuthPassword(username, hash);
-                                                logger.info("[AUTH] Player " + username + " changed password successfully");
+                                                logger.info(Messages.get(Messages.AUTH_CHANGE_PASSWORD_SUCCESS_LOG, username));
                                                 return new AuthResult(true, Messages.AUTH_CHANGEPASSWORD_SUCCESS);
                                             } catch (Exception e) {
-                                                logger.log(Level.WARNING, "[AUTH] Failed to update password for " + username + ": " + e.getMessage(), e);
+                                                logger.log(Level.WARNING, Messages.get(Messages.AUTH_PASSWORD_UPDATE_FAILED_LOG,
+                                                        username, e.getMessage()), e);
                                                 return new AuthResult(false, Messages.AUTH_CHANGEPASSWORD_FAILED);
                                             }
                                         });
                             });
                 })
                 .exceptionally(e -> {
-                    logger.log(Level.WARNING, "[AUTH] Change password failed for " + username + ": " + e.getMessage(), e);
+                    logger.log(Level.WARNING, Messages.get(Messages.AUTH_CHANGE_PASSWORD_FAILED_LOG,
+                            username, e.getMessage()), e);
                     return new AuthResult(false, Messages.AUTH_CHANGEPASSWORD_FAILED);
                 });
     }
@@ -611,11 +619,12 @@ public class AuthService {
                 if (securityManager != null && account != null && account.lastIp() != null) {
                     securityManager.onUnregister(account.lastIp());
                 }
-                logger.info("[AUTH] Account unregistered: " + username);
+                logger.info(Messages.get(Messages.AUTH_UNREGISTER_SUCCESS_LOG, username));
             }
             return deleted;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[AUTH] Failed to unregister " + username + ": " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.AUTH_UNREGISTER_FAILED_LOG,
+                    username, e.getMessage()), e);
             return false;
         }
     }

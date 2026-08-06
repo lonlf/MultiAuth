@@ -39,19 +39,22 @@ public class PlayerRestrictionListener implements Listener {
         Player player = event.getPlayer();
         if (state.isUnrestricted(player)) return;
 
+        Location to = event.getTo();
+        if (to == null) return; // 防御：getTo() 理论非 null，边界情况安全跳过
+
         UUID uuid = player.getUniqueId();
         // 固定位置：传送回原位
         if (config.getConfig().isAuthFreezePosition()) {
             Location frozen = state.getFrozenLocation(uuid);
-            if (frozen != null && !isSameLocation(event.getTo(), frozen)) {
+            if (frozen != null && !isSameLocation(to, frozen)) {
                 event.setTo(frozen);
                 return;
             }
         }
         // 阻止移动（仅当位置变化时）：用 setTo(getFrom) 代替 setCancelled，避免客户端回弹橡皮筋
-        if (event.getFrom().getX() != event.getTo().getX()
-                || event.getFrom().getY() != event.getTo().getY()
-                || event.getFrom().getZ() != event.getTo().getZ()) {
+        if (event.getFrom().getX() != to.getX()
+                || event.getFrom().getY() != to.getY()
+                || event.getFrom().getZ() != to.getZ()) {
             event.setTo(event.getFrom());
         }
     }

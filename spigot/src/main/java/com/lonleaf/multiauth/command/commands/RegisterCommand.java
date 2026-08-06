@@ -62,7 +62,7 @@ public class RegisterCommand implements Command {
                     }
                 }))
                 .exceptionally(e -> {
-                    plugin.getLogger().warning("[AUTH] Register command failed for " + username + ": " + e.getMessage());
+                    plugin.getLogger().warning(Messages.get(Messages.AUTH_REGISTER_COMMAND_FAILED_LOG, username, e.getMessage()));
                     plugin.getServer().getScheduler().runTask(plugin, () ->
                             player.sendMessage(Messages.AUTH_REGISTER_FAILED));
                     return null;

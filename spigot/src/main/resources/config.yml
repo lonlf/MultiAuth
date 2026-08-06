@@ -181,9 +181,9 @@ auth:
       cache-policy: "vIndexCache"    # 缓存策略: file / vIndexCache / bufferCache
       searchers: 15                 # 查询线程池大小
       cross-country:
-        action: warn                # warn=警告 | kick=踢出 | require-login=阻止会话恢复
+        action: warn                # warn=警告 | kick=踢出 | require-login=阻止会话恢复（仅影响重连免密恢复，正常登录时等同 warn）
       cross-city:
-        action: warn                # warn | kick | require-login
+        action: warn                # warn=警告 | kick=踢出 | require-login=阻止会话恢复（仅影响重连免密恢复，正常登录时等同 warn）
       skip-lan: true                # 局域网 IP 跳过地理检测
 
     # 登录历史记录

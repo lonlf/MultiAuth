@@ -60,8 +60,8 @@ public class AuthJoinListener implements Listener {
         // 安全检查：单 IP 在线账号数限制（正版和离线玩家均受限）
         if (!authService.canJoin(ip)) {
             player.kickPlayer(Messages.AUTH_IP_ONLINE_LIMIT);
-            plugin.getLogger().warning("[SEC] Player " + username + " kicked: IP " + ip
-                    + " reached online limit (" + authConfig.getSecMaxOnlinePerIp() + ")");
+            plugin.getLogger().warning(Messages.get(Messages.SEC_JOIN_ONLINE_LIMIT_KICK_LOG,
+                    username, ip, String.valueOf(authConfig.getSecMaxOnlinePerIp())));
             return;
         }
         authService.onPlayerJoin(ip, username);
@@ -209,7 +209,7 @@ public class AuthJoinListener implements Listener {
             try {
                 core.getDatabase().updatePlayerLocation(name, worldName, x, y, z, yaw, pitch);
             } catch (Exception e) {
-                plugin.getLogger().warning("[AUTH] Failed to save location for " + name + ": " + e.getMessage());
+                plugin.getLogger().warning(Messages.get(Messages.AUTH_SAVE_LOCATION_FAILED_LOG, name, e.getMessage()));
             }
         });
     }
@@ -234,7 +234,7 @@ public class AuthJoinListener implements Listener {
                     }
                 });
             } catch (Exception e) {
-                plugin.getLogger().warning("[AUTH] Failed to load last location for " + name + ": " + e.getMessage());
+                plugin.getLogger().warning(Messages.get(Messages.AUTH_LOAD_LOCATION_FAILED_LOG, name, e.getMessage()));
             }
         });
     }
@@ -272,8 +272,7 @@ public class AuthJoinListener implements Listener {
                         authConfig.getAuthSpawnPointYaw(),
                         authConfig.getAuthSpawnPointPitch());
             }
-            plugin.getLogger().warning("[MultiAuth] Spawn-point world '" + worldName
-                    + "' not found, falling back to current world spawn");
+            plugin.getLogger().warning(Messages.get(Messages.SPAWN_WORLD_MISSING_LOG, worldName));
         }
         return player.getWorld().getSpawnLocation();
     }

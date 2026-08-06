@@ -524,7 +524,7 @@ public class SpigotAuthListener implements Listener {
             if (authState != null) {
                 authState.preFillPremiumCache(playerUuid, prem);
             }
-            notifyLoginStatus(player, username, playerUuid, prem ? "正版" : "离线");
+            notifyLoginStatus(player, username, playerUuid, prem);
             return;
         }
 
@@ -538,13 +538,13 @@ public class SpigotAuthListener implements Listener {
 
         // 代理模式 + 实际是正版 UUID：记录同步已在预登录异步阶段完成
         if (config.isProxy() && isActualPremium) {
-            notifyLoginStatus(player, username, playerUuid, "正版");
+            notifyLoginStatus(player, username, playerUuid, true);
             return;
         }
 
         if (record != null && record.isPremium() && record.uuid().equals(playerUuid)) {
             // 正版记录与玩家 UUID 一致 → 正版登录
-            notifyLoginStatus(player, username, playerUuid, "正版");
+            notifyLoginStatus(player, username, playerUuid, true);
         } else if (record != null && record.isPremium() && !record.uuid().equals(playerUuid)) {
             // 会话完整性校验：正版记录的 UUID 与当前 UUID 不一致 → 踢出（防止盗版冒用正版用户名）
             logger.warning(Messages.get(Messages.AUTH_UUID_MISMATCH, username, record.uuid().toString(), playerUuid.toString()));
@@ -554,7 +554,7 @@ public class SpigotAuthListener implements Listener {
         } else {
             // 离线登录（或 proxy=false / use-mojang-uuid=false 下正版玩家共享离线 UUID 的场景，
             // 按预登录阶段缓存的摘要判定真实身份）
-            notifyLoginStatus(player, username, playerUuid, isActualPremium ? "正版" : "离线");
+            notifyLoginStatus(player, username, playerUuid, isActualPremium);
         }
     }
 
@@ -569,7 +569,8 @@ public class SpigotAuthListener implements Listener {
     /**
      * 发送登录状态通知（专门的玩家消息，替代原 session_join_notify/session_complete 进服通知）。
      */
-    private void notifyLoginStatus(Player player, String username, UUID playerUuid, String status) {
+    private void notifyLoginStatus(Player player, String username, UUID playerUuid, boolean isPremium) {
+        String status = resolveLoginType(isPremium);
         if (config.isNotifyPlayerStatus()) {
             String notifyMsg = Messages.get(Messages.SESSION_STATUS_NOTIFY, status, playerUuid.toString());
             player.sendMessage(notifyMsg);
@@ -577,6 +578,19 @@ public class SpigotAuthListener implements Listener {
         }
         // 生产必要日志：登录状态留痕，不受 notify-player-status 开关影响
         logger.info(Messages.get(Messages.SESSION_STATUS_LOG, username, status, playerUuid.toString()));
+    }
+
+    /**
+     * 解析登录类型显示文本（本地化）：
+     * 正版 → "正版"；use-mojang-uuid=false 时正版玩家使用离线 UUID 存档，标注以示区分。
+     */
+    private String resolveLoginType(boolean isPremium) {
+        if (isPremium) {
+            return config.isUseMojangUuid()
+                    ? Messages.get(Messages.LOGIN_TYPE_PREMIUM)
+                    : Messages.get(Messages.LOGIN_TYPE_PREMIUM_OFFLINE_UUID);
+        }
+        return Messages.get(Messages.LOGIN_TYPE_OFFLINE);
     }
 
     /**

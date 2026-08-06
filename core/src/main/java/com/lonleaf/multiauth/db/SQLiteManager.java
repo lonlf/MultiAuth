@@ -138,9 +138,6 @@ public class SQLiteManager implements DatabaseManager {
     private static final String DECREMENT_IP_ACCOUNT_COUNT_SQL =
             "UPDATE multiauth_ip_stats SET account_count = account_count - 1 WHERE ip = ? AND account_count > 0";
 
-    private static final String UPDATE_IP_FAILURE_STATS_SQL =
-            "INSERT INTO multiauth_ip_stats (ip, account_count, failed_attempts, last_failure_time, cooldown_until) VALUES (?, 0, ?, ?, ?) ON CONFLICT(ip) DO UPDATE SET failed_attempts = excluded.failed_attempts, last_failure_time = excluded.last_failure_time, cooldown_until = excluded.cooldown_until";
-
     private final Path dbPath;
     private final Logger logger;
     private Connection connection;
@@ -157,7 +154,7 @@ public class SQLiteManager implements DatabaseManager {
             try {
                 connection.close();
             } catch (SQLException e) {
-                logger.fine("Failed to close old connection: " + e.getMessage());
+                logger.fine(Messages.get(Messages.DB_CLOSE_OLD_CONNECTION_FAILED, e.getMessage()));
             }
             connection = null;
         }
@@ -417,12 +414,12 @@ public class SQLiteManager implements DatabaseManager {
                 if (columnName.equalsIgnoreCase(rs.getString("name"))) return;
             }
         } catch (SQLException e) {
-            logger.fine("Column already exists or migration not needed: " + e.getMessage());
+            logger.fine(Messages.get(Messages.DB_COLUMN_EXISTS, e.getMessage()));
         }
         try {
             stmt.execute("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + columnName + " " + columnType);
         } catch (SQLException e) {
-            logger.fine("Column already exists or migration not needed: " + e.getMessage());
+            logger.fine(Messages.get(Messages.DB_COLUMN_EXISTS, e.getMessage()));
         }
     }
 
@@ -674,22 +671,6 @@ public class SQLiteManager implements DatabaseManager {
             ps.executeUpdate();
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_DECREMENT_IP_ACCOUNT_FAILED, ip), e);
-        }
-    }
-
-    @Override
-    public synchronized void updateIpFailureStats(String ip, int failedAttempts, long lastFailureTime, long cooldownUntil) {
-        if (!isConnected()) {
-            return;
-        }
-        try (PreparedStatement ps = connection.prepareStatement(UPDATE_IP_FAILURE_STATS_SQL)) {
-            ps.setString(1, ip);
-            ps.setInt(2, failedAttempts);
-            ps.setLong(3, lastFailureTime);
-            ps.setLong(4, cooldownUntil);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_IP_FAILURE_STATS_FAILED, ip), e);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.lonleaf.multiauth.auth;
 
+import com.lonleaf.multiauth.Messages;
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
 
@@ -16,12 +17,14 @@ import java.util.logging.Logger;
  */
 public class PasswordHasher {
 
-    private final Argon2 argon2;
+    // ThreadLocal：argon2-jvm 的 Argon2 实例非线程安全，2 线程池每线程独占一个实例，
+    // 避免并发 hash/verify 时共享实例产生竞态
+    private final ThreadLocal<Argon2> argon2 = ThreadLocal.withInitial(
+            () -> Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id));
     private final ExecutorService executor;
     private final Logger logger = Logger.getLogger("MultiAuth");
 
     public PasswordHasher() {
-        this.argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
         this.executor = Executors.newFixedThreadPool(2, r -> {
             Thread t = new Thread(r, "multiauth-argon2");
             t.setDaemon(true);
@@ -40,7 +43,7 @@ public class PasswordHasher {
             char[] chars = password.toCharArray();
             try {
                 // m=32768(32MiB), t=2, p=1
-                return argon2.hash(2, 32768, 1, chars);
+                return argon2.get().hash(2, 32768, 1, chars);
             } finally {
                 Arrays.fill(chars, '\0');
             }
@@ -58,12 +61,12 @@ public class PasswordHasher {
         return CompletableFuture.supplyAsync(() -> {
             char[] chars = password.toCharArray();
             try {
-                return argon2.verify(passwordHash, chars);
+                return argon2.get().verify(passwordHash, chars);
             } catch (IllegalArgumentException e) {
-                logger.log(Level.SEVERE, "[AUTH] Invalid password hash format: " + e.getMessage(), e);
+                logger.log(Level.SEVERE, Messages.get(Messages.AUTH_INVALID_PASSWORD_HASH_FORMAT, e.getMessage()), e);
                 return false;
             } catch (Exception e) {
-                logger.log(Level.WARNING, "[AUTH] Password verification error: " + e.getMessage(), e);
+                logger.log(Level.WARNING, Messages.get(Messages.AUTH_PASSWORD_VERIFY_ERROR, e.getMessage()), e);
                 return false;
             } finally {
                 Arrays.fill(chars, '\0');

@@ -98,7 +98,4 @@ public interface DatabaseManager {
 
     /** 递减 IP 注册账号数（注销账号时） */
     void decrementIpAccountCount(String ip);
-
-    /** 更新 IP 失败计数与冷却 */
-    void updateIpFailureStats(String ip, int failedAttempts, long lastFailureTime, long cooldownUntil);
 }

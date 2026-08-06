@@ -374,7 +374,7 @@ public class VelocityAuthListener {
             // 正版玩家在 hasJoined 通过前断开，两种情况无法通过事件区分：
             //   a) 盗版客户端冒用正版名，加密握手/hasJoined 验证失败被 Velocity 断开（真实拒绝）
             //   b) 正版玩家在登录过程中主动取消/网络波动断开（误报）
-            // 因无法确认是验证失败，故仅 debug 输出，避免生产环境误报"盗版客户端或无效会话"
+            // 因无法确认是验证失败，故仅 debug 输出，避免生产环境误报"盗版客户端或无效会话"<-看着就心烦,真的会有人离线登录正版名吗？:(
             // （踢出本身由 Velocity 协议层执行，功能不受影响；真实拒绝的审计见 Spigot 端
             //   AUTH_MOJANG_VERIFY_FAILED_PIRATE 或 API-only 模式的对应审计）
             debug(Messages.get(Messages.DISCONNECT_BEFORE_HASJOINED, username));

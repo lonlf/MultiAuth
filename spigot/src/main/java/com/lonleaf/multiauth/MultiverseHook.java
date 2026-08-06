@@ -85,8 +85,7 @@ public class MultiverseHook {
             Method get = option.getClass().getMethod("get");
             return (World) get.invoke(option);
         } catch (Exception e) {
-            logger.log(Level.FINE, "[MultiAuth] Multiverse loadWorld reflection failed for '"
-                    + worldName + "': " + e.getMessage(), e);
+            logger.log(Level.FINE, Messages.get(Messages.MULTIVERSE_REFLECTION_FAILED_LOG, worldName, e.getMessage()), e);
             return null;
         }
     }

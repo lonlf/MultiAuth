@@ -88,13 +88,11 @@ public class Messages {
     public static volatile String DB_GET_IP_STATS_FAILED;
     public static volatile String DB_INCREMENT_IP_ACCOUNT_FAILED;
     public static volatile String DB_DECREMENT_IP_ACCOUNT_FAILED;
-    public static volatile String DB_UPDATE_IP_FAILURE_STATS_FAILED;
     public static volatile String DB_CREATE_INDEX_FAILED;
     public static volatile String DB_PARSE_UUID_FAILED;
     public static volatile String CORE_INIT_PROXY;
     public static volatile String CORE_INIT_STANDALONE;
     public static volatile String CORE_SHUTDOWN_COMPLETE;
-    public static volatile String CORE_RSA_KEY_INIT;
     public static volatile String CORE_PROXY_MODE_DEBUG;
     public static volatile String CORE_API_INIT_DEBUG;
     public static volatile String CORE_HEARTBEAT_SCHEDULED;
@@ -239,6 +237,7 @@ public class Messages {
     public static volatile String CONFIG_LOADED;
     public static volatile String CONFIG_RELOADED;
     public static volatile String CONFIG_RELOAD_FAILED;
+    public static volatile String CONFIG_ONLINE_MODE_INCOMPATIBLE_WARN;
     public static volatile String CONFIG_PROXY_CHANGE_RESTART;
     public static volatile String CONFIG_DEFAULT_CREATED;
     public static volatile String CONFIG_LOAD_FAILED;
@@ -358,10 +357,73 @@ public class Messages {
     public static volatile String VERIFY_SPOOFED_UUID_SET;
     public static volatile String MULTIVERSE_LOAD_WORLD_FAILED;
     public static volatile String AUTH_PROXY_SKIP_SPIGOT;
+    public static volatile String AUTH_CREATE_AUTH_TABLE_FAILED_LOG;
+    public static volatile String AUTH_CREATE_SECURITY_TABLES_FAILED_LOG;
+    public static volatile String SEC_REGISTRATION_BLOCKED_LOG;
+    public static volatile String AUTH_HASH_SUBMISSION_FAILED_LOG;
+    public static volatile String AUTH_REGISTER_SUCCESS_LOG;
+    public static volatile String AUTH_SAVE_ACCOUNT_FAILED_LOG;
+    public static volatile String AUTH_HASH_FAILED_LOG;
+    public static volatile String AUTH_REGISTER_FAILED_LOG;
+    public static volatile String AUTH_GEO_HISTORY_QUERY_FAILED_LOG;
+    public static volatile String SEC_IP_CHANGED_LOG;
+    public static volatile String AUTH_LOGIN_SUCCESS_LOG;
+    public static volatile String SEC_TOO_MANY_FAILURES_KICK_LOG;
+    public static volatile String AUTH_LOGIN_WRONG_PASSWORD_LOG;
+    public static volatile String AUTH_LOGIN_UPDATE_FAILED_LOG;
+    public static volatile String AUTH_PASSWORD_VERIFY_FAILED_LOG;
+    public static volatile String AUTH_LOGIN_FAILED_LOG;
+    public static volatile String SEC_GEO_KICK_LOG;
+    public static volatile String SEC_GEO_WARN_LOG;
+    public static volatile String SEC_SESSION_RESUME_KICK_LOG;
+    public static volatile String SEC_SESSION_RESUME_REQUIRE_LOGIN_LOG;
+    public static volatile String SEC_SESSION_RESUME_WARN_LOG;
+    public static volatile String AUTH_CHANGE_PASSWORD_SUCCESS_LOG;
+    public static volatile String AUTH_PASSWORD_UPDATE_FAILED_LOG;
+    public static volatile String AUTH_CHANGE_PASSWORD_FAILED_LOG;
+    public static volatile String AUTH_UNREGISTER_SUCCESS_LOG;
+    public static volatile String AUTH_UNREGISTER_FAILED_LOG;
     public static volatile String AUTH_PLAYER_VERIFIED_SEND_FAKE;
     public static volatile String MSG_STATUS_NOTIFY_SENT;
     public static volatile String PACKET_FAKE_LOGIN_START_FALLBACK_SENT;
     public static volatile String PACKET_ENC_REQUEST_RAW_SENT;
+
+    // --- GEO / HISTORY / MOJANG / HASH 硬编码日志配置化（批次 B） ---
+    public static volatile String GEO_V4V6_DISABLED_WARN;
+    public static volatile String GEO_INIT_SUCCESS;
+    public static volatile String GEO_INIT_FAILED;
+    public static volatile String GEO_XDB_MISSING_DOWNLOAD;
+    public static volatile String GEO_INIT_SUCCESS_AFTER_DOWNLOAD;
+    public static volatile String GEO_INIT_FAILED_AFTER_DOWNLOAD;
+    public static volatile String GEO_DOWNLOAD_FAILED_DISABLED;
+    public static volatile String GEO_XDB_MISSING_NO_DOWNLOAD;
+    public static volatile String GEO_IPV6_SKIPPED;
+    public static volatile String GEO_QUERY_FAILED;
+    public static volatile String GEO_CLOSE_FAILED;
+    public static volatile String GEO_DOWNLOADED_FILE;
+    public static volatile String GEO_DOWNLOAD_ATTEMPT_FAILED;
+    public static volatile String HISTORY_RECORD_FAILED;
+    public static volatile String HISTORY_GET_LAST_FAILED;
+    public static volatile String HISTORY_GET_FAILED;
+    public static volatile String AUTH_INVALID_PASSWORD_HASH_FORMAT;
+    public static volatile String AUTH_PASSWORD_VERIFY_ERROR;
+    public static volatile String MOJANG_MALFORMED_HASJOINED_WARN;
+
+    // --- 其余硬编码日志配置化（批次 C） ---
+    public static volatile String SEC_SERVICES_RELOADED_LOG;
+    public static volatile String AUTH_CHANGEPASSWORD_COMMAND_FAILED_LOG;
+    public static volatile String AUTH_LOGIN_COMMAND_FAILED_LOG;
+    public static volatile String AUTH_REGISTER_COMMAND_FAILED_LOG;
+    public static volatile String MULTIVERSE_REFLECTION_FAILED_LOG;
+    public static volatile String CORE_CLEANUP_ERROR;
+    public static volatile String DB_CLOSE_OLD_CONNECTION_FAILED;
+    public static volatile String DB_CLOSE_DATA_SOURCE_FAILED;
+    public static volatile String DB_COLUMN_EXISTS;
+    public static volatile String DB_INDEX_EXISTS;
+    public static volatile String SEC_JOIN_ONLINE_LIMIT_KICK_LOG;
+    public static volatile String AUTH_SAVE_LOCATION_FAILED_LOG;
+    public static volatile String AUTH_LOAD_LOCATION_FAILED_LOG;
+    public static volatile String SPAWN_WORLD_MISSING_LOG;
 
     // --- 硬编码日志消息配置化（Velocity 模块补充） ---
     public static volatile String VELOCITY_CONFIG_DEBUG;
@@ -585,13 +647,11 @@ public class Messages {
         DB_GET_IP_STATS_FAILED = messages.getOrDefault("db_get_ip_stats_failed", "[DB] Failed to get ip stats for {0}");
         DB_INCREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("db_increment_ip_account_failed", "[DB] Failed to increment ip account count for {0}");
         DB_DECREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("db_decrement_ip_account_failed", "[DB] Failed to decrement ip account count for {0}");
-        DB_UPDATE_IP_FAILURE_STATS_FAILED = messages.getOrDefault("db_update_ip_failure_stats_failed", "[DB] Failed to update ip failure stats for {0}");
         DB_CREATE_INDEX_FAILED = messages.getOrDefault("db_create_index_failed", "[DB] Failed to create index: {0}");
         DB_PARSE_UUID_FAILED = messages.getOrDefault("db_parse_uuid_failed", "[DB] Failed to parse UUID for player {0}: {1}, skipped");
         CORE_INIT_PROXY = messages.getOrDefault("core_init_proxy", "Core initialized in PROXY mode (UUID verification via shared DB)");
         CORE_INIT_STANDALONE = messages.getOrDefault("core_init_standalone", "Core initialized successfully (premium verification by this plugin)");
         CORE_SHUTDOWN_COMPLETE = messages.getOrDefault("core_shutdown_complete", "Core shutdown complete");
-        CORE_RSA_KEY_INIT = messages.getOrDefault("core_rsa_key_init", "Global RSA key pair (2048-bit) initialized");
         CORE_PROXY_MODE_DEBUG = messages.getOrDefault("core_proxy_mode_debug", "Running in PROXY mode (via Velocity forwarding) - Mojang API services disabled");
         CORE_API_INIT_DEBUG = messages.getOrDefault("core_api_init_debug", "Mojang API initialized (on-demand: official first, fallback on failure)");
         CORE_HEARTBEAT_SCHEDULED = messages.getOrDefault("core_heartbeat_scheduled", "Database heartbeat scheduled every {0}s");
@@ -733,6 +793,8 @@ public class Messages {
         CONFIG_LOADED = messages.getOrDefault("config_loaded", "Config loaded: proxy={0}, db-type={1}");
         CONFIG_RELOADED = messages.getOrDefault("config_reloaded", "Reloading config...");
         CONFIG_RELOAD_FAILED = messages.getOrDefault("config_reload_failed", "Failed to reload config: {0}");
+        CONFIG_ONLINE_MODE_INCOMPATIBLE_WARN = messages.getOrDefault("config_online_mode_incompatible_warn",
+                "[MultiAuth] proxy=false requires online-mode=false in server.properties (Spigot Mojang verification will not work)");
         CONFIG_PROXY_CHANGE_RESTART = messages.getOrDefault("config_proxy_change_restart",
                 "§cProxy mode changed to {0} - please restart the server for the change to fully take effect!");
         CONFIG_DEFAULT_CREATED = messages.getOrDefault("config_default_created", "Default config.toml created");
@@ -890,6 +952,58 @@ public class Messages {
                 "[MultiAuth] Multiverse loadWorld failed for '{0}'");
         AUTH_PROXY_SKIP_SPIGOT = messages.getOrDefault("auth_proxy_skip_spigot",
                 "[AUTH] proxy=true, skipping Spigot-side verification (handled by Velocity proxy)");
+        AUTH_CREATE_AUTH_TABLE_FAILED_LOG = messages.getOrDefault("auth_create_auth_table_failed_log",
+                "[AUTH] Failed to create auth table: {0}");
+        AUTH_CREATE_SECURITY_TABLES_FAILED_LOG = messages.getOrDefault("auth_create_security_tables_failed_log",
+                "[AUTH] Failed to create security tables: {0}");
+        SEC_REGISTRATION_BLOCKED_LOG = messages.getOrDefault("sec_registration_blocked_log",
+                "[SEC] Registration blocked for {0}: IP {1} reached account limit ({2})");
+        AUTH_HASH_SUBMISSION_FAILED_LOG = messages.getOrDefault("auth_hash_submission_failed_log",
+                "[AUTH] Password hash submission failed for {0}: {1}");
+        AUTH_REGISTER_SUCCESS_LOG = messages.getOrDefault("auth_register_success_log",
+                "[AUTH] Player {0} registered successfully (IP={1})");
+        AUTH_SAVE_ACCOUNT_FAILED_LOG = messages.getOrDefault("auth_save_account_failed_log",
+                "[AUTH] Failed to save auth account for {0}: {1}");
+        AUTH_HASH_FAILED_LOG = messages.getOrDefault("auth_hash_failed_log",
+                "[AUTH] Password hash failed for {0}: {1}");
+        AUTH_REGISTER_FAILED_LOG = messages.getOrDefault("auth_register_failed_log",
+                "[AUTH] Register failed for {0}: {1}");
+        AUTH_GEO_HISTORY_QUERY_FAILED_LOG = messages.getOrDefault("auth_geo_history_query_failed_log",
+                "[AUTH] Geo/history query failed for {0}: {1}");
+        SEC_IP_CHANGED_LOG = messages.getOrDefault("sec_ip_changed_log",
+                "[SEC] Player {0} IP changed: {1} -> {2}");
+        AUTH_LOGIN_SUCCESS_LOG = messages.getOrDefault("auth_login_success_log",
+                "[AUTH] Player {0} logged in successfully (IP={1})");
+        SEC_TOO_MANY_FAILURES_KICK_LOG = messages.getOrDefault("sec_too_many_failures_kick_log",
+                "[SEC] Player {0} kicked for too many failed attempts (IP={1})");
+        AUTH_LOGIN_WRONG_PASSWORD_LOG = messages.getOrDefault("auth_login_wrong_password_log",
+                "[AUTH] Player {0} login failed: wrong password (IP={1})");
+        AUTH_LOGIN_UPDATE_FAILED_LOG = messages.getOrDefault("auth_login_update_failed_log",
+                "[AUTH] Failed to update login for {0}: {1}");
+        AUTH_PASSWORD_VERIFY_FAILED_LOG = messages.getOrDefault("auth_password_verify_failed_log",
+                "[AUTH] Password verify failed for {0}: {1}");
+        AUTH_LOGIN_FAILED_LOG = messages.getOrDefault("auth_login_failed_log",
+                "[AUTH] Login failed for {0}: {1}");
+        SEC_GEO_KICK_LOG = messages.getOrDefault("sec_geo_kick_log",
+                "[SEC] Player {0} {1} login detected, will be kicked");
+        SEC_GEO_WARN_LOG = messages.getOrDefault("sec_geo_warn_log",
+                "[SEC] Player {0} {1} login warning sent");
+        SEC_SESSION_RESUME_KICK_LOG = messages.getOrDefault("sec_session_resume_kick_log",
+                "[SEC] Player {0} {1} login detected during session resume, will be kicked");
+        SEC_SESSION_RESUME_REQUIRE_LOGIN_LOG = messages.getOrDefault("sec_session_resume_require_login_log",
+                "[SEC] Player {0} {1} login detected during session resume, requiring fresh login");
+        SEC_SESSION_RESUME_WARN_LOG = messages.getOrDefault("sec_session_resume_warn_log",
+                "[SEC] Player {0} {1} login warning sent during session resume");
+        AUTH_CHANGE_PASSWORD_SUCCESS_LOG = messages.getOrDefault("auth_change_password_success_log",
+                "[AUTH] Player {0} changed password successfully");
+        AUTH_PASSWORD_UPDATE_FAILED_LOG = messages.getOrDefault("auth_password_update_failed_log",
+                "[AUTH] Failed to update password for {0}: {1}");
+        AUTH_CHANGE_PASSWORD_FAILED_LOG = messages.getOrDefault("auth_change_password_failed_log",
+                "[AUTH] Change password failed for {0}: {1}");
+        AUTH_UNREGISTER_SUCCESS_LOG = messages.getOrDefault("auth_unregister_success_log",
+                "[AUTH] Account unregistered: {0}");
+        AUTH_UNREGISTER_FAILED_LOG = messages.getOrDefault("auth_unregister_failed_log",
+                "[AUTH] Failed to unregister {0}: {1}");
         AUTH_PLAYER_VERIFIED_SEND_FAKE = messages.getOrDefault("auth_player_verified_send_fake",
                 "[AUTH] Player {0} verified, sending fake LOGIN_START packet (UUID={1})");
         MSG_STATUS_NOTIFY_SENT = messages.getOrDefault("msg_status_notify_sent",
@@ -898,6 +1012,72 @@ public class Messages {
                 "[PACKET][FAKE_LOGIN_START] Sent fake packet (receivePacket fallback)");
         PACKET_ENC_REQUEST_RAW_SENT = messages.getOrDefault("packet_enc_request_raw_sent",
                 "[PACKET][ENCRYPTION_REQUEST] Sent (raw binary)");
+        GEO_V4V6_DISABLED_WARN = messages.getOrDefault("geo_v4v6_disabled_warn",
+                "[GEO] Both v4 and v6 query are disabled, geo service disabled");
+        GEO_INIT_SUCCESS = messages.getOrDefault("geo_init_success",
+                "[GEO] ip2region service initialized successfully");
+        GEO_INIT_FAILED = messages.getOrDefault("geo_init_failed",
+                "[GEO] Failed to initialize ip2region: {0}");
+        GEO_XDB_MISSING_DOWNLOAD = messages.getOrDefault("geo_xdb_missing_download",
+                "[GEO] xdb file(s) missing, starting async download...");
+        GEO_INIT_SUCCESS_AFTER_DOWNLOAD = messages.getOrDefault("geo_init_success_after_download",
+                "[GEO] ip2region service initialized successfully after download");
+        GEO_INIT_FAILED_AFTER_DOWNLOAD = messages.getOrDefault("geo_init_failed_after_download",
+                "[GEO] Failed to initialize ip2region after download: {0}");
+        GEO_DOWNLOAD_FAILED_DISABLED = messages.getOrDefault("geo_download_failed_disabled",
+                "[GEO] Failed to download xdb files, geo service remains disabled");
+        GEO_XDB_MISSING_NO_DOWNLOAD = messages.getOrDefault("geo_xdb_missing_no_download",
+                "[GEO] xdb file(s) missing and auto-download disabled, geo service disabled");
+        GEO_IPV6_SKIPPED = messages.getOrDefault("geo_ipv6_skipped",
+                "[GEO] Player connected via IPv6 but v6 query is disabled, skipping");
+        GEO_QUERY_FAILED = messages.getOrDefault("geo_query_failed",
+                "[GEO] Failed to query IP {0}: {1}");
+        GEO_CLOSE_FAILED = messages.getOrDefault("geo_close_failed",
+                "[GEO] Failed to close ip2region: {0}");
+        GEO_DOWNLOADED_FILE = messages.getOrDefault("geo_downloaded_file",
+                "[GEO] Downloaded xdb file: {0}");
+        GEO_DOWNLOAD_ATTEMPT_FAILED = messages.getOrDefault("geo_download_attempt_failed",
+                "[GEO] Download attempt {0}/{1} failed for {2}: {3}");
+        HISTORY_RECORD_FAILED = messages.getOrDefault("history_record_failed",
+                "[HISTORY] Failed to record login history for {0}: {1}");
+        HISTORY_GET_LAST_FAILED = messages.getOrDefault("history_get_last_failed",
+                "[HISTORY] Failed to get last login for {0}: {1}");
+        HISTORY_GET_FAILED = messages.getOrDefault("history_get_failed",
+                "[HISTORY] Failed to get login history for {0}: {1}");
+        AUTH_INVALID_PASSWORD_HASH_FORMAT = messages.getOrDefault("auth_invalid_password_hash_format",
+                "[AUTH] Invalid password hash format: {0}");
+        AUTH_PASSWORD_VERIFY_ERROR = messages.getOrDefault("auth_password_verify_error",
+                "[AUTH] Password verification error: {0}");
+        MOJANG_MALFORMED_HASJOINED_WARN = messages.getOrDefault("mojang_malformed_hasjoined_warn",
+                "[MOJANG] Malformed response from hasJoined: {0}");
+        SEC_SERVICES_RELOADED_LOG = messages.getOrDefault("sec_services_reloaded_log",
+                "[MultiAuth] Security services reloaded with new config");
+        AUTH_CHANGEPASSWORD_COMMAND_FAILED_LOG = messages.getOrDefault("auth_changepassword_command_failed_log",
+                "[AUTH] Change password command failed for {0}: {1}");
+        AUTH_LOGIN_COMMAND_FAILED_LOG = messages.getOrDefault("auth_login_command_failed_log",
+                "[AUTH] Login command failed for {0}: {1}");
+        AUTH_REGISTER_COMMAND_FAILED_LOG = messages.getOrDefault("auth_register_command_failed_log",
+                "[AUTH] Register command failed for {0}: {1}");
+        MULTIVERSE_REFLECTION_FAILED_LOG = messages.getOrDefault("multiverse_reflection_failed_log",
+                "[MultiAuth] Multiverse loadWorld reflection failed for '{0}': {1}");
+        CORE_CLEANUP_ERROR = messages.getOrDefault("core_cleanup_error",
+                "Cleanup error: {0}");
+        DB_CLOSE_OLD_CONNECTION_FAILED = messages.getOrDefault("db_close_old_connection_failed",
+                "Failed to close old connection: {0}");
+        DB_CLOSE_DATA_SOURCE_FAILED = messages.getOrDefault("db_close_data_source_failed",
+                "Failed to close data source: {0}");
+        DB_COLUMN_EXISTS = messages.getOrDefault("db_column_exists",
+                "Column already exists or migration not needed: {0}");
+        DB_INDEX_EXISTS = messages.getOrDefault("db_index_exists",
+                "Index already exists: {0}");
+        SEC_JOIN_ONLINE_LIMIT_KICK_LOG = messages.getOrDefault("sec_join_online_limit_kick_log",
+                "[SEC] Player {0} kicked: IP {1} reached online limit ({2})");
+        AUTH_SAVE_LOCATION_FAILED_LOG = messages.getOrDefault("auth_save_location_failed_log",
+                "[AUTH] Failed to save location for {0}: {1}");
+        AUTH_LOAD_LOCATION_FAILED_LOG = messages.getOrDefault("auth_load_location_failed_log",
+                "[AUTH] Failed to load last location for {0}: {1}");
+        SPAWN_WORLD_MISSING_LOG = messages.getOrDefault("spawn_world_missing_log",
+                "[MultiAuth] Spawn-point world '{0}' not found, falling back to current world spawn");
 
         // 硬编码日志消息配置化（Velocity 模块补充）
         VELOCITY_CONFIG_DEBUG = messages.getOrDefault("velocity_config_debug",
@@ -978,19 +1158,76 @@ public class Messages {
             sb.append("db_create_ip_stats_table_failed=[DB] 创建 IP 统计表失败\n");
             sb.append("db_get_ip_stats_failed=[DB] 获取 IP {0} 的统计信息失败\n");
             sb.append("db_increment_ip_account_failed=[DB] 递增 IP {0} 的账号计数失败\n");
-            sb.append("db_decrement_ip_account_failed=[DB] 递减 IP {0} 的账号计数失败\n");
-            sb.append("db_update_ip_failure_stats_failed=[DB] 更新 IP {0} 的失败统计失败\n");
+            sb.append("db_decrement_ip_account_failed=[DB] 递减 IP {0} 的注册账号数失败\n");
             sb.append("db_create_index_failed=[DB] 创建索引失败: {0}\n");
             sb.append("db_parse_uuid_failed=[DB] 解析玩家 {0} 的 UUID 失败: {1}，已跳过该记录\n");
             sb.append("core_init_proxy=Core 以 PROXY 模式初始化（通过共享数据库校验 UUID）\n");
             sb.append("core_init_standalone=Core 初始化成功（本插件进行正版验证）\n");
             sb.append("core_shutdown_complete=Core 关闭完成\n");
-            sb.append("core_rsa_key_init=全局 RSA 密钥对（2048位）已初始化\n");
             sb.append("core_proxy_mode_debug=以 PROXY 模式运行（通过 Velocity 转发）- Mojang API 服务已禁用\n");
             sb.append("core_api_init_debug=Mojang API 已初始化（按需调用：官方优先，失败后备用）\n");
             sb.append("core_heartbeat_scheduled=数据库心跳已调度，每 {0}s 执行一次\n");
             sb.append("core_backup_scheduled=数据库备份已调度，每 {0}h 执行一次\n");
             sb.append("core_reloaded_proxy=Core 已在 PROXY 模式下重载（Mojang API 已禁用）\n");
+            sb.append("auth_create_auth_table_failed_log=[AUTH] 创建 auth 数据表失败: {0}\n");
+            sb.append("auth_create_security_tables_failed_log=[AUTH] 创建安全数据表失败: {0}\n");
+            sb.append("sec_registration_blocked_log=[SEC] 注册被阻止: 玩家 {0} 的 IP {1} 已达账号数量上限 ({2})\n");
+            sb.append("auth_hash_submission_failed_log=[AUTH] 提交 {0} 的密码哈希失败: {1}\n");
+            sb.append("auth_register_success_log=[AUTH] 玩家 {0} 注册成功 (IP={1})\n");
+            sb.append("auth_save_account_failed_log=[AUTH] 保存玩家 {0} 的账号失败: {1}\n");
+            sb.append("auth_hash_failed_log=[AUTH] {0} 的密码哈希失败: {1}\n");
+            sb.append("auth_register_failed_log=[AUTH] {0} 注册失败: {1}\n");
+            sb.append("auth_geo_history_query_failed_log=[AUTH] 查询 {0} 的地理/历史信息失败: {1}\n");
+            sb.append("sec_ip_changed_log=[SEC] 玩家 {0} 的 IP 变更: {1} -> {2}\n");
+            sb.append("auth_login_success_log=[AUTH] 玩家 {0} 登录成功 (IP={1})\n");
+            sb.append("sec_too_many_failures_kick_log=[SEC] 玩家 {0} 因失败次数过多被踢出 (IP={1})\n");
+            sb.append("auth_login_wrong_password_log=[AUTH] 玩家 {0} 登录失败: 密码错误 (IP={1})\n");
+            sb.append("auth_login_update_failed_log=[AUTH] 更新 {0} 的登录信息失败: {1}\n");
+            sb.append("auth_password_verify_failed_log=[AUTH] {0} 的密码验证失败: {1}\n");
+            sb.append("auth_login_failed_log=[AUTH] {0} 登录失败: {1}\n");
+            sb.append("sec_geo_kick_log=[SEC] 检测到玩家 {0} 异地{1}登录，将踢出\n");
+            sb.append("sec_geo_warn_log=[SEC] 已向玩家 {0} 发送异地{1}登录警告\n");
+            sb.append("sec_session_resume_kick_log=[SEC] 会话恢复时检测到玩家 {0} 异地{1}登录，将踢出\n");
+            sb.append("sec_session_resume_require_login_log=[SEC] 会话恢复时检测到玩家 {0} 异地{1}登录，要求重新登录\n");
+            sb.append("sec_session_resume_warn_log=[SEC] 会话恢复时已向玩家 {0} 发送异地{1}登录警告\n");
+            sb.append("auth_change_password_success_log=[AUTH] 玩家 {0} 修改密码成功\n");
+            sb.append("auth_password_update_failed_log=[AUTH] 更新 {0} 的密码失败: {1}\n");
+            sb.append("auth_change_password_failed_log=[AUTH] {0} 修改密码失败: {1}\n");
+            sb.append("auth_unregister_success_log=[AUTH] 账号已注销: {0}\n");
+            sb.append("auth_unregister_failed_log=[AUTH] 注销 {0} 失败: {1}\n");
+            sb.append("geo_v4v6_disabled_warn=[GEO] v4 与 v6 查询均被禁用，地理位置服务已停用\n");
+            sb.append("geo_init_success=[GEO] ip2region 服务初始化成功\n");
+            sb.append("geo_init_failed=[GEO] 初始化 ip2region 失败: {0}\n");
+            sb.append("geo_xdb_missing_download=[GEO] xdb 文件缺失，开始异步下载...\n");
+            sb.append("geo_init_success_after_download=[GEO] 下载后 ip2region 服务初始化成功\n");
+            sb.append("geo_init_failed_after_download=[GEO] 下载后初始化 ip2region 失败: {0}\n");
+            sb.append("geo_download_failed_disabled=[GEO] 下载 xdb 文件失败，地理位置服务保持停用\n");
+            sb.append("geo_xdb_missing_no_download=[GEO] xdb 文件缺失且自动下载已禁用，地理位置服务已停用\n");
+            sb.append("geo_ipv6_skipped=[GEO] 玩家通过 IPv6 连接但 v6 查询已禁用，跳过\n");
+            sb.append("geo_query_failed=[GEO] 查询 IP {0} 失败: {1}\n");
+            sb.append("geo_close_failed=[GEO] 关闭 ip2region 失败: {0}\n");
+            sb.append("geo_downloaded_file=[GEO] 已下载 xdb 文件: {0}\n");
+            sb.append("geo_download_attempt_failed=[GEO] 下载第 {0}/{1} 次尝试失败（文件: {2}）: {3}\n");
+            sb.append("history_record_failed=[HISTORY] 记录 {0} 的登录历史失败: {1}\n");
+            sb.append("history_get_last_failed=[HISTORY] 获取 {0} 的最近登录记录失败: {1}\n");
+            sb.append("history_get_failed=[HISTORY] 获取 {0} 的登录历史失败: {1}\n");
+            sb.append("auth_invalid_password_hash_format=[AUTH] 密码哈希格式无效: {0}\n");
+            sb.append("auth_password_verify_error=[AUTH] 密码验证错误: {0}\n");
+            sb.append("mojang_malformed_hasjoined_warn=[MOJANG] hasJoined 返回格式异常: {0}\n");
+            sb.append("sec_services_reloaded_log=[MultiAuth] 安全增强服务已按新配置重新加载\n");
+            sb.append("auth_changepassword_command_failed_log=[AUTH] {0} 执行修改密码命令失败: {1}\n");
+            sb.append("auth_login_command_failed_log=[AUTH] {0} 执行登录命令失败: {1}\n");
+            sb.append("auth_register_command_failed_log=[AUTH] {0} 执行注册命令失败: {1}\n");
+            sb.append("multiverse_reflection_failed_log=[MultiAuth] Multiverse loadWorld 反射调用失败（{0}）: {1}\n");
+            sb.append("core_cleanup_error=清理出错: {0}\n");
+            sb.append("db_close_old_connection_failed=关闭旧连接失败: {0}\n");
+            sb.append("db_close_data_source_failed=关闭数据源失败: {0}\n");
+            sb.append("db_column_exists=列已存在或无需迁移: {0}\n");
+            sb.append("db_index_exists=索引已存在: {0}\n");
+            sb.append("sec_join_online_limit_kick_log=[SEC] 玩家 {0} 被踢出: IP {1} 已达在线账号上限 ({2})\n");
+            sb.append("auth_save_location_failed_log=[AUTH] 保存 {0} 的位置失败: {1}\n");
+            sb.append("auth_load_location_failed_log=[AUTH] 加载 {0} 的最后位置失败: {1}\n");
+            sb.append("spawn_world_missing_log=[MultiAuth] 出生点世界 '{0}' 不存在，回退到当前世界出生点\n");
             sb.append("core_reloaded_standalone=Core 已重载（独立模式，API 按需调用）\n");
             sb.append("core_close_mojang_session_failed=关闭 Mojang 会话服务出错: {0}\n");
             sb.append("core_close_mojang_api_failed=关闭 Mojang API 服务出错: {0}\n");
@@ -1117,6 +1354,7 @@ public class Messages {
             sb.append("config_loaded=配置已加载：proxy={0}, 数据库类型={1}\n");
             sb.append("config_reloaded=正在重新加载配置...\n");
             sb.append("config_reload_failed=重新加载配置失败：{0}\n");
+            sb.append("config_online_mode_incompatible_warn=[MultiAuth] proxy=false 模式要求 server.properties 中 online-mode=false（Spigot Mojang 验证将无法工作）\n");
             sb.append("config_proxy_change_restart=§c代理模式已变更为 {0}，请重启服务端使配置完全生效！\n");
             sb.append("config_default_created=默认 config.toml 已创建\n");
             sb.append("config_load_failed=config.toml 加载失败，使用默认配置：{0}\n\n");
@@ -1297,18 +1535,75 @@ public class Messages {
             sb.append("db_get_ip_stats_failed=[DB] Failed to get ip stats for {0}\n");
             sb.append("db_increment_ip_account_failed=[DB] Failed to increment ip account count for {0}\n");
             sb.append("db_decrement_ip_account_failed=[DB] Failed to decrement ip account count for {0}\n");
-            sb.append("db_update_ip_failure_stats_failed=[DB] Failed to update ip failure stats for {0}\n");
             sb.append("db_create_index_failed=[DB] Failed to create index: {0}\n");
             sb.append("db_parse_uuid_failed=[DB] Failed to parse UUID for player {0}: {1}, skipped\n");
             sb.append("core_init_proxy=Core initialized in PROXY mode (UUID verification via shared DB)\n");
             sb.append("core_init_standalone=Core initialized successfully (premium verification by this plugin)\n");
             sb.append("core_shutdown_complete=Core shutdown complete\n");
-            sb.append("core_rsa_key_init=Global RSA key pair (2048-bit) initialized\n");
             sb.append("core_proxy_mode_debug=Running in PROXY mode (via Velocity forwarding) - Mojang API services disabled\n");
             sb.append("core_api_init_debug=Mojang API initialized (on-demand: official first, fallback on failure)\n");
             sb.append("core_heartbeat_scheduled=Database heartbeat scheduled every {0}s\n");
             sb.append("core_backup_scheduled=Database backup scheduled every {0}h\n");
             sb.append("core_reloaded_proxy=Core reloaded in PROXY mode (Mojang API disabled)\n");
+            sb.append("auth_create_auth_table_failed_log=[AUTH] Failed to create auth table: {0}\n");
+            sb.append("auth_create_security_tables_failed_log=[AUTH] Failed to create security tables: {0}\n");
+            sb.append("sec_registration_blocked_log=[SEC] Registration blocked for {0}: IP {1} reached account limit ({2})\n");
+            sb.append("auth_hash_submission_failed_log=[AUTH] Password hash submission failed for {0}: {1}\n");
+            sb.append("auth_register_success_log=[AUTH] Player {0} registered successfully (IP={1})\n");
+            sb.append("auth_save_account_failed_log=[AUTH] Failed to save auth account for {0}: {1}\n");
+            sb.append("auth_hash_failed_log=[AUTH] Password hash failed for {0}: {1}\n");
+            sb.append("auth_register_failed_log=[AUTH] Register failed for {0}: {1}\n");
+            sb.append("auth_geo_history_query_failed_log=[AUTH] Geo/history query failed for {0}: {1}\n");
+            sb.append("sec_ip_changed_log=[SEC] Player {0} IP changed: {1} -> {2}\n");
+            sb.append("auth_login_success_log=[AUTH] Player {0} logged in successfully (IP={1})\n");
+            sb.append("sec_too_many_failures_kick_log=[SEC] Player {0} kicked for too many failed attempts (IP={1})\n");
+            sb.append("auth_login_wrong_password_log=[AUTH] Player {0} login failed: wrong password (IP={1})\n");
+            sb.append("auth_login_update_failed_log=[AUTH] Failed to update login for {0}: {1}\n");
+            sb.append("auth_password_verify_failed_log=[AUTH] Password verify failed for {0}: {1}\n");
+            sb.append("auth_login_failed_log=[AUTH] Login failed for {0}: {1}\n");
+            sb.append("sec_geo_kick_log=[SEC] Player {0} {1} login detected, will be kicked\n");
+            sb.append("sec_geo_warn_log=[SEC] Player {0} {1} login warning sent\n");
+            sb.append("sec_session_resume_kick_log=[SEC] Player {0} {1} login detected during session resume, will be kicked\n");
+            sb.append("sec_session_resume_require_login_log=[SEC] Player {0} {1} login detected during session resume, requiring fresh login\n");
+            sb.append("sec_session_resume_warn_log=[SEC] Player {0} {1} login warning sent during session resume\n");
+            sb.append("auth_change_password_success_log=[AUTH] Player {0} changed password successfully\n");
+            sb.append("auth_password_update_failed_log=[AUTH] Failed to update password for {0}: {1}\n");
+            sb.append("auth_change_password_failed_log=[AUTH] Change password failed for {0}: {1}\n");
+            sb.append("auth_unregister_success_log=[AUTH] Account unregistered: {0}\n");
+            sb.append("auth_unregister_failed_log=[AUTH] Failed to unregister {0}: {1}\n");
+            sb.append("geo_v4v6_disabled_warn=[GEO] Both v4 and v6 query are disabled, geo service disabled\n");
+            sb.append("geo_init_success=[GEO] ip2region service initialized successfully\n");
+            sb.append("geo_init_failed=[GEO] Failed to initialize ip2region: {0}\n");
+            sb.append("geo_xdb_missing_download=[GEO] xdb file(s) missing, starting async download...\n");
+            sb.append("geo_init_success_after_download=[GEO] ip2region service initialized successfully after download\n");
+            sb.append("geo_init_failed_after_download=[GEO] Failed to initialize ip2region after download: {0}\n");
+            sb.append("geo_download_failed_disabled=[GEO] Failed to download xdb files, geo service remains disabled\n");
+            sb.append("geo_xdb_missing_no_download=[GEO] xdb file(s) missing and auto-download disabled, geo service disabled\n");
+            sb.append("geo_ipv6_skipped=[GEO] Player connected via IPv6 but v6 query is disabled, skipping\n");
+            sb.append("geo_query_failed=[GEO] Failed to query IP {0}: {1}\n");
+            sb.append("geo_close_failed=[GEO] Failed to close ip2region: {0}\n");
+            sb.append("geo_downloaded_file=[GEO] Downloaded xdb file: {0}\n");
+            sb.append("geo_download_attempt_failed=[GEO] Download attempt {0}/{1} failed for {2}: {3}\n");
+            sb.append("history_record_failed=[HISTORY] Failed to record login history for {0}: {1}\n");
+            sb.append("history_get_last_failed=[HISTORY] Failed to get last login for {0}: {1}\n");
+            sb.append("history_get_failed=[HISTORY] Failed to get login history for {0}: {1}\n");
+            sb.append("auth_invalid_password_hash_format=[AUTH] Invalid password hash format: {0}\n");
+            sb.append("auth_password_verify_error=[AUTH] Password verification error: {0}\n");
+            sb.append("mojang_malformed_hasjoined_warn=[MOJANG] Malformed response from hasJoined: {0}\n");
+            sb.append("sec_services_reloaded_log=[MultiAuth] Security services reloaded with new config\n");
+            sb.append("auth_changepassword_command_failed_log=[AUTH] Change password command failed for {0}: {1}\n");
+            sb.append("auth_login_command_failed_log=[AUTH] Login command failed for {0}: {1}\n");
+            sb.append("auth_register_command_failed_log=[AUTH] Register command failed for {0}: {1}\n");
+            sb.append("multiverse_reflection_failed_log=[MultiAuth] Multiverse loadWorld reflection failed for '{0}': {1}\n");
+            sb.append("core_cleanup_error=Cleanup error: {0}\n");
+            sb.append("db_close_old_connection_failed=Failed to close old connection: {0}\n");
+            sb.append("db_close_data_source_failed=Failed to close data source: {0}\n");
+            sb.append("db_column_exists=Column already exists or migration not needed: {0}\n");
+            sb.append("db_index_exists=Index already exists: {0}\n");
+            sb.append("sec_join_online_limit_kick_log=[SEC] Player {0} kicked: IP {1} reached online limit ({2})\n");
+            sb.append("auth_save_location_failed_log=[AUTH] Failed to save location for {0}: {1}\n");
+            sb.append("auth_load_location_failed_log=[AUTH] Failed to load last location for {0}: {1}\n");
+            sb.append("spawn_world_missing_log=[MultiAuth] Spawn-point world '{0}' not found, falling back to current world spawn\n");
             sb.append("core_reloaded_standalone=Core reloaded (standalone mode, API on-demand)\n");
             sb.append("core_close_mojang_session_failed=Error closing mojang session service: {0}\n");
             sb.append("core_close_mojang_api_failed=Error closing mojang api service: {0}\n");
@@ -1435,6 +1730,7 @@ public class Messages {
             sb.append("config_loaded=Config loaded: proxy={0}, db-type={1}\n");
             sb.append("config_reloaded=Reloading config...\n");
             sb.append("config_reload_failed=Failed to reload config: {0}\n");
+            sb.append("config_online_mode_incompatible_warn=[MultiAuth] proxy=false requires online-mode=false in server.properties (Spigot Mojang verification will not work)\n");
             sb.append("config_proxy_change_restart=§cProxy mode changed to {0} - please restart the server for the change to fully take effect!\n");
             sb.append("config_default_created=Default config.toml created\n");
             sb.append("config_load_failed=Failed to load config.toml, using defaults: {0}\n\n");
