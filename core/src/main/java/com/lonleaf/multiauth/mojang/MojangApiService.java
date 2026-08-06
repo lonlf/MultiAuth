@@ -136,13 +136,13 @@ public class MojangApiService {
             long now = System.currentTimeMillis();
             long nextProbe = nextRecoveryProbeTime.get();
             if (now < nextProbe) {
-                logger.fine("[API] 宕机快速失败（距下次恢复探测 " + (nextProbe - now) / 1000 + "s），跳过 API 调用");
+                logger.fine(Messages.get(Messages.API_FAST_FAIL_DOWNTIME, String.valueOf((nextProbe - now) / 1000)));
                 throw new IOException("All Mojang APIs are unavailable (fast-fail during downtime)");
             }
             // 本线程承担恢复探测：CAS 抢占探测窗口，防止并发登录重复探测；
             // 探测走下方完整 failover，成功则自动清除 allApisDown 并恢复。
             if (!nextRecoveryProbeTime.compareAndSet(nextProbe, now + RECOVERY_PROBE_INTERVAL_MS)) {
-                logger.fine("[API] 其他线程正在执行恢复探测，本请求快速失败");
+                logger.fine(Messages.get(Messages.API_PROBE_IN_PROGRESS));
                 throw new IOException("All Mojang APIs are unavailable (recovery probe in progress)");
             }
             logger.info(Messages.get(Messages.API_PROBE_START, String.valueOf(RECOVERY_PROBE_INTERVAL_MS / 1000)));
@@ -196,9 +196,9 @@ public class MojangApiService {
                     logger.info(Messages.get(Messages.API_RECOVERED, Messages.API_SOURCE_OFFICIAL));
                 }
                 // 过程细节：API 调用结果与耗时（仅 debug 可见）
-                logger.fine("[API][OFFICIAL] 用户名 " + username + " 检查完成: "
-                        + (result.map(u -> "PREMIUM " + u).orElse("NOT_PREMIUM"))
-                        + " (耗时 " + (System.currentTimeMillis() - t0) + "ms)");
+                logger.fine(Messages.get(Messages.API_OFFICIAL_CHECK_COMPLETE, username,
+                        result.map(u -> "PREMIUM " + u).orElse("NOT_PREMIUM"),
+                        String.valueOf(System.currentTimeMillis() - t0)));
                 return result;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -236,9 +236,9 @@ public class MojangApiService {
                             Messages.get(Messages.API_SOURCE_FALLBACK, String.valueOf(idx + 1))));
                 }
                 // 过程细节：API 调用结果与耗时（仅 debug 可见）
-                logger.fine("[API][FALLBACK#" + (idx + 1) + "] 用户名 " + username + " 检查完成: "
-                        + (result.map(u -> "PREMIUM " + u).orElse("NOT_PREMIUM"))
-                        + " (耗时 " + (System.currentTimeMillis() - t0) + "ms)");
+                logger.fine(Messages.get(Messages.API_FALLBACK_CHECK_COMPLETE, String.valueOf(idx + 1), username,
+                        result.map(u -> "PREMIUM " + u).orElse("NOT_PREMIUM"),
+                        String.valueOf(System.currentTimeMillis() - t0)));
                 return result;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

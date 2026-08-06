@@ -69,7 +69,8 @@ public class MultiAuth {
 
         // 跨服会话同步（proxy 模式下启用，Velocity 作为会话中心）
         boolean syncEnabled = config.getConfig().isProxy();
-        this.sessionSyncManager = new SessionSyncManager(this, server, logger, syncEnabled, config.getConfig().isDebug());
+        this.sessionSyncManager = new SessionSyncManager(this, server, logger, syncEnabled,
+                config.getConfig().isDebug(), () -> config.getConfig().getSessionSyncSecret());
         this.authListener.setSessionSyncManager(sessionSyncManager);
         server.getEventManager().register(this, authListener);
 

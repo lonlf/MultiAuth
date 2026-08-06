@@ -52,7 +52,7 @@ public class Core {
 
         // 初始化全局 RSA 密钥对（2048 位，复用于所有加密握手）
         this.globalCrypto = new AuthCrypto();
-        logger.fine("Global RSA key pair (2048-bit) initialized");
+        logger.fine(Messages.get(Messages.CORE_RSA_KEY_INIT));
 
         // 初始化数据库
         if (!initDatabase()) {
@@ -67,12 +67,12 @@ public class Core {
         boolean proxyMode = Boolean.TRUE.equals(config.isProxy());
         if (proxyMode) {
             // proxy=true：Mojang 验证完全由 Velocity 端执行，Spigot 端不做任何 API 调用
-            logger.fine("Running in PROXY mode (via Velocity forwarding) - Mojang API services disabled");
+            logger.fine(Messages.get(Messages.CORE_PROXY_MODE_DEBUG));
             this.mojangApiService = new MojangApiService(java.util.Collections.emptyList(), logger);
         } else {
             // proxy=false / Velocity 端：启用 Mojang API（仅在玩家连接时调用）
             this.mojangApiService = new MojangApiService(config.getFallbackApiUrls(), logger);
-            logger.fine("Mojang API initialized (on-demand: official first, fallback on failure)");
+            logger.fine(Messages.get(Messages.CORE_API_INIT_DEBUG));
         }
 
         // 初始化 AuthManager
@@ -129,7 +129,7 @@ public class Core {
         int heartbeatSec = config.getHeartbeatInterval();
         if (heartbeatSec > 0) {
             scheduler.scheduleAtFixedRate(this::heartbeat, heartbeatSec, heartbeatSec, TimeUnit.SECONDS);
-            logger.fine("Database heartbeat scheduled every " + heartbeatSec + "s");
+            logger.fine(Messages.get(Messages.CORE_HEARTBEAT_SCHEDULED, String.valueOf(heartbeatSec)));
         }
 
         // 备份
@@ -138,7 +138,7 @@ public class Core {
             if (hours > 0) {
                 long initialDelay = hours;
                 scheduler.scheduleAtFixedRate(this::performBackup, initialDelay, hours, TimeUnit.HOURS);
-                logger.fine("Database backup scheduled every " + hours + "h");
+                logger.fine(Messages.get(Messages.CORE_BACKUP_SCHEDULED, String.valueOf(hours)));
             }
         }
     }
@@ -295,7 +295,8 @@ public class Core {
             if (database != null) {
                 try {
                     database.disconnect();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    logger.fine("Cleanup error: " + e.getMessage());
                 }
             }
             databaseHealthy = false;
@@ -341,13 +342,15 @@ public class Core {
         if (oldMojangService != null) {
             try {
                 oldMojangService.close();
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                logger.fine("Cleanup error: " + e.getMessage());
             }
         }
         if (oldMojangApiService != null) {
             try {
                 oldMojangApiService.close();
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                logger.fine("Cleanup error: " + e.getMessage());
             }
         }
 
@@ -356,8 +359,8 @@ public class Core {
         startSchedulers();
 
         logger.fine(proxyMode
-                ? "Core reloaded in PROXY mode (Mojang API disabled)"
-                : "Core reloaded (standalone mode, API on-demand)");
+                ? Messages.get(Messages.CORE_RELOADED_PROXY)
+                : Messages.get(Messages.CORE_RELOADED_STANDALONE));
     }
 
     /** 数据库配置签名：任一字段变化即视为配置变更，需重建连接 */
@@ -389,20 +392,20 @@ public class Core {
             try {
                 mojangService.close();
             } catch (Exception e) {
-                logger.warning("Error closing mojang session service: " + e.getMessage());
+                logger.warning(Messages.get(Messages.CORE_CLOSE_MOJANG_SESSION_FAILED, e.getMessage()));
             }
         }
         if (mojangApiService != null) {
             try {
                 mojangApiService.close();
             } catch (Exception e) {
-                logger.warning("Error closing mojang api service: " + e.getMessage());
+                logger.warning(Messages.get(Messages.CORE_CLOSE_MOJANG_API_FAILED, e.getMessage()));
             }
         }
         try {
             if (database != null) database.disconnect();
         } catch (Exception e) {
-            logger.warning("Error disconnecting database: " + e.getMessage());
+            logger.warning(Messages.get(Messages.CORE_DISCONNECT_DB_FAILED, e.getMessage()));
         }
         logger.info(Messages.CORE_SHUTDOWN_COMPLETE);
     }

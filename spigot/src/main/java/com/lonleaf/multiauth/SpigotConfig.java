@@ -60,6 +60,8 @@ public class SpigotConfig {
         newConfig.setUseMojangUuid(f.getBoolean("use-mojang-uuid", true));
         // 玩家进服后是否在消息栏显示登录状态
         newConfig.setNotifyPlayerStatus(f.getBoolean("notify-player-status", true));
+        // 跨服会话同步签名密钥（必须与 Velocity 端配置一致，空则关闭验签）
+        newConfig.setSessionSyncSecret(f.getString("session-sync-secret", ""));
 
         List<String> list = f.getStringList("auth-list");
         if (list.isEmpty()) {

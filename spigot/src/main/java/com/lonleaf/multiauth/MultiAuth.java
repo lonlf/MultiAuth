@@ -100,7 +100,8 @@ public final class MultiAuth extends JavaPlugin {
 
             // proxy=true 模式下注册跨服会话同步接收器
             if (config.isProxy()) {
-                this.sessionSyncReceiver = new SessionSyncReceiver(this, authService, authState, julLogger);
+                this.sessionSyncReceiver = new SessionSyncReceiver(this, authService, authState, julLogger,
+                        () -> config.getConfig().getSessionSyncSecret());
                 this.sessionSyncReceiver.register();
             }
 

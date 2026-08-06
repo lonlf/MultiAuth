@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 /**
@@ -19,19 +20,23 @@ public class SessionSyncReceiver implements PluginMessageListener {
     private final AuthService authService;
     private final AuthState authState;
     private final Logger logger;
+    /** 签名密钥提供者：实时从配置读取（reload 后立即生效），空则关闭验签 */
+    private final Supplier<String> secretSupplier;
 
-    public SessionSyncReceiver(MultiAuth plugin, AuthService authService, AuthState authState, Logger logger) {
+    public SessionSyncReceiver(MultiAuth plugin, AuthService authService, AuthState authState,
+                               Logger logger, Supplier<String> secretSupplier) {
         this.plugin = plugin;
         this.authService = authService;
         this.authState = authState;
         this.logger = logger;
+        this.secretSupplier = secretSupplier;
     }
 
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
         if (!SessionSyncProtocol.CHANNEL_ID.equals(channel)) return;
         try {
-            SessionSyncProtocol.SessionSyncMessage msg = SessionSyncProtocol.parse(message);
+            SessionSyncProtocol.SessionSyncMessage msg = SessionSyncProtocol.parse(message, secretSupplier.get());
             UUID uuid = msg.uuid();
             String username = msg.username();
 
@@ -52,6 +57,11 @@ public class SessionSyncReceiver implements PluginMessageListener {
                 }
                 logger.fine(Messages.get(Messages.SESSION_SYNC_LOGOUT, username));
             }
+        } catch (SessionSyncProtocol.InvalidSignatureException e) {
+            // 验签失败：消息来源不可信（可能为直连后端伪造），拒绝处理并留痕
+            logger.warning(Messages.get(Messages.SESSION_SYNC_BAD_SIGNATURE,
+                    player != null ? player.getName() : "?",
+                    player != null ? player.getUniqueId().toString() : "?"));
         } catch (Exception e) {
             logger.warning(Messages.get(Messages.SESSION_SYNC_PARSE_ERROR, e.getMessage()));
         }

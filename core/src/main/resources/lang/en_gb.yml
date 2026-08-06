@@ -30,9 +30,38 @@ db_exists_failed=[DB] Failed to check existence for player {0}
 db_count_failed=[DB] Failed to count records
 db_count_premium_failed=[DB] Failed to count premium records
 db_migration_exception=[DB] Database migration failed
+db_update_location_failed=[DB] Failed to update player location for {0}
+db_create_auth_table_failed=[DB] Failed to create auth table
+db_get_auth_account_failed=[DB] Failed to get auth account for {0}
+db_save_auth_account_failed=[DB] Failed to save auth account for {0}
+db_update_auth_password_failed=[DB] Failed to update auth password for {0}
+db_update_auth_login_failed=[DB] Failed to update auth login for {0}
+db_delete_auth_account_failed=[DB] Failed to delete auth account for {0}
+db_auth_account_exists_failed=[DB] Failed to check auth account exists for {0}
+db_create_login_history_table_failed=[DB] Failed to create login history table
+db_record_login_history_failed=[DB] Failed to record login history for {0}
+db_get_login_history_failed=[DB] Failed to get recent login history for {0}
+db_trim_login_history_failed=[DB] Failed to trim login history for {0}
+db_create_ip_stats_table_failed=[DB] Failed to create ip stats table
+db_get_ip_stats_failed=[DB] Failed to get ip stats for {0}
+db_increment_ip_account_failed=[DB] Failed to increment ip account count for {0}
+db_decrement_ip_account_failed=[DB] Failed to decrement ip account count for {0}
+db_update_ip_failure_stats_failed=[DB] Failed to update ip failure stats for {0}
+db_create_index_failed=[DB] Failed to create index: {0}
+db_parse_uuid_failed=[DB] Failed to parse UUID for player {0}: {1}, skipped
 core_init_proxy=Core initialized in PROXY mode (UUID verification via shared DB)
 core_init_standalone=Core initialized successfully (premium verification by this plugin)
 core_shutdown_complete=Core shutdown complete
+core_rsa_key_init=Global RSA key pair (2048-bit) initialized
+core_proxy_mode_debug=Running in PROXY mode (via Velocity forwarding) - Mojang API services disabled
+core_api_init_debug=Mojang API initialized (on-demand: official first, fallback on failure)
+core_heartbeat_scheduled=Database heartbeat scheduled every {0}s
+core_backup_scheduled=Database backup scheduled every {0}h
+core_reloaded_proxy=Core reloaded in PROXY mode (Mojang API disabled)
+core_reloaded_standalone=Core reloaded (standalone mode, API on-demand)
+core_close_mojang_session_failed=Error closing mojang session service: {0}
+core_close_mojang_api_failed=Error closing mojang api service: {0}
+core_disconnect_db_failed=Error disconnecting database: {0}
 
 # API
 api_official_available=[API] Mojang official API: {0} (HTTP {1})
@@ -46,6 +75,10 @@ api_high_failure_rate=[API] Mojang API high failure rate ({0}%), failing over to
 api_recovered=[API] Mojang API recovered - now using {0}
 api_probe_start=[API] Downtime recovery probe started (next probe window +{0}s)
 api_parse_failed=[API] Failed to parse Mojang API response: {0} body={1}
+api_fast_fail_downtime=[API] Fast-fail during downtime ({0}s until next recovery probe), skipping API call
+api_probe_in_progress=[API] Recovery probe in progress by another thread, fast-failing
+api_official_check_complete=[API][OFFICIAL] Username {0} check complete: {1} (took {2}ms)
+api_fallback_check_complete=[API][FALLBACK#{0}] Username {1} check complete: {2} (took {3}ms)
 
 # Auth
 auth_database_unavailable=§cMultiAuth database is currently unavailable, login not possible.
@@ -199,6 +232,9 @@ session_sync_logout=[AUTH] Player {0} logged out via Velocity cross-server sync
 session_sync_parse_error=[AUTH] Failed to parse cross-server session sync message: {0}
 session_sync_reject_client=[AUTH] Blocked client-forged cross-server session sync message (forward to backend rejected)
 session_sync_ttl_removed=[SESSION] Removed expired session record (TTL): {0} (UUID: {1})
+session_sync_secret_missing=[AUTH] session-sync-secret is not configured on Velocity side; cross-server session sync messages are NOT authenticated. Set the same secret in Velocity and Spigot configs.
+session_sync_bad_signature=[AUTH] Rejected cross-server session sync message from player {0} (UUID: {1}): invalid signature
+sec_session_resume_check_failed=[SEC] Failed to check session resume security for {0}: {1}
 config_loaded_debug=[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}
 config_reloading=[Config] Reloading config...
 packetevents_loaded=[MultiAuth] PacketEvents loaded, encryption handshake mode enabled
@@ -278,3 +314,8 @@ auth_info_never_logged_in=Never logged in
 auth_info_not_registered=§cThis player is not registered.
 auth_module_disabled=§cAuth module is disabled.
 auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.
+
+# Security (SEC)
+sec_query_ip_stats_failed=[SEC] Failed to query ip stats for {0}: {1}
+sec_increment_ip_account_failed=[SEC] Failed to increment ip account count for {0}: {1}
+sec_decrement_ip_account_failed=[SEC] Failed to decrement ip account count for {0}: {1}

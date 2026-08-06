@@ -486,9 +486,10 @@ public class AuthService {
             }
             return SessionResumeCheck.allow();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[SEC] Failed to check session resume security for "
-                    + username + ": " + e.getMessage(), e);
-            return SessionResumeCheck.allow();
+            logger.log(Level.WARNING, Messages.get(Messages.SEC_SESSION_RESUME_CHECK_FAILED,
+                    username, e.getMessage() != null ? e.getMessage() : "unknown"), e);
+            // 安全检查异常时默认拒绝会话恢复（fail-closed，DECISIONS #12），玩家需重新登录
+            return new SessionResumeCheck(false, false, Collections.emptyList());
         }
     }
 

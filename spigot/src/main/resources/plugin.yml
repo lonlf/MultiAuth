@@ -8,8 +8,6 @@ authors: [ lonlf ]
 description: Login authenticated players and other players.
 website: https://github.com/lonlf
 softdepend:
-  - BungeeCord
-  - Velocity
   - packetevents
   - Multiverse-Core
 commands:

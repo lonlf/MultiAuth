@@ -72,9 +72,38 @@ public class Messages {
     public static volatile String DB_COUNT_FAILED;
     public static volatile String DB_COUNT_PREMIUM_FAILED;
     public static volatile String DB_MIGRATION_EXCEPTION;
+    public static volatile String DB_UPDATE_LOCATION_FAILED;
+    public static volatile String DB_CREATE_AUTH_TABLE_FAILED;
+    public static volatile String DB_GET_AUTH_ACCOUNT_FAILED;
+    public static volatile String DB_SAVE_AUTH_ACCOUNT_FAILED;
+    public static volatile String DB_UPDATE_AUTH_PASSWORD_FAILED;
+    public static volatile String DB_UPDATE_AUTH_LOGIN_FAILED;
+    public static volatile String DB_DELETE_AUTH_ACCOUNT_FAILED;
+    public static volatile String DB_AUTH_ACCOUNT_EXISTS_FAILED;
+    public static volatile String DB_CREATE_LOGIN_HISTORY_TABLE_FAILED;
+    public static volatile String DB_RECORD_LOGIN_HISTORY_FAILED;
+    public static volatile String DB_GET_LOGIN_HISTORY_FAILED;
+    public static volatile String DB_TRIM_LOGIN_HISTORY_FAILED;
+    public static volatile String DB_CREATE_IP_STATS_TABLE_FAILED;
+    public static volatile String DB_GET_IP_STATS_FAILED;
+    public static volatile String DB_INCREMENT_IP_ACCOUNT_FAILED;
+    public static volatile String DB_DECREMENT_IP_ACCOUNT_FAILED;
+    public static volatile String DB_UPDATE_IP_FAILURE_STATS_FAILED;
+    public static volatile String DB_CREATE_INDEX_FAILED;
+    public static volatile String DB_PARSE_UUID_FAILED;
     public static volatile String CORE_INIT_PROXY;
     public static volatile String CORE_INIT_STANDALONE;
     public static volatile String CORE_SHUTDOWN_COMPLETE;
+    public static volatile String CORE_RSA_KEY_INIT;
+    public static volatile String CORE_PROXY_MODE_DEBUG;
+    public static volatile String CORE_API_INIT_DEBUG;
+    public static volatile String CORE_HEARTBEAT_SCHEDULED;
+    public static volatile String CORE_BACKUP_SCHEDULED;
+    public static volatile String CORE_RELOADED_PROXY;
+    public static volatile String CORE_RELOADED_STANDALONE;
+    public static volatile String CORE_CLOSE_MOJANG_SESSION_FAILED;
+    public static volatile String CORE_CLOSE_MOJANG_API_FAILED;
+    public static volatile String CORE_DISCONNECT_DB_FAILED;
 
     // --- API 相关 ---
     public static volatile String API_OFFICIAL_AVAILABLE;
@@ -88,6 +117,10 @@ public class Messages {
     public static volatile String API_RECOVERED;
     public static volatile String API_PROBE_START;
     public static volatile String API_PARSE_FAILED;
+    public static volatile String API_FAST_FAIL_DOWNTIME;
+    public static volatile String API_PROBE_IN_PROGRESS;
+    public static volatile String API_OFFICIAL_CHECK_COMPLETE;
+    public static volatile String API_FALLBACK_CHECK_COMPLETE;
 
     // --- 认证流程 ---
     public static volatile String AUTH_DATABASE_UNAVAILABLE;
@@ -164,6 +197,9 @@ public class Messages {
     public static volatile String AUTH_GEO_CROSS_COUNTRY;
     public static volatile String AUTH_GEO_CROSS_CITY;
     public static volatile String AUTH_GEO_REQUIRE_LOGIN;
+    public static volatile String SEC_QUERY_IP_STATS_FAILED;
+    public static volatile String SEC_INCREMENT_IP_ACCOUNT_FAILED;
+    public static volatile String SEC_DECREMENT_IP_ACCOUNT_FAILED;
 
     // --- 日志参数：拒绝/放行原因与登录类型标签（可配置） ---
     public static volatile String DENY_REASON_DB_UNAVAILABLE;
@@ -286,6 +322,9 @@ public class Messages {
     public static volatile String SESSION_SYNC_PARSE_ERROR;
     public static volatile String SESSION_SYNC_REJECT_CLIENT;
     public static volatile String SESSION_SYNC_TTL_REMOVED;
+    public static volatile String SESSION_SYNC_SECRET_MISSING;
+    public static volatile String SESSION_SYNC_BAD_SIGNATURE;
+    public static volatile String SEC_SESSION_RESUME_CHECK_FAILED;
     // 硬编码日志消息配置化
     public static volatile String CONFIG_LOADED_DEBUG;
     public static volatile String CONFIG_RELOADING;
@@ -530,9 +569,38 @@ public class Messages {
         DB_COUNT_FAILED = messages.getOrDefault("db_count_failed", "[DB] Failed to count records");
         DB_COUNT_PREMIUM_FAILED = messages.getOrDefault("db_count_premium_failed", "[DB] Failed to count premium records");
         DB_MIGRATION_EXCEPTION = messages.getOrDefault("db_migration_exception", "[DB] Database migration failed");
+        DB_UPDATE_LOCATION_FAILED = messages.getOrDefault("db_update_location_failed", "[DB] Failed to update player location for {0}");
+        DB_CREATE_AUTH_TABLE_FAILED = messages.getOrDefault("db_create_auth_table_failed", "[DB] Failed to create auth table");
+        DB_GET_AUTH_ACCOUNT_FAILED = messages.getOrDefault("db_get_auth_account_failed", "[DB] Failed to get auth account for {0}");
+        DB_SAVE_AUTH_ACCOUNT_FAILED = messages.getOrDefault("db_save_auth_account_failed", "[DB] Failed to save auth account for {0}");
+        DB_UPDATE_AUTH_PASSWORD_FAILED = messages.getOrDefault("db_update_auth_password_failed", "[DB] Failed to update auth password for {0}");
+        DB_UPDATE_AUTH_LOGIN_FAILED = messages.getOrDefault("db_update_auth_login_failed", "[DB] Failed to update auth login for {0}");
+        DB_DELETE_AUTH_ACCOUNT_FAILED = messages.getOrDefault("db_delete_auth_account_failed", "[DB] Failed to delete auth account for {0}");
+        DB_AUTH_ACCOUNT_EXISTS_FAILED = messages.getOrDefault("db_auth_account_exists_failed", "[DB] Failed to check auth account exists for {0}");
+        DB_CREATE_LOGIN_HISTORY_TABLE_FAILED = messages.getOrDefault("db_create_login_history_table_failed", "[DB] Failed to create login history table");
+        DB_RECORD_LOGIN_HISTORY_FAILED = messages.getOrDefault("db_record_login_history_failed", "[DB] Failed to record login history for {0}");
+        DB_GET_LOGIN_HISTORY_FAILED = messages.getOrDefault("db_get_login_history_failed", "[DB] Failed to get recent login history for {0}");
+        DB_TRIM_LOGIN_HISTORY_FAILED = messages.getOrDefault("db_trim_login_history_failed", "[DB] Failed to trim login history for {0}");
+        DB_CREATE_IP_STATS_TABLE_FAILED = messages.getOrDefault("db_create_ip_stats_table_failed", "[DB] Failed to create ip stats table");
+        DB_GET_IP_STATS_FAILED = messages.getOrDefault("db_get_ip_stats_failed", "[DB] Failed to get ip stats for {0}");
+        DB_INCREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("db_increment_ip_account_failed", "[DB] Failed to increment ip account count for {0}");
+        DB_DECREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("db_decrement_ip_account_failed", "[DB] Failed to decrement ip account count for {0}");
+        DB_UPDATE_IP_FAILURE_STATS_FAILED = messages.getOrDefault("db_update_ip_failure_stats_failed", "[DB] Failed to update ip failure stats for {0}");
+        DB_CREATE_INDEX_FAILED = messages.getOrDefault("db_create_index_failed", "[DB] Failed to create index: {0}");
+        DB_PARSE_UUID_FAILED = messages.getOrDefault("db_parse_uuid_failed", "[DB] Failed to parse UUID for player {0}: {1}, skipped");
         CORE_INIT_PROXY = messages.getOrDefault("core_init_proxy", "Core initialized in PROXY mode (UUID verification via shared DB)");
         CORE_INIT_STANDALONE = messages.getOrDefault("core_init_standalone", "Core initialized successfully (premium verification by this plugin)");
         CORE_SHUTDOWN_COMPLETE = messages.getOrDefault("core_shutdown_complete", "Core shutdown complete");
+        CORE_RSA_KEY_INIT = messages.getOrDefault("core_rsa_key_init", "Global RSA key pair (2048-bit) initialized");
+        CORE_PROXY_MODE_DEBUG = messages.getOrDefault("core_proxy_mode_debug", "Running in PROXY mode (via Velocity forwarding) - Mojang API services disabled");
+        CORE_API_INIT_DEBUG = messages.getOrDefault("core_api_init_debug", "Mojang API initialized (on-demand: official first, fallback on failure)");
+        CORE_HEARTBEAT_SCHEDULED = messages.getOrDefault("core_heartbeat_scheduled", "Database heartbeat scheduled every {0}s");
+        CORE_BACKUP_SCHEDULED = messages.getOrDefault("core_backup_scheduled", "Database backup scheduled every {0}h");
+        CORE_RELOADED_PROXY = messages.getOrDefault("core_reloaded_proxy", "Core reloaded in PROXY mode (Mojang API disabled)");
+        CORE_RELOADED_STANDALONE = messages.getOrDefault("core_reloaded_standalone", "Core reloaded (standalone mode, API on-demand)");
+        CORE_CLOSE_MOJANG_SESSION_FAILED = messages.getOrDefault("core_close_mojang_session_failed", "Error closing mojang session service: {0}");
+        CORE_CLOSE_MOJANG_API_FAILED = messages.getOrDefault("core_close_mojang_api_failed", "Error closing mojang api service: {0}");
+        CORE_DISCONNECT_DB_FAILED = messages.getOrDefault("core_disconnect_db_failed", "Error disconnecting database: {0}");
 
         API_OFFICIAL_AVAILABLE = messages.getOrDefault("api_official_available", "[API] Mojang official API availability: {0} (HTTP {1})");
         API_OFFICIAL_UNAVAILABLE = messages.getOrDefault("api_official_unavailable", "[API] Mojang official API unreachable: {0}");
@@ -545,6 +613,10 @@ public class Messages {
         API_RECOVERED = messages.getOrDefault("api_recovered", "[API] Mojang API is back online - now using {0}");
         API_PROBE_START = messages.getOrDefault("api_probe_start", "[API] Downtime recovery probe started (next probe window +{0}s)");
         API_PARSE_FAILED = messages.getOrDefault("api_parse_failed", "[API] Failed to parse Mojang API response: {0} body={1}");
+        API_FAST_FAIL_DOWNTIME = messages.getOrDefault("api_fast_fail_downtime", "[API] Fast-fail during downtime ({0}s until next recovery probe), skipping API call");
+        API_PROBE_IN_PROGRESS = messages.getOrDefault("api_probe_in_progress", "[API] Recovery probe in progress by another thread, fast-failing");
+        API_OFFICIAL_CHECK_COMPLETE = messages.getOrDefault("api_official_check_complete", "[API][OFFICIAL] Username {0} check complete: {1} (took {2}ms)");
+        API_FALLBACK_CHECK_COMPLETE = messages.getOrDefault("api_fallback_check_complete", "[API][FALLBACK#{0}] Username {1} check complete: {2} (took {3}ms)");
 
         AUTH_DATABASE_UNAVAILABLE = messages.getOrDefault("auth_database_unavailable", "§cMultiAuth 数据库当前不可用，无法登录。");
         AUTH_SERVICE_NOT_INITIALIZED = messages.getOrDefault("auth_service_not_initialized", "§c认证服务未初始化，请联系管理员。");
@@ -618,6 +690,9 @@ public class Messages {
         AUTH_GEO_CROSS_COUNTRY = messages.getOrDefault("auth_geo_cross_country", "§e警告：检测到跨国登录（上次：§f{0}§e，当前：§f{1}§e）。");
         AUTH_GEO_CROSS_CITY = messages.getOrDefault("auth_geo_cross_city", "§e警告：检测到跨城市登录（上次：§f{0}§e，当前：§f{1}§e）。");
         AUTH_GEO_REQUIRE_LOGIN = messages.getOrDefault("auth_geo_require_login", "§e检测到异地登录，需重新输入密码验证。");
+        SEC_QUERY_IP_STATS_FAILED = messages.getOrDefault("sec_query_ip_stats_failed", "[SEC] Failed to query ip stats for {0}: {1}");
+        SEC_INCREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("sec_increment_ip_account_failed", "[SEC] Failed to increment ip account count for {0}: {1}");
+        SEC_DECREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("sec_decrement_ip_account_failed", "[SEC] Failed to decrement ip account count for {0}: {1}");
         DENY_REASON_DB_UNAVAILABLE = messages.getOrDefault("deny_reason_db_unavailable", "database unavailable");
         DENY_REASON_AUTHMANAGER_NOT_INITIALIZED = messages.getOrDefault("deny_reason_authmanager_not_initialized", "AuthManager not initialized");
         DENY_REASON_CONCURRENT_LOGIN = messages.getOrDefault("deny_reason_concurrent_login", "concurrent login blocked");
@@ -747,6 +822,12 @@ public class Messages {
                 "[AUTH] Blocked client-forged cross-server session sync message (forward to backend rejected)");
         SESSION_SYNC_TTL_REMOVED = messages.getOrDefault("session_sync_ttl_removed",
                 "[SESSION] Removed expired session record (TTL): {0} (UUID: {1})");
+        SESSION_SYNC_SECRET_MISSING = messages.getOrDefault("session_sync_secret_missing",
+                "[AUTH] session-sync-secret is not configured on Velocity side; cross-server session sync messages are NOT authenticated. Set the same secret in Velocity and Spigot configs.");
+        SESSION_SYNC_BAD_SIGNATURE = messages.getOrDefault("session_sync_bad_signature",
+                "[AUTH] Rejected cross-server session sync message from player {0} (UUID: {1}): invalid signature");
+        SEC_SESSION_RESUME_CHECK_FAILED = messages.getOrDefault("sec_session_resume_check_failed",
+                "[SEC] Failed to check session resume security for {0}: {1}");
         CONFIG_LOADED_DEBUG = messages.getOrDefault("config_loaded_debug",
                 "[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}");
         CONFIG_RELOADING = messages.getOrDefault("config_reloading",
@@ -882,9 +963,38 @@ public class Messages {
             sb.append("db_count_failed=[DB] 统计记录数失败\n");
             sb.append("db_count_premium_failed=[DB] 统计正版记录数失败\n");
             sb.append("db_migration_exception=[DB] 数据库迁移失败\n");
+            sb.append("db_update_location_failed=[DB] 更新玩家 {0} 的位置失败\n");
+            sb.append("db_create_auth_table_failed=[DB] 创建认证表失败\n");
+            sb.append("db_get_auth_account_failed=[DB] 获取玩家 {0} 的认证账号失败\n");
+            sb.append("db_save_auth_account_failed=[DB] 保存玩家 {0} 的认证账号失败\n");
+            sb.append("db_update_auth_password_failed=[DB] 更新玩家 {0} 的密码失败\n");
+            sb.append("db_update_auth_login_failed=[DB] 更新玩家 {0} 的登录信息失败\n");
+            sb.append("db_delete_auth_account_failed=[DB] 删除玩家 {0} 的认证账号失败\n");
+            sb.append("db_auth_account_exists_failed=[DB] 检查玩家 {0} 的认证账号是否存在失败\n");
+            sb.append("db_create_login_history_table_failed=[DB] 创建登录历史表失败\n");
+            sb.append("db_record_login_history_failed=[DB] 记录玩家 {0} 的登录历史失败\n");
+            sb.append("db_get_login_history_failed=[DB] 获取玩家 {0} 的登录历史失败\n");
+            sb.append("db_trim_login_history_failed=[DB] 清理玩家 {0} 的登录历史失败\n");
+            sb.append("db_create_ip_stats_table_failed=[DB] 创建 IP 统计表失败\n");
+            sb.append("db_get_ip_stats_failed=[DB] 获取 IP {0} 的统计信息失败\n");
+            sb.append("db_increment_ip_account_failed=[DB] 递增 IP {0} 的账号计数失败\n");
+            sb.append("db_decrement_ip_account_failed=[DB] 递减 IP {0} 的账号计数失败\n");
+            sb.append("db_update_ip_failure_stats_failed=[DB] 更新 IP {0} 的失败统计失败\n");
+            sb.append("db_create_index_failed=[DB] 创建索引失败: {0}\n");
+            sb.append("db_parse_uuid_failed=[DB] 解析玩家 {0} 的 UUID 失败: {1}，已跳过该记录\n");
             sb.append("core_init_proxy=Core 以 PROXY 模式初始化（通过共享数据库校验 UUID）\n");
             sb.append("core_init_standalone=Core 初始化成功（本插件进行正版验证）\n");
-            sb.append("core_shutdown_complete=Core 关闭完成\n\n");
+            sb.append("core_shutdown_complete=Core 关闭完成\n");
+            sb.append("core_rsa_key_init=全局 RSA 密钥对（2048位）已初始化\n");
+            sb.append("core_proxy_mode_debug=以 PROXY 模式运行（通过 Velocity 转发）- Mojang API 服务已禁用\n");
+            sb.append("core_api_init_debug=Mojang API 已初始化（按需调用：官方优先，失败后备用）\n");
+            sb.append("core_heartbeat_scheduled=数据库心跳已调度，每 {0}s 执行一次\n");
+            sb.append("core_backup_scheduled=数据库备份已调度，每 {0}h 执行一次\n");
+            sb.append("core_reloaded_proxy=Core 已在 PROXY 模式下重载（Mojang API 已禁用）\n");
+            sb.append("core_reloaded_standalone=Core 已重载（独立模式，API 按需调用）\n");
+            sb.append("core_close_mojang_session_failed=关闭 Mojang 会话服务出错: {0}\n");
+            sb.append("core_close_mojang_api_failed=关闭 Mojang API 服务出错: {0}\n");
+            sb.append("core_disconnect_db_failed=断开数据库连接出错: {0}\n\n");
 
             sb.append("# API 相关\n");
             sb.append("api_official_available=[API] Mojang 官方 API 可用性：{0} (HTTP {1})\n");
@@ -897,7 +1007,11 @@ public class Messages {
             sb.append("api_high_failure_rate=[API] Mojang API 高失败率（{0}%），切换到下一个可用 API...\n");
             sb.append("api_recovered=[API] Mojang API 已恢复 - 现在使用 {0}\n");
             sb.append("api_probe_start=[API] 宕机恢复探测开始（下一次探测窗口 +{0}s）\n");
-            sb.append("api_parse_failed=[API] Mojang API 响应解析失败: {0} body={1}\n\n");
+            sb.append("api_parse_failed=[API] Mojang API 响应解析失败: {0} body={1}\n");
+            sb.append("api_fast_fail_downtime=[API] 宕机快速失败（距下次恢复探测 {0}s），跳过 API 调用\n");
+            sb.append("api_probe_in_progress=[API] 其他线程正在执行恢复探测，本请求快速失败\n");
+            sb.append("api_official_check_complete=[API][OFFICIAL] 用户名 {0} 检查完成: {1} (耗时 {2}ms)\n");
+            sb.append("api_fallback_check_complete=[API][FALLBACK#{0}] 用户名 {1} 检查完成: {2} (耗时 {3}ms)\n\n");
 
             sb.append("# 认证流程\n");
             sb.append("auth_database_unavailable=§cMultiAuth 数据库当前不可用，无法登录。\n");
@@ -960,6 +1074,12 @@ public class Messages {
             sb.append("auth_info_not_registered=§c该玩家尚未注册。\n");
             sb.append("auth_module_disabled=§c认证模块已禁用。\n");
             sb.append("auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。\n\n");
+
+            sb.append("# 安全增强（SEC）\n");
+            sb.append("sec_query_ip_stats_failed=[SEC] 查询 IP {0} 的统计信息失败: {1}\n");
+            sb.append("sec_increment_ip_account_failed=[SEC] 递增 IP {0} 的账号计数失败: {1}\n");
+            sb.append("sec_decrement_ip_account_failed=[SEC] 递减 IP {0} 的账号计数失败: {1}\n\n");
+
             sb.append("deny_reason_db_unavailable=数据库不可用\n");
             sb.append("deny_reason_authmanager_not_initialized=AuthManager 未初始化\n");
             sb.append("deny_reason_concurrent_login=并发登录被阻止\n");
@@ -1080,6 +1200,9 @@ public class Messages {
             sb.append("session_sync_parse_error=[AUTH] 解析跨服会话同步消息失败: {0}\n");
             sb.append("session_sync_reject_client=[AUTH] 拒绝客户端伪造的跨服会话同步消息（仅接受 Velocity 代理消息）\n");
             sb.append("session_sync_ttl_removed=[SESSION] 清理过期会话记录（TTL）: {0} (UUID: {1})\n");
+            sb.append("session_sync_secret_missing=[AUTH] Velocity 端未配置 session-sync-secret，跨服会话同步消息未做身份认证。请在 Velocity 与 Spigot 配置中设置相同的密钥。\n");
+            sb.append("session_sync_bad_signature=[AUTH] 拒绝玩家 {0}（UUID: {1}）的跨服会话同步消息：签名无效\n");
+            sb.append("sec_session_resume_check_failed=[SEC] 检查 {0} 的会话恢复安全检查失败: {1}\n");
             sb.append("config_loaded_debug=[Config] 已加载: proxy={0}, useMojangUuid={1}, debug={2}\n");
             sb.append("config_reloading=[Config] 正在重载配置...\n");
             sb.append("packetevents_loaded=[MultiAuth] PacketEvents 已加载，加密握手模式已启用\n");
@@ -1158,9 +1281,38 @@ public class Messages {
             sb.append("db_count_failed=[DB] Failed to count records\n");
             sb.append("db_count_premium_failed=[DB] Failed to count premium records\n");
             sb.append("db_migration_exception=[DB] Database migration failed\n");
+            sb.append("db_update_location_failed=[DB] Failed to update player location for {0}\n");
+            sb.append("db_create_auth_table_failed=[DB] Failed to create auth table\n");
+            sb.append("db_get_auth_account_failed=[DB] Failed to get auth account for {0}\n");
+            sb.append("db_save_auth_account_failed=[DB] Failed to save auth account for {0}\n");
+            sb.append("db_update_auth_password_failed=[DB] Failed to update auth password for {0}\n");
+            sb.append("db_update_auth_login_failed=[DB] Failed to update auth login for {0}\n");
+            sb.append("db_delete_auth_account_failed=[DB] Failed to delete auth account for {0}\n");
+            sb.append("db_auth_account_exists_failed=[DB] Failed to check auth account exists for {0}\n");
+            sb.append("db_create_login_history_table_failed=[DB] Failed to create login history table\n");
+            sb.append("db_record_login_history_failed=[DB] Failed to record login history for {0}\n");
+            sb.append("db_get_login_history_failed=[DB] Failed to get recent login history for {0}\n");
+            sb.append("db_trim_login_history_failed=[DB] Failed to trim login history for {0}\n");
+            sb.append("db_create_ip_stats_table_failed=[DB] Failed to create ip stats table\n");
+            sb.append("db_get_ip_stats_failed=[DB] Failed to get ip stats for {0}\n");
+            sb.append("db_increment_ip_account_failed=[DB] Failed to increment ip account count for {0}\n");
+            sb.append("db_decrement_ip_account_failed=[DB] Failed to decrement ip account count for {0}\n");
+            sb.append("db_update_ip_failure_stats_failed=[DB] Failed to update ip failure stats for {0}\n");
+            sb.append("db_create_index_failed=[DB] Failed to create index: {0}\n");
+            sb.append("db_parse_uuid_failed=[DB] Failed to parse UUID for player {0}: {1}, skipped\n");
             sb.append("core_init_proxy=Core initialized in PROXY mode (UUID verification via shared DB)\n");
             sb.append("core_init_standalone=Core initialized successfully (premium verification by this plugin)\n");
-            sb.append("core_shutdown_complete=Core shutdown complete\n\n");
+            sb.append("core_shutdown_complete=Core shutdown complete\n");
+            sb.append("core_rsa_key_init=Global RSA key pair (2048-bit) initialized\n");
+            sb.append("core_proxy_mode_debug=Running in PROXY mode (via Velocity forwarding) - Mojang API services disabled\n");
+            sb.append("core_api_init_debug=Mojang API initialized (on-demand: official first, fallback on failure)\n");
+            sb.append("core_heartbeat_scheduled=Database heartbeat scheduled every {0}s\n");
+            sb.append("core_backup_scheduled=Database backup scheduled every {0}h\n");
+            sb.append("core_reloaded_proxy=Core reloaded in PROXY mode (Mojang API disabled)\n");
+            sb.append("core_reloaded_standalone=Core reloaded (standalone mode, API on-demand)\n");
+            sb.append("core_close_mojang_session_failed=Error closing mojang session service: {0}\n");
+            sb.append("core_close_mojang_api_failed=Error closing mojang api service: {0}\n");
+            sb.append("core_disconnect_db_failed=Error disconnecting database: {0}\n\n");
 
             sb.append("# API\n");
             sb.append("api_official_available=[API] Mojang official API: {0} (HTTP {1})\n");
@@ -1173,7 +1325,11 @@ public class Messages {
             sb.append("api_high_failure_rate=[API] Mojang API high failure rate ({0}%), failing over to next available API...\n");
             sb.append("api_recovered=[API] Mojang API recovered - now using {0}\n");
             sb.append("api_probe_start=[API] Downtime recovery probe started (next probe window +{0}s)\n");
-            sb.append("api_parse_failed=[API] Failed to parse Mojang API response: {0} body={1}\n\n");
+            sb.append("api_parse_failed=[API] Failed to parse Mojang API response: {0} body={1}\n");
+            sb.append("api_fast_fail_downtime=[API] Fast-fail during downtime ({0}s until next recovery probe), skipping API call\n");
+            sb.append("api_probe_in_progress=[API] Recovery probe in progress by another thread, fast-failing\n");
+            sb.append("api_official_check_complete=[API][OFFICIAL] Username {0} check complete: {1} (took {2}ms)\n");
+            sb.append("api_fallback_check_complete=[API][FALLBACK#{0}] Username {1} check complete: {2} (took {3}ms)\n\n");
 
             sb.append("# Auth\n");
             sb.append("auth_database_unavailable=§cMultiAuth database is currently unavailable, login not possible.\n");
@@ -1236,6 +1392,12 @@ public class Messages {
             sb.append("auth_info_not_registered=§cThis player is not registered.\n");
             sb.append("auth_module_disabled=§cAuth module is disabled.\n");
             sb.append("auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.\n\n");
+
+            sb.append("# Security (SEC)\n");
+            sb.append("sec_query_ip_stats_failed=[SEC] Failed to query ip stats for {0}: {1}\n");
+            sb.append("sec_increment_ip_account_failed=[SEC] Failed to increment ip account count for {0}: {1}\n");
+            sb.append("sec_decrement_ip_account_failed=[SEC] Failed to decrement ip account count for {0}: {1}\n\n");
+
             sb.append("deny_reason_db_unavailable=database unavailable\n");
             sb.append("deny_reason_authmanager_not_initialized=AuthManager not initialized\n");
             sb.append("deny_reason_concurrent_login=concurrent login blocked\n");
@@ -1356,6 +1518,9 @@ public class Messages {
             sb.append("session_sync_parse_error=[AUTH] Failed to parse cross-server session sync message: {0}\n");
             sb.append("session_sync_reject_client=[AUTH] Blocked client-forged cross-server session sync message (forward to backend rejected)\n");
             sb.append("session_sync_ttl_removed=[SESSION] Removed expired session record (TTL): {0} (UUID: {1})\n");
+            sb.append("session_sync_secret_missing=[AUTH] session-sync-secret is not configured on Velocity side; cross-server session sync messages are NOT authenticated. Set the same secret in Velocity and Spigot configs.\n");
+            sb.append("session_sync_bad_signature=[AUTH] Rejected cross-server session sync message from player {0} (UUID: {1}): invalid signature\n");
+            sb.append("sec_session_resume_check_failed=[SEC] Failed to check session resume security for {0}: {1}\n");
             sb.append("config_loaded_debug=[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}\n");
             sb.append("config_reloading=[Config] Reloading config...\n");
             sb.append("packetevents_loaded=[MultiAuth] PacketEvents loaded, encryption handshake mode enabled\n");

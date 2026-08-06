@@ -1,5 +1,6 @@
 package com.lonleaf.multiauth.auth;
 
+import com.lonleaf.multiauth.Messages;
 import com.lonleaf.multiauth.config.AuthConfig;
 import com.lonleaf.multiauth.db.DatabaseManager;
 import com.lonleaf.multiauth.db.IpStatsRecord;
@@ -160,8 +161,8 @@ public class LoginSecurityManager {
             }
             return stats.accountCount() < max;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[SEC] Failed to query ip stats for " + ip + ": " + e.getMessage(), e);
-            return true;
+            logger.log(Level.WARNING, Messages.get(Messages.SEC_QUERY_IP_STATS_FAILED, ip, e.getMessage()), e);
+            return false;
         }
     }
 
@@ -173,7 +174,7 @@ public class LoginSecurityManager {
         try {
             database.incrementIpAccountCount(ip);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[SEC] Failed to increment ip account count for " + ip + ": " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.SEC_INCREMENT_IP_ACCOUNT_FAILED, ip, e.getMessage()), e);
         }
     }
 
@@ -185,7 +186,7 @@ public class LoginSecurityManager {
         try {
             database.decrementIpAccountCount(ip);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "[SEC] Failed to decrement ip account count for " + ip + ": " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.SEC_DECREMENT_IP_ACCOUNT_FAILED, ip, e.getMessage()), e);
         }
     }
 

@@ -30,9 +30,38 @@ db_exists_failed=[DB] 检查玩家 {0} 是否存在失败
 db_count_failed=[DB] 统计记录数失败
 db_count_premium_failed=[DB] 统计正版记录数失败
 db_migration_exception=[DB] 数据库迁移失败
+db_update_location_failed=[DB] 更新玩家 {0} 的位置失败
+db_create_auth_table_failed=[DB] 创建认证表失败
+db_get_auth_account_failed=[DB] 获取玩家 {0} 的认证账号失败
+db_save_auth_account_failed=[DB] 保存玩家 {0} 的认证账号失败
+db_update_auth_password_failed=[DB] 更新玩家 {0} 的密码失败
+db_update_auth_login_failed=[DB] 更新玩家 {0} 的登录信息失败
+db_delete_auth_account_failed=[DB] 删除玩家 {0} 的认证账号失败
+db_auth_account_exists_failed=[DB] 检查玩家 {0} 的认证账号是否存在失败
+db_create_login_history_table_failed=[DB] 创建登录历史表失败
+db_record_login_history_failed=[DB] 记录玩家 {0} 的登录历史失败
+db_get_login_history_failed=[DB] 获取玩家 {0} 的登录历史失败
+db_trim_login_history_failed=[DB] 清理玩家 {0} 的登录历史失败
+db_create_ip_stats_table_failed=[DB] 创建 IP 统计表失败
+db_get_ip_stats_failed=[DB] 获取 IP {0} 的统计信息失败
+db_increment_ip_account_failed=[DB] 递增 IP {0} 的账号计数失败
+db_decrement_ip_account_failed=[DB] 递减 IP {0} 的账号计数失败
+db_update_ip_failure_stats_failed=[DB] 更新 IP {0} 的失败统计失败
+db_create_index_failed=[DB] 创建索引失败: {0}
+db_parse_uuid_failed=[DB] 解析玩家 {0} 的 UUID 失败: {1}，已跳过该记录
 core_init_proxy=Core 以 PROXY 模式初始化（通过共享数据库校验 UUID）
 core_init_standalone=Core 初始化成功（本插件进行正版验证）
 core_shutdown_complete=Core 关闭完成
+core_rsa_key_init=全局 RSA 密钥对（2048位）已初始化
+core_proxy_mode_debug=以 PROXY 模式运行（通过 Velocity 转发）- Mojang API 服务已禁用
+core_api_init_debug=Mojang API 已初始化（按需调用：官方优先，失败后备用）
+core_heartbeat_scheduled=数据库心跳已调度，每 {0}s 执行一次
+core_backup_scheduled=数据库备份已调度，每 {0}h 执行一次
+core_reloaded_proxy=Core 已在 PROXY 模式下重载（Mojang API 已禁用）
+core_reloaded_standalone=Core 已重载（独立模式，API 按需调用）
+core_close_mojang_session_failed=关闭 Mojang 会话服务出错: {0}
+core_close_mojang_api_failed=关闭 Mojang API 服务出错: {0}
+core_disconnect_db_failed=断开数据库连接出错: {0}
 
 # API 相关
 api_official_available=[API] Mojang 官方 API 可用性：{0} (HTTP {1})
@@ -46,6 +75,10 @@ api_high_failure_rate=[API] Mojang API 高失败率（{0}%），切换到下一�
 api_recovered=[API] Mojang API 已恢复 - 现在使用 {0}
 api_probe_start=[API] 宕机恢复探测开始（下一次探测窗口 +{0}s）
 api_parse_failed=[API] Mojang API 响应解析失败: {0} body={1}
+api_fast_fail_downtime=[API] 宕机快速失败（距下次恢复探测 {0}s），跳过 API 调用
+api_probe_in_progress=[API] 其他线程正在执行恢复探测，本请求快速失败
+api_official_check_complete=[API][OFFICIAL] 用户名 {0} 检查完成: {1} (耗时 {2}ms)
+api_fallback_check_complete=[API][FALLBACK#{0}] 用户名 {1} 检查完成: {2} (耗时 {3}ms)
 
 # 认证流程
 auth_database_unavailable=§cMultiAuth 数据库当前不可用，无法登录。
@@ -199,6 +232,9 @@ session_sync_logout=[AUTH] 玩家 {0} 通过 Velocity 跨服会话同步登出
 session_sync_parse_error=[AUTH] 解析跨服会话同步消息失败: {0}
 session_sync_reject_client=[AUTH] 拦截客户端伪造的跨服会话同步消息（已阻止转发到后端）
 session_sync_ttl_removed=[SESSION] 清理过期会话记录（TTL）: {0} (UUID: {1})
+session_sync_secret_missing=[AUTH] Velocity 端未配置 session-sync-secret，跨服会话同步消息未做身份认证。请在 Velocity 与 Spigot 配置中设置相同的密钥。
+session_sync_bad_signature=[AUTH] 拒绝玩家 {0}（UUID: {1}）的跨服会话同步消息：签名无效
+sec_session_resume_check_failed=[SEC] 检查 {0} 的会话恢复安全检查失败: {1}
 config_loaded_debug=[Config] 已加载: proxy={0}, useMojangUuid={1}, debug={2}
 config_reloading=[Config] 正在重载配置...
 packetevents_loaded=[MultiAuth] PacketEvents 已加载，加密握手模式已启用
@@ -278,3 +314,8 @@ auth_info_never_logged_in=从未登录
 auth_info_not_registered=§c该玩家尚未注册。
 auth_module_disabled=§c认证模块已禁用。
 auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。
+
+# 安全增强（SEC）
+sec_query_ip_stats_failed=[SEC] 查询 IP {0} 的统计信息失败: {1}
+sec_increment_ip_account_failed=[SEC] 递增 IP {0} 的账号计数失败: {1}
+sec_decrement_ip_account_failed=[SEC] 递减 IP {0} 的账号计数失败: {1}

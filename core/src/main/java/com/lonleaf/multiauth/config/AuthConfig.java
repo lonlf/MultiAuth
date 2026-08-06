@@ -135,6 +135,9 @@ public class AuthConfig {
     /** 会话超时时间（分钟），0=禁用。启用后玩家在超时时间内重连且 IP 相同则无需重新登录 */
     private int sessionTimeout = 0;
 
+    /** 跨服会话同步签名密钥（Velocity 与 Spigot 端必须配置相同的值，空则关闭验签） */
+    private String sessionSyncSecret = "";
+
     // ==================== 安全增强 ====================
 
     /** 失败登录计数与冷却：是否启用 */
@@ -375,6 +378,11 @@ public class AuthConfig {
 
     public int getSessionTimeout() { return sessionTimeout; }
     public void setSessionTimeout(int sessionTimeout) { this.sessionTimeout = sessionTimeout; }
+
+    public String getSessionSyncSecret() { return sessionSyncSecret; }
+    public void setSessionSyncSecret(String sessionSyncSecret) {
+        this.sessionSyncSecret = sessionSyncSecret != null ? sessionSyncSecret : "";
+    }
 
     // ==================== 安全增强 Getters / Setters ====================
 

@@ -26,6 +26,12 @@ auth-list = [
     "jeb_"
 ]
 
+# 跨服会话同步签名密钥（强烈建议配置）
+# Spigot 端必须配置相同的密钥字符串，用于对 multiauth:session
+# 跨服会话同步消息做 HMAC-SHA256 验签，防止后端被直连时客户端伪造登录状态
+# 留空 = 不验签（仅拦截经代理转发的伪造消息，后端直连场景不安全）
+session-sync-secret = ""
+
 # Mojang API 配置
 [mojang-api]
 # 备用 API 地址列表（官方 API 宕机时依次尝试，留空则不启用备用）

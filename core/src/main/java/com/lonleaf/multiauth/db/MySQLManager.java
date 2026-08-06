@@ -216,7 +216,9 @@ public class MySQLManager implements DatabaseManager {
                 return;
             }
             // ping 失败，关闭旧池重建（不递归调用 connect，避免无限循环）
-            try { dataSource.close(); } catch (Exception ignored) {}
+            try { dataSource.close(); } catch (Exception e) {
+                logger.fine("Failed to close data source: " + e.getMessage());
+            }
             dataSource = null;
         }
         try {
@@ -338,7 +340,13 @@ public class MySQLManager implements DatabaseManager {
                     if (rs.next()) {
                         String name = rs.getString("username");
                         boolean isPremium = rs.getInt("is_premium") != 0;
-                        UUID uuid = UUID.fromString(rs.getString("uuid"));
+                        UUID uuid;
+                        try {
+                            uuid = UUID.fromString(rs.getString("uuid"));
+                        } catch (IllegalArgumentException e) {
+                            logger.warning(Messages.get(Messages.DB_PARSE_UUID_FAILED, username, e.getMessage()));
+                            return null;
+                        }
                         long updatedAt = rs.getLong("updated_at");
                         String lastWorld = rs.getString("last_world");
                         double lastX = rs.getDouble("last_x");
@@ -404,7 +412,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to update player location for " + username, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_LOCATION_FAILED, username), e);
         }
     }
 
@@ -415,7 +423,8 @@ public class MySQLManager implements DatabaseManager {
             if (!rs.next()) {
                 stmt.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnType);
             }
-        } catch (SQLException ignored) {
+        } catch (SQLException e) {
+            logger.fine("Already exists or not needed: " + e.getMessage());
         }
     }
 
@@ -473,7 +482,13 @@ public class MySQLManager implements DatabaseManager {
                 while (rs.next()) {
                     String name = rs.getString("username");
                     boolean isPremium = rs.getInt("is_premium") != 0;
-                    UUID uuid = UUID.fromString(rs.getString("uuid"));
+                    UUID uuid;
+                    try {
+                        uuid = UUID.fromString(rs.getString("uuid"));
+                    } catch (IllegalArgumentException e) {
+                        logger.warning(Messages.get(Messages.DB_PARSE_UUID_FAILED, name, e.getMessage()));
+                        continue;
+                    }
                     // savePlayerSafe：条件 UPSERT，避免目标库中已有的正版记录被离线记录覆盖（#9）
                     target.savePlayerSafe(name, isPremium, uuid);
                     count++;
@@ -555,7 +570,7 @@ public class MySQLManager implements DatabaseManager {
     private void logIndexCreationFailure(SQLException e) {
         String msg = String.valueOf(e.getMessage()).toLowerCase(java.util.Locale.ROOT);
         if (!msg.contains("duplicate") && !msg.contains("exists")) {
-            logger.log(Level.WARNING, "[DB] Failed to create index: " + e.getMessage(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_CREATE_INDEX_FAILED, e.getMessage()), e);
         }
     }
 
@@ -567,12 +582,12 @@ public class MySQLManager implements DatabaseManager {
                 stmt.execute(createAuthTableSql());
                 try {
                     stmt.execute(createAuthIndexSql());
-                } catch (SQLException ignored) {
-                    // 索引已存在则忽略
+                } catch (SQLException e) {
+                    logger.fine("Index already exists: " + e.getMessage());
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to create auth table", e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_CREATE_AUTH_TABLE_FAILED), e);
         }
     }
 
@@ -594,7 +609,7 @@ public class MySQLManager implements DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to get auth account for " + username, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_GET_AUTH_ACCOUNT_FAILED, username), e);
         }
         return null;
     }
@@ -612,7 +627,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to save auth account for " + account.username(), e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_SAVE_AUTH_ACCOUNT_FAILED, account.username()), e);
         }
     }
 
@@ -626,7 +641,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to update auth password for " + username, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_AUTH_PASSWORD_FAILED, username), e);
         }
     }
 
@@ -641,7 +656,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to update auth login for " + username, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_AUTH_LOGIN_FAILED, username), e);
         }
     }
 
@@ -654,7 +669,7 @@ public class MySQLManager implements DatabaseManager {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to delete auth account for " + username, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_DELETE_AUTH_ACCOUNT_FAILED, username), e);
             return false;
         }
     }
@@ -670,7 +685,7 @@ public class MySQLManager implements DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to check auth account exists for " + username, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_AUTH_ACCOUNT_EXISTS_FAILED, username), e);
             return false;
         }
     }
@@ -683,17 +698,17 @@ public class MySQLManager implements DatabaseManager {
                 stmt.execute(createLoginHistoryTableSql());
                 try {
                     stmt.execute(createLoginHistoryIndexUserTimeSql());
-                } catch (SQLException ignored) {
-                    // 索引已存在则忽略
+                } catch (SQLException e) {
+                    logger.fine("Index already exists: " + e.getMessage());
                 }
                 try {
                     stmt.execute(createLoginHistoryIndexIpSql());
-                } catch (SQLException ignored) {
-                    // 索引已存在则忽略
+                } catch (SQLException e) {
+                    logger.fine("Index already exists: " + e.getMessage());
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to create login history table", e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_CREATE_LOGIN_HISTORY_TABLE_FAILED), e);
         }
     }
 
@@ -711,7 +726,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to record login history for " + username, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_RECORD_LOGIN_HISTORY_FAILED, username), e);
         }
     }
 
@@ -736,7 +751,7 @@ public class MySQLManager implements DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to get recent login history for " + username, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_GET_LOGIN_HISTORY_FAILED, username), e);
         }
         return result;
     }
@@ -752,7 +767,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to trim login history for " + username, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_TRIM_LOGIN_HISTORY_FAILED, username), e);
         }
     }
 
@@ -764,7 +779,7 @@ public class MySQLManager implements DatabaseManager {
                 stmt.execute(createIpStatsTableSql());
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to create ip stats table", e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_CREATE_IP_STATS_TABLE_FAILED), e);
         }
     }
 
@@ -786,7 +801,7 @@ public class MySQLManager implements DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to get ip stats for " + ip, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_GET_IP_STATS_FAILED, ip), e);
         }
         return null;
     }
@@ -800,7 +815,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to increment ip account count for " + ip, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_INCREMENT_IP_ACCOUNT_FAILED, ip), e);
         }
     }
 
@@ -813,7 +828,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to decrement ip account count for " + ip, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_DECREMENT_IP_ACCOUNT_FAILED, ip), e);
         }
     }
 
@@ -829,7 +844,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "[DB] Failed to update ip failure stats for " + ip, e);
+            logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_IP_FAILURE_STATS_FAILED, ip), e);
         }
     }
 }

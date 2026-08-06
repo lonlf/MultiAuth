@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Velocity 端跨服会话同步管理器。
@@ -34,23 +35,30 @@ public class SessionSyncManager {
     private final Logger logger;
     private final boolean enabled;
     private final boolean debug;
+    /** 签名密钥提供者：实时从配置读取（reload 后立即生效），空则关闭签名 */
+    private final Supplier<String> secretSupplier;
 
     /** 内存会话表：UUID → SessionInfo（玩家通过 Velocity 认证后记录） */
     private final ConcurrentMap<UUID, SessionInfo> sessions = new ConcurrentHashMap<>();
 
     private ScheduledTask cleanupTask;
 
-    public SessionSyncManager(Object plugin, ProxyServer server, Logger logger, boolean enabled, boolean debug) {
+    public SessionSyncManager(Object plugin, ProxyServer server, Logger logger,
+                              boolean enabled, boolean debug, Supplier<String> secretSupplier) {
         this.plugin = plugin;
         this.server = server;
         this.logger = logger;
         this.enabled = enabled;
         this.debug = debug;
+        this.secretSupplier = secretSupplier;
         if (enabled) {
             server.getChannelRegistrar().register(CHANNEL);
             server.getEventManager().register(plugin, this);
             scheduleCleanup();
             debug(Messages.get(Messages.SESSION_SYNC_ENABLED, SessionSyncProtocol.CHANNEL_ID));
+            if (secretSupplier.get() == null || secretSupplier.get().isBlank()) {
+                logger.warn(Messages.get(Messages.SESSION_SYNC_SECRET_MISSING));
+            }
         }
     }
 
@@ -127,12 +135,12 @@ public class SessionSyncManager {
     }
 
     private void sendLoginSyncToServer(RegisteredServer server, String username, UUID uuid, String ip, boolean isPremium, long loginTime) {
-        byte[] data = SessionSyncProtocol.buildLoginMessage(username, uuid, ip, isPremium, loginTime);
+        byte[] data = SessionSyncProtocol.buildLoginMessage(username, uuid, ip, isPremium, loginTime, secretSupplier.get());
         server.sendPluginMessage(CHANNEL, data);
     }
 
     private void sendLogoutSync(Player player, String username, UUID uuid) {
-        byte[] data = SessionSyncProtocol.buildLogoutMessage(username, uuid);
+        byte[] data = SessionSyncProtocol.buildLogoutMessage(username, uuid, secretSupplier.get());
         player.getCurrentServer().ifPresent(conn -> conn.sendPluginMessage(CHANNEL, data));
     }
 
