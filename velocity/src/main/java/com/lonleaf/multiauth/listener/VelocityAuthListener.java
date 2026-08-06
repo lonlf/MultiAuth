@@ -192,7 +192,9 @@ public class VelocityAuthListener {
                     debug(Messages.get(Messages.LOGIN_PREMIUM_DECISION, username, getRemoteIp(connection)));
                     // 状态清理兜底：防止极端情况下 handshakeStates 残留（不执行任何抢先踢出）
                     scheduleStateCleanup(username, connection);
-                    event.setResult(PreLoginEvent.PreLoginComponentResult.allowed());
+                    // forceOnlineMode()：强制该连接执行加密握手 + hasJoined，
+                    // 与 velocity.toml 全局 online-mode 解耦，防止全局设为 false 时正版玩家被静默放行
+                    event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
                 }
                 case ALLOW_OFFLINE -> {
                     // 非正版：强制离线模式，Velocity 跳过加密

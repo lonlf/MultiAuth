@@ -35,8 +35,15 @@ public class SessionSyncReceiver implements PluginMessageListener {
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
         if (!SessionSyncProtocol.CHANNEL_ID.equals(channel)) return;
+        // 未配置密钥时拒绝一切会话同步消息（fail-closed）：直连后端场景（无 Velocity 拦截）下
+        // 客户端可伪造该通道消息，空密钥等同无条件信任
+        String secret = secretSupplier.get();
+        if (secret == null || secret.isBlank()) {
+            logger.warning(Messages.get(Messages.SESSION_SYNC_SECRET_MISSING));
+            return;
+        }
         try {
-            SessionSyncProtocol.SessionSyncMessage msg = SessionSyncProtocol.parse(message, secretSupplier.get());
+            SessionSyncProtocol.SessionSyncMessage msg = SessionSyncProtocol.parse(message, secret);
             UUID uuid = msg.uuid();
             String username = msg.username();
 

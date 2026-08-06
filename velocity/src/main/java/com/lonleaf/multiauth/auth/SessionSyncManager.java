@@ -51,9 +51,11 @@ public class SessionSyncManager {
         this.enabled = enabled;
         this.debug = debug;
         this.secretSupplier = secretSupplier;
+        // 安全拦截必须始终注册：即使会话同步功能被禁用（密钥留空），也要拦截客户端伪造的
+        // multiauth:session 消息转发到后端，否则盗版客户端可伪造登录状态绕过后端认证限制
+        server.getChannelRegistrar().register(CHANNEL);
+        server.getEventManager().register(plugin, this);
         if (enabled) {
-            server.getChannelRegistrar().register(CHANNEL);
-            server.getEventManager().register(plugin, this);
             scheduleCleanup();
             debug(Messages.get(Messages.SESSION_SYNC_ENABLED, SessionSyncProtocol.CHANNEL_ID));
             if (secretSupplier.get() == null || secretSupplier.get().isBlank()) {
@@ -145,13 +147,12 @@ public class SessionSyncManager {
     }
 
     public void shutdown() {
-        if (enabled) {
-            if (cleanupTask != null) {
-                cleanupTask.cancel();
-            }
-            server.getChannelRegistrar().unregister(CHANNEL);
-            sessions.clear();
+        if (cleanupTask != null) {
+            cleanupTask.cancel();
         }
+        server.getChannelRegistrar().unregister(CHANNEL);
+        server.getEventManager().unregisterListener(plugin, this);
+        sessions.clear();
     }
 
     private record SessionInfo(String username, String ip, boolean isPremium, long loginTime, long lastSeen) {

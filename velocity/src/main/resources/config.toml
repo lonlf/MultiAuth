@@ -1,10 +1,10 @@
 # MultiAuth Velocity 配置文件
 #
-# 重要：Velocity 的 velocity.toml 中必须设置 online-mode = true
-# 插件通过 forceOfflineMode() 实现正版/非正版混合验证：
-#   - 正版玩家：Velocity 自动执行加密握手 + hasJoined 验证
-#   - 非正版玩家：插件设置 forceOfflineMode() 跳过验证，使用离线 UUID
-# 如果 online-mode = false，所有玩家都会以离线模式登录，正版验证不生效
+# 重要：本插件对每个连接显式设置验证结果（正版=forceOnlineMode，离线=forceOfflineMode），
+# 因此 velocity.toml 的全局 online-mode 设置不再影响本插件的验证流程。
+#   - 正版玩家：forceOnlineMode() 强制执行加密握手 + hasJoined 验证
+#   - 非正版玩家：forceOfflineMode() 跳过验证，使用离线 UUID
+# 建议仍保持 velocity.toml online-mode = true，避免影响其他依赖全局配置的插件
 
 # 语言设置
 # 插件启动时会生成 lang/ 文件夹，内含多种语言文件
@@ -26,10 +26,11 @@ auth-list = [
     "jeb_"
 ]
 
-# 跨服会话同步签名密钥（强烈建议配置）
+# 跨服会话同步签名密钥（关闭会话同步则留空）
 # Spigot 端必须配置相同的密钥字符串，用于对 multiauth:session
-# 跨服会话同步消息做 HMAC-SHA256 验签，防止后端被直连时客户端伪造登录状态
-# 留空 = 不验签（仅拦截经代理转发的伪造消息，后端直连场景不安全）
+# 跨服会话同步消息做 HMAC-SHA256 验签
+# 留空 = 关闭跨服会话同步：Velocity 不发送同步消息，后端拒绝一切同步消息
+#         （客户端伪造拦截仍生效，防止直连后端时绕过认证限制）
 session-sync-secret = ""
 
 # Mojang API 配置
