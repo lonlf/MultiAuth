@@ -16,7 +16,6 @@ db_backup_failed=[DB] 数据库备份失败：{0}
 db_backup_deleted_old=[DB] 已删除旧备份：{0}
 db_migration_complete=[DB] 迁移完成：{0} 条记录已迁移到 {1}
 db_migration_failed=[DB] 迁移失败：{0}
-db_uuid_rewrite_warning=[DB] 正在重写正版玩家 {0} 的 UUID：{1} → {2}
 db_connection_failed=[DB] 数据库连接失败：{0}
 db_rebuild_connection=[DB] 数据库配置已变更，重建数据库连接
 db_backup_clean_failed=[DB] 清理旧备份失败：{0}
@@ -116,9 +115,7 @@ auth_audit_api_only_premium=[AUDIT] 拒绝玩家 {0}：API-only 降级模式下�
 # 配置相关
 config_loaded=配置已加载：proxy={0}, 数据库类型={1}
 config_reloaded=正在重新加载配置...
-config_reload_success=配置重新加载成功
 config_reload_failed=重新加载配置失败：{0}
-config_lang_changed=语言已更改：{0}
 config_proxy_change_restart=§c代理模式已变更为 {0}，请重启服务端使配置完全生效！
 config_default_created=默认 config.toml 已创建
 config_load_failed=config.toml 加载失败，使用默认配置：{0}
@@ -150,25 +147,21 @@ verify_inbound_anchor_missing=[VERIFY] 找不到入站锚点 handler（splitter/
 verify_outbound_anchor_missing=[VERIFY] 找不到出站锚点 handler（prepender/compress/encoder），AES 加密启用失败
 verify_aes_enable_failed=[VERIFY] Netty AES 加密启用失败：{0}
 verify_spoofed_connection_missing=[VERIFY] 无法设置 spoofedUUID：Connection 未找到
-verify_spoofed_field_missing=[VERIFY] spoofedUUID 字段未找到（非 Spigot/Paper 环境？）
 verify_spoofed_failed=[VERIFY] 设置 spoofedUUID 失败：{0}
 verify_packet_handler_missing=[VERIFY] packet_handler 未找到
 verify_connection_failed=[VERIFY] 获取 Connection 失败：{0}
-verify_nms_load_failed=[VERIFY] NMS 类加载失败：{0}
 
 # 命令相关
 cmd_help=MultiAuth 命令：\n  /multiauth reload  - 重载配置\n  /multiauth status  - 查看插件状态\n  /multiauth backup  - 强制备份数据库\n  /multiauth migrate <type> - 迁移数据库 (sqlite|mysql)\n  /multiauth info <玩家> - 查看离线玩家账号信息\n  /multiauth unregister <玩家> - 删除离线玩家账号
 cmd_no_permission=§c你没有权限执行此命令。
 cmd_status=MultiAuth 状态：\n  数据库：{0}\n  Mojang API：{1}\n  正版玩家数：{2}\n  总记录数：{3}
 cmd_reload_success=§a配置重新加载成功
-cmd_reload_failed=§c重新加载配置失败：{0}
 cmd_migrate_usage=§c用法：/multiauth migrate <sqlite|mysql>
 cmd_migrate_success=§a迁移完成：{0} 条记录已迁移到 {1}
 cmd_migrate_failed=§c迁移失败：{0}
 cmd_migrate_invalid_type=§c无效的数据库类型。请使用：sqlite, mysql
 cmd_backup_success=§a数据库备份已成功创建
 cmd_backup_failed=§c数据库备份失败，请查看控制台了解详情
-cmd_corrupted_db=§c数据库似乎已损坏。迁移可能有帮助。
 cmd_plugin_info=§6MultiAuth v{0} - 玩家认证插件
 cmd_info_usage=§e用法：/multiauth info <玩家>
 cmd_unregister_usage=§e用法：/multiauth unregister <玩家>
@@ -197,16 +190,59 @@ session_complete=[SESSION] 玩家 {0} 认证完成 - {1}
 session_disconnect=[SESSION] 玩家 {0} 断开连接 - 清理认证状态
 session_join_notify=[SESSION] 玩家 {0} 加入服务器（UUID: {1}，正版: {2}）
 session_hijack_warning=§c[安全警告] {0} 的 UUID 不匹配！怀疑会话劫持！
-session_gameprofile_rejected=[AUDIT] 玩家 {0} 的 GameProfile 被拒绝（UUID 不匹配）
 session_status_notify=§e您当前为{0}登录状态\n§7UUID: {1}
 session_status_log=[SESSION] 玩家 {0} 登录状态：{1}（UUID: {2}）
+session_sync_enabled=[MultiAuth] 跨服会话同步已启用（通道: {0}）
+session_sync_receiver_registered=[MultiAuth] 跨服会话同步接收器已注册（通道: {0}）
+session_sync_login=[AUTH] 玩家 {0} 通过 Velocity 跨服会话同步登录（IP: {1}, 正版: {2}）
+session_sync_logout=[AUTH] 玩家 {0} 通过 Velocity 跨服会话同步登出
+session_sync_parse_error=[AUTH] 解析跨服会话同步消息失败: {0}
+config_loaded_debug=[Config] 已加载: proxy={0}, useMojangUuid={1}, debug={2}
+config_reloading=[Config] 正在重载配置...
+packetevents_loaded=[MultiAuth] PacketEvents 已加载，加密握手模式已启用
+packetevents_not_installed=[MultiAuth] PacketEvents 未安装，proxy=false 模式降级为 API-only（仅第一层用户名检查，正版玩家无法登录）
+packetevents_install_required=[MultiAuth] 请安装 PacketEvents 插件以启用加密握手验证
+auth_module_enabled=[MultiAuth] 离线玩家注册登录模块已启用（含安全增强）
+session_clean_failed=清理过期会话失败: {0}
+db_save_failed=保存玩家记录失败: {0}
+auth_account_unregistered_log=[AUTH] 账号已注销: {0}
+packet_listener_registered=[PACKET] PacketEvents 监听器已注册（方案 A：LOGIN_START 拦截 + 假包）
+packet_login_start_verified=[PACKET][LOGIN_START] 已验证用户 {0}，放行假包
+packet_login_start_username=[PACKET][LOGIN_START] 用户名={0}，不在 verifiedChannels 中，处理中
+packet_enc_response_received=[PACKET][ENCRYPTION_RESPONSE] 收到加密响应，用户={0}
+packet_enc_request_sent=[PACKET][ENCRYPTION_REQUEST] 已发送 (PacketEvents Wrapper)
+packet_verify_channel_closed=[AUTH] 玩家 {0} 验证完成时 channel 已关闭，跳过缓存验证结果
+packet_fake_login_start_sent=[PACKET][FAKE_LOGIN_START] 已发送假包 username={0} uuid={1}
+packet_disconnect_channel_closed=[PACKET][DISCONNECT] Channel 已断开（客户端自行离开），跳过 Disconnect 包
+packet_disconnect_already_sent=[PACKET][DISCONNECT] 已发送过 Disconnect 包，跳过重复发送
+packet_disconnect_sent=[PACKET][DISCONNECT] 已发送踢出包: {0}
+auth_player_verified_debug=[AUTH] 玩家 {0} 已通过验证，允许登录（UUID={1}）
+auth_no_login_summary_debug=[AUTH] 玩家 {0} 无预登录摘要（reload 竞态），按 UUID 判断身份
+verify_handshake_start=[VERIFY][{0}] 开始加密握手（PacketEvents + NMS）
+verify_enc_request_sent_waiting=[VERIFY][{0}] EncryptionRequest 已发送，等待响应（5s 超时）...
+verify_enc_response_received_debug=[VERIFY][{0}] 收到 EncryptionResponse，开始验证...
+verify_hasjoined_passed=[VERIFY][{0}] hasJoined 验证通过，UUID={1}
+verify_skip_spoofed_uuid=[VERIFY][{0}] use-mojang-uuid=false，跳过 spoofedUUID（保留离线 UUID）
+verify_aes_enabled=[VERIFY] AES 加密已启用（Netty Handler，锚点: {0} / {1}）
+verify_spoofed_uuid_set=[VERIFY] spoofedUUID 已设置: {0}
+multiverse_load_world_failed=[MultiAuth] Multiverse loadWorld 失败: '{0}'
+auth_proxy_skip_spigot=[AUTH] proxy=true，跳过 Spigot 端验证（由 Velocity 代理完成）
+auth_player_verified_send_fake=[AUTH] 玩家 {0} 验证通过，发送假 LOGIN_START 包（UUID={1}）
+msg_status_notify_sent=[MSG] 玩家 {0} 收到状态通知: {1}
+packet_fake_login_start_fallback_sent=[PACKET][FAKE_LOGIN_START] 已发送假包（receivePacket 回退）
+packet_enc_request_raw_sent=[PACKET][ENCRYPTION_REQUEST] 已发送（原始二进制）
+velocity_config_debug=配置已加载: use-mojang-uuid={0}, auth-list={1}, db-type={2}
+prelogin_other_plugin_denied=[PRELOGIN] 其他插件已拒绝玩家 {0}，本插件跳过验证
+prelogin_verify_exception=[PRELOGIN] 玩家 {0} 验证异常: {1}
+login_premium_decision=[LOGIN] 玩家 {0} 正版决策，等待 hasJoined（IP={1}）
+login_offline_decision=[LOGIN] 玩家 {0} 离线决策（IP={1}）
+state_cleanup_removed=[STATE-CLEANUP][{0}] 3 秒后仍未通过 hasJoined 且连接已断开，清理残留状态
+rewrite_premium_uuid_offline=use-mojang-uuid=false: 已重写正版 profile UUID -> {0}
+disconnect_before_hasjoined=[DISCONNECT] 玩家 {0} 在 hasJoined 通过前断开（可能是盗版客户端验证失败，也可能是玩家主动断开）
 
 # 通用
-generic_prefix=§6[MultiAuth] 
 generic_permission_denied=§c你没有权限使用此命令。
 generic_player_only=§c此命令只能由玩家使用。
-generic_number_required=§c请输入有效的数字。
-generic_no_player=§c未指定玩家。
 generic_player_not_found=§c未找到玩家：{0}
 generic_unknown=未知
 

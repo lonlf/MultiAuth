@@ -58,7 +58,6 @@ public class Messages {
     public static volatile String DB_BACKUP_DELETED_OLD;
     public static volatile String DB_MIGRATION_COMPLETE;
     public static volatile String DB_MIGRATION_FAILED;
-    public static volatile String DB_UUID_REWRITE_WARNING;
     public static volatile String DB_CONNECTION_FAILED;
     public static volatile String DB_REBUILD_CONNECTION;
     public static volatile String DB_BACKUP_CLEAN_FAILED;
@@ -203,9 +202,7 @@ public class Messages {
     // --- 配置相关 ---
     public static volatile String CONFIG_LOADED;
     public static volatile String CONFIG_RELOADED;
-    public static volatile String CONFIG_RELOAD_SUCCESS;
     public static volatile String CONFIG_RELOAD_FAILED;
-    public static volatile String CONFIG_LANG_CHANGED;
     public static volatile String CONFIG_PROXY_CHANGE_RESTART;
     public static volatile String CONFIG_DEFAULT_CREATED;
     public static volatile String CONFIG_LOAD_FAILED;
@@ -237,25 +234,21 @@ public class Messages {
     public static volatile String VERIFY_OUTBOUND_ANCHOR_MISSING;
     public static volatile String VERIFY_AES_ENABLE_FAILED;
     public static volatile String VERIFY_SPOOFED_CONNECTION_MISSING;
-    public static volatile String VERIFY_SPOOFED_FIELD_MISSING;
     public static volatile String VERIFY_SPOOFED_FAILED;
     public static volatile String VERIFY_PACKET_HANDLER_MISSING;
     public static volatile String VERIFY_CONNECTION_FAILED;
-    public static volatile String VERIFY_NMS_LOAD_FAILED;
 
     // --- 命令相关 ---
     public static volatile String CMD_HELP;
     public static volatile String CMD_NO_PERMISSION;
     public static volatile String CMD_STATUS;
     public static volatile String CMD_RELOAD_SUCCESS;
-    public static volatile String CMD_RELOAD_FAILED;
     public static volatile String CMD_MIGRATE_USAGE;
     public static volatile String CMD_MIGRATE_SUCCESS;
     public static volatile String CMD_MIGRATE_FAILED;
     public static volatile String CMD_MIGRATE_INVALID_TYPE;
     public static volatile String CMD_BACKUP_SUCCESS;
     public static volatile String CMD_BACKUP_FAILED;
-    public static volatile String CMD_CORRUPTED_DB;
     public static volatile String CMD_PLUGIN_INFO;
     public static volatile String CMD_INFO_USAGE;
     public static volatile String CMD_UNREGISTER_USAGE;
@@ -284,16 +277,64 @@ public class Messages {
     public static volatile String SESSION_DISCONNECT;
     public static volatile String SESSION_JOIN_NOTIFY;
     public static volatile String SESSION_HIJACK_WARNING;
-    public static volatile String SESSION_GAMEPROFILE_REJECTED;
     public static volatile String SESSION_STATUS_NOTIFY;
     public static volatile String SESSION_STATUS_LOG;
+    public static volatile String SESSION_SYNC_ENABLED;
+    public static volatile String SESSION_SYNC_RECEIVER_REGISTERED;
+    public static volatile String SESSION_SYNC_LOGIN;
+    public static volatile String SESSION_SYNC_LOGOUT;
+    public static volatile String SESSION_SYNC_PARSE_ERROR;
+    // 硬编码日志消息配置化
+    public static volatile String CONFIG_LOADED_DEBUG;
+    public static volatile String CONFIG_RELOADING;
+    public static volatile String PACKETEVENTS_LOADED;
+    public static volatile String PACKETEVENTS_NOT_INSTALLED;
+    public static volatile String PACKETEVENTS_INSTALL_REQUIRED;
+    public static volatile String AUTH_MODULE_ENABLED;
+    public static volatile String SESSION_CLEAN_FAILED;
+    public static volatile String DB_SAVE_FAILED;
+    public static volatile String AUTH_ACCOUNT_UNREGISTERED_LOG;
+    public static volatile String PACKET_LISTENER_REGISTERED;
+    public static volatile String PACKET_LOGIN_START_VERIFIED;
+    public static volatile String PACKET_LOGIN_START_USERNAME;
+    public static volatile String PACKET_ENC_RESPONSE_RECEIVED;
+    public static volatile String PACKET_ENC_REQUEST_SENT;
+    public static volatile String PACKET_VERIFY_CHANNEL_CLOSED;
+    public static volatile String PACKET_FAKE_LOGIN_START_SENT;
+    public static volatile String PACKET_DISCONNECT_CHANNEL_CLOSED;
+    public static volatile String PACKET_DISCONNECT_ALREADY_SENT;
+    public static volatile String PACKET_DISCONNECT_SENT;
+    public static volatile String AUTH_PLAYER_VERIFIED_DEBUG;
+    public static volatile String AUTH_NO_LOGIN_SUMMARY_DEBUG;
+
+    // --- 硬编码日志消息配置化（Spigot 模块补充） ---
+    public static volatile String VERIFY_HANDSHAKE_START;
+    public static volatile String VERIFY_ENC_REQUEST_SENT_WAITING;
+    public static volatile String VERIFY_ENC_RESPONSE_RECEIVED_DEBUG;
+    public static volatile String VERIFY_HASJOINED_PASSED;
+    public static volatile String VERIFY_SKIP_SPOOFED_UUID;
+    public static volatile String VERIFY_AES_ENABLED;
+    public static volatile String VERIFY_SPOOFED_UUID_SET;
+    public static volatile String MULTIVERSE_LOAD_WORLD_FAILED;
+    public static volatile String AUTH_PROXY_SKIP_SPIGOT;
+    public static volatile String AUTH_PLAYER_VERIFIED_SEND_FAKE;
+    public static volatile String MSG_STATUS_NOTIFY_SENT;
+    public static volatile String PACKET_FAKE_LOGIN_START_FALLBACK_SENT;
+    public static volatile String PACKET_ENC_REQUEST_RAW_SENT;
+
+    // --- 硬编码日志消息配置化（Velocity 模块补充） ---
+    public static volatile String VELOCITY_CONFIG_DEBUG;
+    public static volatile String PRELOGIN_OTHER_PLUGIN_DENIED;
+    public static volatile String PRELOGIN_VERIFY_EXCEPTION;
+    public static volatile String LOGIN_PREMIUM_DECISION;
+    public static volatile String LOGIN_OFFLINE_DECISION;
+    public static volatile String STATE_CLEANUP_REMOVED;
+    public static volatile String REWRITE_PREMIUM_UUID_OFFLINE;
+    public static volatile String DISCONNECT_BEFORE_HASJOINED;
 
     // --- 通用 ---
-    public static volatile String GENERIC_PREFIX;
     public static volatile String GENERIC_PERMISSION_DENIED;
     public static volatile String GENERIC_PLAYER_ONLY;
-    public static volatile String GENERIC_NUMBER_REQUIRED;
-    public static volatile String GENERIC_NO_PLAYER;
     public static volatile String GENERIC_PLAYER_NOT_FOUND;
     public static volatile String GENERIC_UNKNOWN;
 
@@ -473,7 +514,6 @@ public class Messages {
         DB_BACKUP_DELETED_OLD = messages.getOrDefault("db_backup_deleted_old", "[DB] Deleted old backup: {0}");
         DB_MIGRATION_COMPLETE = messages.getOrDefault("db_migration_complete", "[DB] Migration complete: {0} records migrated to {1}");
         DB_MIGRATION_FAILED = messages.getOrDefault("db_migration_failed", "[DB] Migration failed: {0}");
-        DB_UUID_REWRITE_WARNING = messages.getOrDefault("db_uuid_rewrite_warning", "[DB] Rewriting UUID for premium player {0}: {1} → {2}");
         DB_CONNECTION_FAILED = messages.getOrDefault("db_connection_failed", "[DB] Database connection failed: {0}");
         DB_REBUILD_CONNECTION = messages.getOrDefault("db_rebuild_connection", "[DB] Database config changed, rebuilding connection");
         DB_BACKUP_CLEAN_FAILED = messages.getOrDefault("db_backup_clean_failed", "[DB] Failed to clean old backups: {0}");
@@ -615,9 +655,7 @@ public class Messages {
 
         CONFIG_LOADED = messages.getOrDefault("config_loaded", "Config loaded: proxy={0}, db-type={1}");
         CONFIG_RELOADED = messages.getOrDefault("config_reloaded", "Reloading config...");
-        CONFIG_RELOAD_SUCCESS = messages.getOrDefault("config_reload_success", "Config reloaded successfully");
         CONFIG_RELOAD_FAILED = messages.getOrDefault("config_reload_failed", "Failed to reload config: {0}");
-        CONFIG_LANG_CHANGED = messages.getOrDefault("config_lang_changed", "Language changed to: {0}");
         CONFIG_PROXY_CHANGE_RESTART = messages.getOrDefault("config_proxy_change_restart",
                 "§cProxy mode changed to {0} - please restart the server for the change to fully take effect!");
         CONFIG_DEFAULT_CREATED = messages.getOrDefault("config_default_created", "Default config.toml created");
@@ -648,24 +686,20 @@ public class Messages {
         VERIFY_OUTBOUND_ANCHOR_MISSING = messages.getOrDefault("verify_outbound_anchor_missing", "[VERIFY] Outbound anchor handler not found (prepender/compress/encoder), AES encryption enable failed");
         VERIFY_AES_ENABLE_FAILED = messages.getOrDefault("verify_aes_enable_failed", "[VERIFY] Netty AES encryption enable failed: {0}");
         VERIFY_SPOOFED_CONNECTION_MISSING = messages.getOrDefault("verify_spoofed_connection_missing", "[VERIFY] Cannot set spoofedUUID: Connection not found");
-        VERIFY_SPOOFED_FIELD_MISSING = messages.getOrDefault("verify_spoofed_field_missing", "[VERIFY] spoofedUUID field not found (non-Spigot/Paper environment?)");
         VERIFY_SPOOFED_FAILED = messages.getOrDefault("verify_spoofed_failed", "[VERIFY] Setting spoofedUUID failed: {0}");
         VERIFY_PACKET_HANDLER_MISSING = messages.getOrDefault("verify_packet_handler_missing", "[VERIFY] packet_handler not found");
         VERIFY_CONNECTION_FAILED = messages.getOrDefault("verify_connection_failed", "[VERIFY] Failed to get Connection: {0}");
-        VERIFY_NMS_LOAD_FAILED = messages.getOrDefault("verify_nms_load_failed", "[VERIFY] NMS class load failed: {0}");
 
         CMD_HELP = messages.getOrDefault("cmd_help", "MultiAuth Commands:\n  /multiauth reload  - Reload config\n  /multiauth status  - Show plugin status\n  /multiauth backup  - Force database backup\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)");
         CMD_NO_PERMISSION = messages.getOrDefault("cmd_no_permission", "§cYou don't have permission to use this command.");
         CMD_STATUS = messages.getOrDefault("cmd_status", "MultiAuth Status:\n  Database: {0}\n  Mojang API: {1}\n  Premium Players: {2}\n  Total Records: {3}");
         CMD_RELOAD_SUCCESS = messages.getOrDefault("cmd_reload_success", "§aConfig reloaded successfully");
-        CMD_RELOAD_FAILED = messages.getOrDefault("cmd_reload_failed", "§cFailed to reload config: {0}");
         CMD_MIGRATE_USAGE = messages.getOrDefault("cmd_migrate_usage", "§cUsage: /multiauth migrate <sqlite|mysql>");
         CMD_MIGRATE_SUCCESS = messages.getOrDefault("cmd_migrate_success", "§aMigration complete: {0} records migrated to {1}");
         CMD_MIGRATE_FAILED = messages.getOrDefault("cmd_migrate_failed", "§cMigration failed: {0}");
         CMD_MIGRATE_INVALID_TYPE = messages.getOrDefault("cmd_migrate_invalid_type", "§cInvalid database type. Use: sqlite, mysql");
         CMD_BACKUP_SUCCESS = messages.getOrDefault("cmd_backup_success", "§a数据库备份已成功创建");
         CMD_BACKUP_FAILED = messages.getOrDefault("cmd_backup_failed", "§c数据库备份失败，请查看控制台了解详情");
-        CMD_CORRUPTED_DB = messages.getOrDefault("cmd_corrupted_db", "§cDatabase appears corrupted. Migration may help.");
         CMD_PLUGIN_INFO = messages.getOrDefault("cmd_plugin_info", "§6MultiAuth v{0} - Player authentication plugin");
         CMD_INFO_USAGE = messages.getOrDefault("cmd_info_usage", "§e用法：/multiauth info <玩家>");
         CMD_UNREGISTER_USAGE = messages.getOrDefault("cmd_unregister_usage", "§e用法：/multiauth unregister <玩家>");
@@ -693,17 +727,111 @@ public class Messages {
         SESSION_DISCONNECT = messages.getOrDefault("session_disconnect", "[SESSION] Player {0} disconnected - cleaning up auth state");
         SESSION_JOIN_NOTIFY = messages.getOrDefault("session_join_notify", "[SESSION] Player {0} joined the server (UUID: {1}, Premium: {2})");
         SESSION_HIJACK_WARNING = messages.getOrDefault("session_hijack_warning", "§c[SECURITY WARNING] UUID mismatch for {0}! Session hijack suspected!");
-        SESSION_GAMEPROFILE_REJECTED = messages.getOrDefault("session_gameprofile_rejected", "[AUDIT] Player {0} gameprofile rejected (UUID mismatch)");
         SESSION_STATUS_NOTIFY = messages.getOrDefault("session_status_notify",
                 "§e您当前为{0}登录状态\n§7UUID: {1}");
         SESSION_STATUS_LOG = messages.getOrDefault("session_status_log",
                 "[SESSION] Player {0} login status: {1} (UUID: {2})");
+        SESSION_SYNC_ENABLED = messages.getOrDefault("session_sync_enabled",
+                "[MultiAuth] Cross-server session sync enabled (channel: {0})");
+        SESSION_SYNC_RECEIVER_REGISTERED = messages.getOrDefault("session_sync_receiver_registered",
+                "[MultiAuth] Cross-server session sync receiver registered (channel: {0})");
+        SESSION_SYNC_LOGIN = messages.getOrDefault("session_sync_login",
+                "[AUTH] Player {0} logged in via Velocity cross-server sync (IP: {1}, Premium: {2})");
+        SESSION_SYNC_LOGOUT = messages.getOrDefault("session_sync_logout",
+                "[AUTH] Player {0} logged out via Velocity cross-server sync");
+        SESSION_SYNC_PARSE_ERROR = messages.getOrDefault("session_sync_parse_error",
+                "[AUTH] Failed to parse cross-server sync message: {0}");
+        CONFIG_LOADED_DEBUG = messages.getOrDefault("config_loaded_debug",
+                "[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}");
+        CONFIG_RELOADING = messages.getOrDefault("config_reloading",
+                "[Config] Reloading config...");
+        PACKETEVENTS_LOADED = messages.getOrDefault("packetevents_loaded",
+                "[MultiAuth] PacketEvents loaded, encryption handshake mode enabled");
+        PACKETEVENTS_NOT_INSTALLED = messages.getOrDefault("packetevents_not_installed",
+                "[MultiAuth] PacketEvents not installed, proxy=false mode degraded to API-only (username check only, premium players cannot login)");
+        PACKETEVENTS_INSTALL_REQUIRED = messages.getOrDefault("packetevents_install_required",
+                "[MultiAuth] Please install PacketEvents to enable encryption handshake verification");
+        AUTH_MODULE_ENABLED = messages.getOrDefault("auth_module_enabled",
+                "[MultiAuth] Offline player register/login module enabled (with security enhancements)");
+        SESSION_CLEAN_FAILED = messages.getOrDefault("session_clean_failed",
+                "Failed to clean expired sessions: {0}");
+        DB_SAVE_FAILED = messages.getOrDefault("db_save_failed",
+                "Failed to save player record: {0}");
+        AUTH_ACCOUNT_UNREGISTERED_LOG = messages.getOrDefault("auth_account_unregistered_log",
+                "[AUTH] Account unregistered: {0}");
+        PACKET_LISTENER_REGISTERED = messages.getOrDefault("packet_listener_registered",
+                "[PACKET] PacketEvents listener registered (Plan A: LOGIN_START interception + fake packet)");
+        PACKET_LOGIN_START_VERIFIED = messages.getOrDefault("packet_login_start_verified",
+                "[PACKET][LOGIN_START] Verified user {0}, passing fake packet");
+        PACKET_LOGIN_START_USERNAME = messages.getOrDefault("packet_login_start_username",
+                "[PACKET][LOGIN_START] username={0}, not in verifiedChannels, processing");
+        PACKET_ENC_RESPONSE_RECEIVED = messages.getOrDefault("packet_enc_response_received",
+                "[PACKET][ENCRYPTION_RESPONSE] Received encryption response, user={0}");
+        PACKET_ENC_REQUEST_SENT = messages.getOrDefault("packet_enc_request_sent",
+                "[PACKET][ENCRYPTION_REQUEST] Sent (PacketEvents Wrapper)");
+        PACKET_VERIFY_CHANNEL_CLOSED = messages.getOrDefault("packet_verify_channel_closed",
+                "[AUTH] Player {0} channel closed during verification, skipping cache");
+        PACKET_FAKE_LOGIN_START_SENT = messages.getOrDefault("packet_fake_login_start_sent",
+                "[PACKET][FAKE_LOGIN_START] Sent fake packet username={0} uuid={1}");
+        PACKET_DISCONNECT_CHANNEL_CLOSED = messages.getOrDefault("packet_disconnect_channel_closed",
+                "[PACKET][DISCONNECT] Channel already disconnected, skipping Disconnect packet");
+        PACKET_DISCONNECT_ALREADY_SENT = messages.getOrDefault("packet_disconnect_already_sent",
+                "[PACKET][DISCONNECT] Disconnect packet already sent, skipping duplicate");
+        PACKET_DISCONNECT_SENT = messages.getOrDefault("packet_disconnect_sent",
+                "[PACKET][DISCONNECT] Sent disconnect packet: {0}");
+        AUTH_PLAYER_VERIFIED_DEBUG = messages.getOrDefault("auth_player_verified_debug",
+                "[AUTH] Player {0} verified, allowing login (UUID={1})");
+        AUTH_NO_LOGIN_SUMMARY_DEBUG = messages.getOrDefault("auth_no_login_summary_debug",
+                "[AUTH] Player {0} has no pre-login summary (reload race), determining by UUID");
 
-        GENERIC_PREFIX = messages.getOrDefault("generic_prefix", "§6[MultiAuth] ");
+        // 硬编码日志消息配置化（Spigot 模块补充）
+        VERIFY_HANDSHAKE_START = messages.getOrDefault("verify_handshake_start",
+                "[VERIFY][{0}] Starting encrypted handshake (PacketEvents + NMS)");
+        VERIFY_ENC_REQUEST_SENT_WAITING = messages.getOrDefault("verify_enc_request_sent_waiting",
+                "[VERIFY][{0}] EncryptionRequest sent, waiting for response (5s timeout)...");
+        VERIFY_ENC_RESPONSE_RECEIVED_DEBUG = messages.getOrDefault("verify_enc_response_received_debug",
+                "[VERIFY][{0}] EncryptionResponse received, starting verification...");
+        VERIFY_HASJOINED_PASSED = messages.getOrDefault("verify_hasjoined_passed",
+                "[VERIFY][{0}] hasJoined verification passed, UUID={1}");
+        VERIFY_SKIP_SPOOFED_UUID = messages.getOrDefault("verify_skip_spoofed_uuid",
+                "[VERIFY][{0}] use-mojang-uuid=false, skipping spoofedUUID (keeping offline UUID)");
+        VERIFY_AES_ENABLED = messages.getOrDefault("verify_aes_enabled",
+                "[VERIFY] AES encryption enabled (Netty Handler, anchors: {0} / {1})");
+        VERIFY_SPOOFED_UUID_SET = messages.getOrDefault("verify_spoofed_uuid_set",
+                "[VERIFY] spoofedUUID set: {0}");
+        MULTIVERSE_LOAD_WORLD_FAILED = messages.getOrDefault("multiverse_load_world_failed",
+                "[MultiAuth] Multiverse loadWorld failed for '{0}'");
+        AUTH_PROXY_SKIP_SPIGOT = messages.getOrDefault("auth_proxy_skip_spigot",
+                "[AUTH] proxy=true, skipping Spigot-side verification (handled by Velocity proxy)");
+        AUTH_PLAYER_VERIFIED_SEND_FAKE = messages.getOrDefault("auth_player_verified_send_fake",
+                "[AUTH] Player {0} verified, sending fake LOGIN_START packet (UUID={1})");
+        MSG_STATUS_NOTIFY_SENT = messages.getOrDefault("msg_status_notify_sent",
+                "[MSG] Player {0} received status notification: {1}");
+        PACKET_FAKE_LOGIN_START_FALLBACK_SENT = messages.getOrDefault("packet_fake_login_start_fallback_sent",
+                "[PACKET][FAKE_LOGIN_START] Sent fake packet (receivePacket fallback)");
+        PACKET_ENC_REQUEST_RAW_SENT = messages.getOrDefault("packet_enc_request_raw_sent",
+                "[PACKET][ENCRYPTION_REQUEST] Sent (raw binary)");
+
+        // 硬编码日志消息配置化（Velocity 模块补充）
+        VELOCITY_CONFIG_DEBUG = messages.getOrDefault("velocity_config_debug",
+                "Config loaded: use-mojang-uuid={0}, auth-list={1}, db-type={2}");
+        PRELOGIN_OTHER_PLUGIN_DENIED = messages.getOrDefault("prelogin_other_plugin_denied",
+                "[PRELOGIN] Player {0} already denied by another plugin, skipping verification");
+        PRELOGIN_VERIFY_EXCEPTION = messages.getOrDefault("prelogin_verify_exception",
+                "[PRELOGIN] Player {0} verification exception: {1}");
+        LOGIN_PREMIUM_DECISION = messages.getOrDefault("login_premium_decision",
+                "[LOGIN] Player {0} premium decision, waiting for hasJoined (IP={1})");
+        LOGIN_OFFLINE_DECISION = messages.getOrDefault("login_offline_decision",
+                "[LOGIN] Player {0} offline decision (IP={1})");
+        STATE_CLEANUP_REMOVED = messages.getOrDefault("state_cleanup_removed",
+                "[STATE-CLEANUP][{0}] 3s elapsed without hasJoined pass and connection disconnected, cleaning residual state");
+        REWRITE_PREMIUM_UUID_OFFLINE = messages.getOrDefault("rewrite_premium_uuid_offline",
+                "use-mojang-uuid=false: rewritten premium profile UUID -> {0}");
+        DISCONNECT_BEFORE_HASJOINED = messages.getOrDefault("disconnect_before_hasjoined",
+                "[DISCONNECT] Player {0} disconnected before hasJoined passed (pirate client verification failure or player-initiated disconnect)");
+
         GENERIC_PERMISSION_DENIED = messages.getOrDefault("generic_permission_denied", "§cYou don't have permission to use this command.");
         GENERIC_PLAYER_ONLY = messages.getOrDefault("generic_player_only", "§cThis command can only be used by players.");
-        GENERIC_NUMBER_REQUIRED = messages.getOrDefault("generic_number_required", "§cPlease enter a valid number.");
-        GENERIC_NO_PLAYER = messages.getOrDefault("generic_no_player", "§cNo player specified.");
         GENERIC_PLAYER_NOT_FOUND = messages.getOrDefault("generic_player_not_found", "§cPlayer not found: {0}");
         GENERIC_UNKNOWN = messages.getOrDefault("generic_unknown", "未知");
 
@@ -734,7 +862,6 @@ public class Messages {
             sb.append("db_backup_deleted_old=[DB] 已删除旧备份：{0}\n");
             sb.append("db_migration_complete=[DB] 迁移完成：{0} 条记录已迁移到 {1}\n");
             sb.append("db_migration_failed=[DB] 迁移失败：{0}\n");
-            sb.append("db_uuid_rewrite_warning=[DB] 正在重写正版玩家 {0} 的 UUID：{1} → {2}\n");
             sb.append("db_connection_failed=[DB] 数据库连接失败：{0}\n");
             sb.append("db_rebuild_connection=[DB] 数据库配置已变更，重建数据库连接\n");
             sb.append("db_backup_clean_failed=[DB] 清理旧备份失败：{0}\n");
@@ -863,9 +990,7 @@ public class Messages {
             sb.append("# 配置相关\n");
             sb.append("config_loaded=配置已加载：proxy={0}, 数据库类型={1}\n");
             sb.append("config_reloaded=正在重新加载配置...\n");
-            sb.append("config_reload_success=配置重新加载成功\n");
             sb.append("config_reload_failed=重新加载配置失败：{0}\n");
-            sb.append("config_lang_changed=语言已更改：{0}\n");
             sb.append("config_proxy_change_restart=§c代理模式已变更为 {0}，请重启服务端使配置完全生效！\n");
             sb.append("config_default_created=默认 config.toml 已创建\n");
             sb.append("config_load_failed=config.toml 加载失败，使用默认配置：{0}\n\n");
@@ -897,25 +1022,21 @@ public class Messages {
             sb.append("verify_outbound_anchor_missing=[VERIFY] 找不到出站锚点 handler（prepender/compress/encoder），AES 加密启用失败\n");
             sb.append("verify_aes_enable_failed=[VERIFY] Netty AES 加密启用失败：{0}\n");
             sb.append("verify_spoofed_connection_missing=[VERIFY] 无法设置 spoofedUUID：Connection 未找到\n");
-            sb.append("verify_spoofed_field_missing=[VERIFY] spoofedUUID 字段未找到（非 Spigot/Paper 环境？）\n");
             sb.append("verify_spoofed_failed=[VERIFY] 设置 spoofedUUID 失败：{0}\n");
             sb.append("verify_packet_handler_missing=[VERIFY] packet_handler 未找到\n");
-            sb.append("verify_connection_failed=[VERIFY] 获取 Connection 失败：{0}\n");
-            sb.append("verify_nms_load_failed=[VERIFY] NMS 类加载失败：{0}\n\n");
+            sb.append("verify_connection_failed=[VERIFY] 获取 Connection 失败：{0}\n\n");
 
             sb.append("# 命令相关\n");
             sb.append("cmd_help=MultiAuth 命令：\\n  /multiauth reload  - 重载配置\\n  /multiauth status  - 查看插件状态\\n  /multiauth backup  - 强制备份数据库\\n  /multiauth migrate <type> - 迁移数据库 (sqlite|mysql)\\n  /multiauth info <玩家> - 查看离线玩家账号信息\\n  /multiauth unregister <玩家> - 删除离线玩家账号\n");
             sb.append("cmd_no_permission=§c你没有权限执行此命令。\n");
             sb.append("cmd_status=MultiAuth 状态：\\n  数据库：{0}\\n  Mojang API：{1}\\n  正版玩家数：{2}\\n  总记录数：{3}\n");
             sb.append("cmd_reload_success=§a配置重新加载成功\n");
-            sb.append("cmd_reload_failed=§c重新加载配置失败：{0}\n");
             sb.append("cmd_migrate_usage=§c用法：/multiauth migrate <sqlite|mysql>\n");
             sb.append("cmd_migrate_success=§a迁移完成：{0} 条记录已迁移到 {1}\n");
             sb.append("cmd_migrate_failed=§c迁移失败：{0}\n");
             sb.append("cmd_migrate_invalid_type=§c无效的数据库类型。请使用：sqlite, mysql\n");
             sb.append("cmd_backup_success=§a数据库备份已成功创建\n");
             sb.append("cmd_backup_failed=§c数据库备份失败，请查看控制台了解详情\n");
-            sb.append("cmd_corrupted_db=§c数据库似乎已损坏。迁移可能有帮助。\n");
             sb.append("cmd_plugin_info=§6MultiAuth v{0} - 玩家认证插件\n");
             sb.append("cmd_info_usage=§e用法：/multiauth info <玩家>\n");
             sb.append("cmd_unregister_usage=§e用法：/multiauth unregister <玩家>\n");
@@ -944,16 +1065,59 @@ public class Messages {
             sb.append("session_disconnect=[SESSION] 玩家 {0} 断开连接 - 清理认证状态\n");
             sb.append("session_join_notify=[SESSION] 玩家 {0} 加入服务器（UUID: {1}，正版: {2}）\n");
             sb.append("session_hijack_warning=§c[安全警告] {0} 的 UUID 不匹配！怀疑会话劫持！\n");
-            sb.append("session_gameprofile_rejected=[AUDIT] 玩家 {0} 的 GameProfile 被拒绝（UUID 不匹配）\n");
             sb.append("session_status_notify=§e您当前为{0}登录状态\\n§7UUID: {1}\n");
-            sb.append("session_status_log=[SESSION] 玩家 {0} 登录状态：{1}（UUID: {2}）\n\n");
+            sb.append("session_status_log=[SESSION] 玩家 {0} 登录状态：{1}（UUID: {2}）\n");
+            sb.append("session_sync_enabled=[MultiAuth] 跨服会话同步已启用（通道: {0}）\n");
+            sb.append("session_sync_receiver_registered=[MultiAuth] 跨服会话同步接收器已注册（通道: {0}）\n");
+            sb.append("session_sync_login=[AUTH] 玩家 {0} 通过 Velocity 跨服会话同步登录（IP: {1}, 正版: {2}）\n");
+            sb.append("session_sync_logout=[AUTH] 玩家 {0} 通过 Velocity 跨服会话同步登出\n");
+            sb.append("session_sync_parse_error=[AUTH] 解析跨服会话同步消息失败: {0}\n");
+            sb.append("config_loaded_debug=[Config] 已加载: proxy={0}, useMojangUuid={1}, debug={2}\n");
+            sb.append("config_reloading=[Config] 正在重载配置...\n");
+            sb.append("packetevents_loaded=[MultiAuth] PacketEvents 已加载，加密握手模式已启用\n");
+            sb.append("packetevents_not_installed=[MultiAuth] PacketEvents 未安装，proxy=false 模式降级为 API-only（仅第一层用户名检查，正版玩家无法登录）\n");
+            sb.append("packetevents_install_required=[MultiAuth] 请安装 PacketEvents 插件以启用加密握手验证\n");
+            sb.append("auth_module_enabled=[MultiAuth] 离线玩家注册登录模块已启用（含安全增强）\n");
+            sb.append("session_clean_failed=清理过期会话失败: {0}\n");
+            sb.append("db_save_failed=保存玩家记录失败: {0}\n");
+            sb.append("auth_account_unregistered_log=[AUTH] 账号已注销: {0}\n");
+            sb.append("packet_listener_registered=[PACKET] PacketEvents 监听器已注册（方案 A：LOGIN_START 拦截 + 假包）\n");
+            sb.append("packet_login_start_verified=[PACKET][LOGIN_START] 已验证用户 {0}，放行假包\n");
+            sb.append("packet_login_start_username=[PACKET][LOGIN_START] 用户名={0}，不在 verifiedChannels 中，处理中\n");
+            sb.append("packet_enc_response_received=[PACKET][ENCRYPTION_RESPONSE] 收到加密响应，用户={0}\n");
+            sb.append("packet_enc_request_sent=[PACKET][ENCRYPTION_REQUEST] 已发送 (PacketEvents Wrapper)\n");
+            sb.append("packet_verify_channel_closed=[AUTH] 玩家 {0} 验证完成时 channel 已关闭，跳过缓存验证结果\n");
+            sb.append("packet_fake_login_start_sent=[PACKET][FAKE_LOGIN_START] 已发送假包 username={0} uuid={1}\n");
+            sb.append("packet_disconnect_channel_closed=[PACKET][DISCONNECT] Channel 已断开（客户端自行离开），跳过 Disconnect 包\n");
+            sb.append("packet_disconnect_already_sent=[PACKET][DISCONNECT] 已发送过 Disconnect 包，跳过重复发送\n");
+            sb.append("packet_disconnect_sent=[PACKET][DISCONNECT] 已发送踢出包: {0}\n");
+            sb.append("auth_player_verified_debug=[AUTH] 玩家 {0} 已通过验证，允许登录（UUID={1}）\n");
+            sb.append("auth_no_login_summary_debug=[AUTH] 玩家 {0} 无预登录摘要（reload 竞态），按 UUID 判断身份\n");
+            sb.append("verify_handshake_start=[VERIFY][{0}] 开始加密握手（PacketEvents + NMS）\n");
+            sb.append("verify_enc_request_sent_waiting=[VERIFY][{0}] EncryptionRequest 已发送，等待响应（5s 超时）...\n");
+            sb.append("verify_enc_response_received_debug=[VERIFY][{0}] 收到 EncryptionResponse，开始验证...\n");
+            sb.append("verify_hasjoined_passed=[VERIFY][{0}] hasJoined 验证通过，UUID={1}\n");
+            sb.append("verify_skip_spoofed_uuid=[VERIFY][{0}] use-mojang-uuid=false，跳过 spoofedUUID（保留离线 UUID）\n");
+            sb.append("verify_aes_enabled=[VERIFY] AES 加密已启用（Netty Handler，锚点: {0} / {1}）\n");
+            sb.append("verify_spoofed_uuid_set=[VERIFY] spoofedUUID 已设置: {0}\n");
+            sb.append("multiverse_load_world_failed=[MultiAuth] Multiverse loadWorld 失败: '{0}'\n");
+            sb.append("auth_proxy_skip_spigot=[AUTH] proxy=true，跳过 Spigot 端验证（由 Velocity 代理完成）\n");
+            sb.append("auth_player_verified_send_fake=[AUTH] 玩家 {0} 验证通过，发送假 LOGIN_START 包（UUID={1}）\n");
+            sb.append("msg_status_notify_sent=[MSG] 玩家 {0} 收到状态通知: {1}\n");
+            sb.append("packet_fake_login_start_fallback_sent=[PACKET][FAKE_LOGIN_START] 已发送假包（receivePacket 回退）\n");
+            sb.append("packet_enc_request_raw_sent=[PACKET][ENCRYPTION_REQUEST] 已发送（原始二进制）\n");
+            sb.append("velocity_config_debug=配置已加载: use-mojang-uuid={0}, auth-list={1}, db-type={2}\n");
+            sb.append("prelogin_other_plugin_denied=[PRELOGIN] 其他插件已拒绝玩家 {0}，本插件跳过验证\n");
+            sb.append("prelogin_verify_exception=[PRELOGIN] 玩家 {0} 验证异常: {1}\n");
+            sb.append("login_premium_decision=[LOGIN] 玩家 {0} 正版决策，等待 hasJoined（IP={1}）\n");
+            sb.append("login_offline_decision=[LOGIN] 玩家 {0} 离线决策（IP={1}）\n");
+            sb.append("state_cleanup_removed=[STATE-CLEANUP][{0}] 3 秒后仍未通过 hasJoined 且连接已断开，清理残留状态\n");
+            sb.append("rewrite_premium_uuid_offline=use-mojang-uuid=false: 已重写正版 profile UUID -> {0}\n");
+            sb.append("disconnect_before_hasjoined=[DISCONNECT] 玩家 {0} 在 hasJoined 通过前断开（可能是盗版客户端验证失败，也可能是玩家主动断开）\n\n");
 
             sb.append("# 通用\n");
-            sb.append("generic_prefix=§6[MultiAuth] \n");
             sb.append("generic_permission_denied=§c你没有权限使用此命令。\n");
             sb.append("generic_player_only=§c此命令只能由玩家使用。\n");
-            sb.append("generic_number_required=§c请输入有效的数字。\n");
-            sb.append("generic_no_player=§c未指定玩家。\n");
             sb.append("generic_player_not_found=§c未找到玩家：{0}\n");
             sb.append("generic_unknown=未知\n");
         } else {
@@ -972,7 +1136,6 @@ public class Messages {
             sb.append("db_backup_deleted_old=[DB] Deleted old backup: {0}\n");
             sb.append("db_migration_complete=[DB] Migration complete: {0} records migrated to {1}\n");
             sb.append("db_migration_failed=[DB] Migration failed: {0}\n");
-            sb.append("db_uuid_rewrite_warning=[DB] Rewriting UUID for premium player {0}: {1} → {2}\n");
             sb.append("db_connection_failed=[DB] Database connection failed: {0}\n");
             sb.append("db_rebuild_connection=[DB] Database config changed, rebuilding connection\n");
             sb.append("db_backup_clean_failed=[DB] Failed to clean old backups: {0}\n");
@@ -1101,9 +1264,7 @@ public class Messages {
             sb.append("# Config\n");
             sb.append("config_loaded=Config loaded: proxy={0}, db-type={1}\n");
             sb.append("config_reloaded=Reloading config...\n");
-            sb.append("config_reload_success=Config reloaded successfully\n");
             sb.append("config_reload_failed=Failed to reload config: {0}\n");
-            sb.append("config_lang_changed=Language changed to: {0}\n");
             sb.append("config_proxy_change_restart=§cProxy mode changed to {0} - please restart the server for the change to fully take effect!\n");
             sb.append("config_default_created=Default config.toml created\n");
             sb.append("config_load_failed=Failed to load config.toml, using defaults: {0}\n\n");
@@ -1135,25 +1296,21 @@ public class Messages {
             sb.append("verify_outbound_anchor_missing=[VERIFY] Outbound anchor handler not found (prepender/compress/encoder), AES encryption enable failed\n");
             sb.append("verify_aes_enable_failed=[VERIFY] Netty AES encryption enable failed: {0}\n");
             sb.append("verify_spoofed_connection_missing=[VERIFY] Cannot set spoofedUUID: Connection not found\n");
-            sb.append("verify_spoofed_field_missing=[VERIFY] spoofedUUID field not found (non-Spigot/Paper environment?)\n");
             sb.append("verify_spoofed_failed=[VERIFY] Setting spoofedUUID failed: {0}\n");
             sb.append("verify_packet_handler_missing=[VERIFY] packet_handler not found\n");
-            sb.append("verify_connection_failed=[VERIFY] Failed to get Connection: {0}\n");
-            sb.append("verify_nms_load_failed=[VERIFY] NMS class load failed: {0}\n\n");
+            sb.append("verify_connection_failed=[VERIFY] Failed to get Connection: {0}\n\n");
 
             sb.append("# Commands\n");
             sb.append("cmd_help=MultiAuth Commands:\\n  /multiauth reload  - Reload config\\n  /multiauth status  - Show plugin status\\n  /multiauth backup  - Force database backup\\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)\\n  /multiauth info <player> - View offline player account info\\n  /multiauth unregister <player> - Delete offline player account\n");
             sb.append("cmd_no_permission=§cYou don't have permission to use this command.\n");
             sb.append("cmd_status=MultiAuth Status:\\n  Database: {0}\\n  Mojang API: {1}\\n  Premium Players: {2}\\n  Total Records: {3}\n");
             sb.append("cmd_reload_success=§aConfig reloaded successfully\n");
-            sb.append("cmd_reload_failed=§cFailed to reload config: {0}\n");
             sb.append("cmd_migrate_usage=§cUsage: /multiauth migrate <sqlite|mysql>\n");
             sb.append("cmd_migrate_success=§aMigration complete: {0} records migrated to {1}\n");
             sb.append("cmd_migrate_failed=§cMigration failed: {0}\n");
             sb.append("cmd_migrate_invalid_type=§cInvalid database type. Use: sqlite, mysql\n");
             sb.append("cmd_backup_success=§aDatabase backup created successfully\n");
             sb.append("cmd_backup_failed=§cDatabase backup failed. Check console for details.\n");
-            sb.append("cmd_corrupted_db=§cDatabase appears corrupted. Migration may help.\n");
             sb.append("cmd_plugin_info=§6MultiAuth v{0} - Player authentication plugin\n");
             sb.append("cmd_info_usage=§eUsage: /multiauth info <player>\n");
             sb.append("cmd_unregister_usage=§eUsage: /multiauth unregister <player>\n");
@@ -1182,16 +1339,59 @@ public class Messages {
             sb.append("session_disconnect=[SESSION] Player {0} disconnected - cleaning up auth state\n");
             sb.append("session_join_notify=[SESSION] Player {0} joined the server (UUID: {1}, Premium: {2})\n");
             sb.append("session_hijack_warning=§c[SECURITY WARNING] UUID mismatch for {0}! Session hijack suspected!\n");
-            sb.append("session_gameprofile_rejected=[AUDIT] Player {0} gameprofile rejected (UUID mismatch)\n");
             sb.append("session_status_notify=§eYour current login status: {0}\\n§7UUID: {1}\n");
-            sb.append("session_status_log=[SESSION] Player {0} login status: {1} (UUID: {2})\n\n");
+            sb.append("session_status_log=[SESSION] Player {0} login status: {1} (UUID: {2})\n");
+            sb.append("session_sync_enabled=[MultiAuth] Cross-server session sync enabled (channel: {0})\n");
+            sb.append("session_sync_receiver_registered=[MultiAuth] Cross-server session sync receiver registered (channel: {0})\n");
+            sb.append("session_sync_login=[AUTH] Player {0} logged in via Velocity cross-server sync (IP: {1}, Premium: {2})\n");
+            sb.append("session_sync_logout=[AUTH] Player {0} logged out via Velocity cross-server sync\n");
+            sb.append("session_sync_parse_error=[AUTH] Failed to parse cross-server sync message: {0}\n");
+            sb.append("config_loaded_debug=[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}\n");
+            sb.append("config_reloading=[Config] Reloading config...\n");
+            sb.append("packetevents_loaded=[MultiAuth] PacketEvents loaded, encryption handshake mode enabled\n");
+            sb.append("packetevents_not_installed=[MultiAuth] PacketEvents not installed, proxy=false mode degraded to API-only (username check only, premium players cannot login)\n");
+            sb.append("packetevents_install_required=[MultiAuth] Please install PacketEvents to enable encryption handshake verification\n");
+            sb.append("auth_module_enabled=[MultiAuth] Offline player register/login module enabled (with security enhancements)\n");
+            sb.append("session_clean_failed=Failed to clean expired sessions: {0}\n");
+            sb.append("db_save_failed=Failed to save player record: {0}\n");
+            sb.append("auth_account_unregistered_log=[AUTH] Account unregistered: {0}\n");
+            sb.append("packet_listener_registered=[PACKET] PacketEvents listener registered (Plan A: LOGIN_START interception + fake packet)\n");
+            sb.append("packet_login_start_verified=[PACKET][LOGIN_START] Verified user {0}, passing fake packet\n");
+            sb.append("packet_login_start_username=[PACKET][LOGIN_START] username={0}, not in verifiedChannels, processing\n");
+            sb.append("packet_enc_response_received=[PACKET][ENCRYPTION_RESPONSE] Received encryption response, user={0}\n");
+            sb.append("packet_enc_request_sent=[PACKET][ENCRYPTION_REQUEST] Sent (PacketEvents Wrapper)\n");
+            sb.append("packet_verify_channel_closed=[AUTH] Player {0} channel closed during verification, skipping cache\n");
+            sb.append("packet_fake_login_start_sent=[PACKET][FAKE_LOGIN_START] Sent fake packet username={0} uuid={1}\n");
+            sb.append("packet_disconnect_channel_closed=[PACKET][DISCONNECT] Channel already disconnected, skipping Disconnect packet\n");
+            sb.append("packet_disconnect_already_sent=[PACKET][DISCONNECT] Disconnect packet already sent, skipping duplicate\n");
+            sb.append("packet_disconnect_sent=[PACKET][DISCONNECT] Sent disconnect packet: {0}\n");
+            sb.append("auth_player_verified_debug=[AUTH] Player {0} verified, allowing login (UUID={1})\n");
+            sb.append("auth_no_login_summary_debug=[AUTH] Player {0} has no pre-login summary (reload race), determining by UUID\n");
+            sb.append("verify_handshake_start=[VERIFY][{0}] Starting encrypted handshake (PacketEvents + NMS)\n");
+            sb.append("verify_enc_request_sent_waiting=[VERIFY][{0}] EncryptionRequest sent, waiting for response (5s timeout)...\n");
+            sb.append("verify_enc_response_received_debug=[VERIFY][{0}] EncryptionResponse received, starting verification...\n");
+            sb.append("verify_hasjoined_passed=[VERIFY][{0}] hasJoined verification passed, UUID={1}\n");
+            sb.append("verify_skip_spoofed_uuid=[VERIFY][{0}] use-mojang-uuid=false, skipping spoofedUUID (keeping offline UUID)\n");
+            sb.append("verify_aes_enabled=[VERIFY] AES encryption enabled (Netty Handler, anchors: {0} / {1})\n");
+            sb.append("verify_spoofed_uuid_set=[VERIFY] spoofedUUID set: {0}\n");
+            sb.append("multiverse_load_world_failed=[MultiAuth] Multiverse loadWorld failed for '{0}'\n");
+            sb.append("auth_proxy_skip_spigot=[AUTH] proxy=true, skipping Spigot-side verification (handled by Velocity proxy)\n");
+            sb.append("auth_player_verified_send_fake=[AUTH] Player {0} verified, sending fake LOGIN_START packet (UUID={1})\n");
+            sb.append("msg_status_notify_sent=[MSG] Player {0} received status notification: {1}\n");
+            sb.append("packet_fake_login_start_fallback_sent=[PACKET][FAKE_LOGIN_START] Sent fake packet (receivePacket fallback)\n");
+            sb.append("packet_enc_request_raw_sent=[PACKET][ENCRYPTION_REQUEST] Sent (raw binary)\n");
+            sb.append("velocity_config_debug=Config loaded: use-mojang-uuid={0}, auth-list={1}, db-type={2}\n");
+            sb.append("prelogin_other_plugin_denied=[PRELOGIN] Player {0} already denied by another plugin, skipping verification\n");
+            sb.append("prelogin_verify_exception=[PRELOGIN] Player {0} verification exception: {1}\n");
+            sb.append("login_premium_decision=[LOGIN] Player {0} premium decision, waiting for hasJoined (IP={1})\n");
+            sb.append("login_offline_decision=[LOGIN] Player {0} offline decision (IP={1})\n");
+            sb.append("state_cleanup_removed=[STATE-CLEANUP][{0}] 3s elapsed without hasJoined pass and connection disconnected, cleaning residual state\n");
+            sb.append("rewrite_premium_uuid_offline=use-mojang-uuid=false: rewritten premium profile UUID -> {0}\n");
+            sb.append("disconnect_before_hasjoined=[DISCONNECT] Player {0} disconnected before hasJoined passed (pirate client verification failure or player-initiated disconnect)\n\n");
 
             sb.append("# Generic\n");
-            sb.append("generic_prefix=§6[MultiAuth] \n");
             sb.append("generic_permission_denied=§cYou don't have permission to use this command.\n");
             sb.append("generic_player_only=§cThis command can only be used by players.\n");
-            sb.append("generic_number_required=§cPlease enter a valid number.\n");
-            sb.append("generic_no_player=§cNo player specified.\n");
             sb.append("generic_player_not_found=§cPlayer not found: {0}\n");
             sb.append("generic_unknown=unknown\n");
         }

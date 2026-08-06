@@ -4,6 +4,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
+import com.lonleaf.multiauth.Messages;
 import org.slf4j.Logger;
 
 import java.util.UUID;
@@ -21,17 +22,26 @@ public class SessionSyncManager {
     private final ProxyServer server;
     private final Logger logger;
     private final boolean enabled;
+    private final boolean debug;
 
     /** 内存会话表：UUID → SessionInfo（玩家通过 Velocity 认证后记录） */
     private final ConcurrentMap<UUID, SessionInfo> sessions = new ConcurrentHashMap<>();
 
-    public SessionSyncManager(ProxyServer server, Logger logger, boolean enabled) {
+    public SessionSyncManager(ProxyServer server, Logger logger, boolean enabled, boolean debug) {
         this.server = server;
         this.logger = logger;
         this.enabled = enabled;
+        this.debug = debug;
         if (enabled) {
             server.getChannelRegistrar().register(CHANNEL);
-            logger.info("[MultiAuth] 跨服会话同步已启用（通道: {}）", SessionSyncProtocol.CHANNEL_ID);
+            debug(Messages.get(Messages.SESSION_SYNC_ENABLED, SessionSyncProtocol.CHANNEL_ID));
+        }
+    }
+
+    /** debug 日志：仅 debug=true 时输出，用 info 级别绕过 SLF4J 默认级别限制 */
+    private void debug(String msg) {
+        if (debug) {
+            logger.info("[DEBUG] " + msg);
         }
     }
 

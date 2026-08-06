@@ -60,7 +60,7 @@ public class MultiverseHook {
             Method isSuccess = attempt.getClass().getMethod("isSuccess");
             boolean success = (boolean) isSuccess.invoke(attempt);
             if (!success) {
-                logger.fine("[MultiAuth] Multiverse loadWorld failed for '" + worldName + "'");
+                logger.fine(Messages.get(Messages.MULTIVERSE_LOAD_WORLD_FAILED, worldName));
                 return null;
             }
             // Attempt.getOrNull() → LoadedMultiverseWorld

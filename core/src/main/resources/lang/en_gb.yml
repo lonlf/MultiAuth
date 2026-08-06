@@ -16,7 +16,6 @@ db_backup_failed=[DB] Database backup failed: {0}
 db_backup_deleted_old=[DB] Deleted old backup: {0}
 db_migration_complete=[DB] Migration complete: {0} records migrated to {1}
 db_migration_failed=[DB] Migration failed: {0}
-db_uuid_rewrite_warning=[DB] Rewriting UUID for premium player {0}: {1} → {2}
 db_connection_failed=[DB] Database connection failed: {0}
 db_rebuild_connection=[DB] Database config changed, rebuilding connection
 db_backup_clean_failed=[DB] Failed to clean old backups: {0}
@@ -116,9 +115,7 @@ auth_audit_api_only_premium=[AUDIT] Player {0} DENIED - premium username cannot 
 # Config
 config_loaded=Config loaded: proxy={0}, db-type={1}
 config_reloaded=Reloading config...
-config_reload_success=Config reloaded successfully
 config_reload_failed=Failed to reload config: {0}
-config_lang_changed=Language changed to: {0}
 config_proxy_change_restart=§cProxy mode changed to {0} - please restart the server for the change to fully take effect!
 config_default_created=Default config.toml created
 config_load_failed=Failed to load config.toml, using defaults: {0}
@@ -150,25 +147,21 @@ verify_inbound_anchor_missing=[VERIFY] Inbound anchor handler not found (splitte
 verify_outbound_anchor_missing=[VERIFY] Outbound anchor handler not found (prepender/compress/encoder), AES encryption enable failed
 verify_aes_enable_failed=[VERIFY] Netty AES encryption enable failed: {0}
 verify_spoofed_connection_missing=[VERIFY] Cannot set spoofedUUID: Connection not found
-verify_spoofed_field_missing=[VERIFY] spoofedUUID field not found (non-Spigot/Paper environment?)
 verify_spoofed_failed=[VERIFY] Setting spoofedUUID failed: {0}
 verify_packet_handler_missing=[VERIFY] packet_handler not found
 verify_connection_failed=[VERIFY] Failed to get Connection: {0}
-verify_nms_load_failed=[VERIFY] NMS class load failed: {0}
 
 # Commands
 cmd_help=MultiAuth Commands:\n  /multiauth reload  - Reload config\n  /multiauth status  - Show plugin status\n  /multiauth backup  - Force database backup\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)\n  /multiauth info <player> - View offline player account info\n  /multiauth unregister <player> - Delete offline player account
 cmd_no_permission=§cYou don't have permission to use this command.
 cmd_status=MultiAuth Status:\n  Database: {0}\n  Mojang API: {1}\n  Premium Players: {2}\n  Total Records: {3}
 cmd_reload_success=§aConfig reloaded successfully
-cmd_reload_failed=§cFailed to reload config: {0}
 cmd_migrate_usage=§cUsage: /multiauth migrate <sqlite|mysql>
 cmd_migrate_success=§aMigration complete: {0} records migrated to {1}
 cmd_migrate_failed=§cMigration failed: {0}
 cmd_migrate_invalid_type=§cInvalid database type. Use: sqlite, mysql
 cmd_backup_success=§aDatabase backup created successfully
 cmd_backup_failed=§cDatabase backup failed. Check console for details.
-cmd_corrupted_db=§cDatabase appears corrupted. Migration may help.
 cmd_plugin_info=§6MultiAuth v{0} - Player authentication plugin
 cmd_info_usage=§eUsage: /multiauth info <player>
 cmd_unregister_usage=§eUsage: /multiauth unregister <player>
@@ -197,16 +190,59 @@ session_complete=[SESSION] Player {0} authentication complete - {1}
 session_disconnect=[SESSION] Player {0} disconnected - cleaning up auth state
 session_join_notify=[SESSION] Player {0} joined the server (UUID: {1}, Premium: {2})
 session_hijack_warning=§c[SECURITY WARNING] UUID mismatch for {0}! Session hijack suspected!
-session_gameprofile_rejected=[AUDIT] Player {0} gameprofile rejected (UUID mismatch)
 session_status_notify=§eYour current login status: {0}\n§7UUID: {1}
 session_status_log=[SESSION] Player {0} login status: {1} (UUID: {2})
+session_sync_enabled=[MultiAuth] Cross-server session sync enabled (channel: {0})
+session_sync_receiver_registered=[MultiAuth] Cross-server session sync receiver registered (channel: {0})
+session_sync_login=[AUTH] Player {0} logged in via Velocity cross-server sync (IP: {1}, Premium: {2})
+session_sync_logout=[AUTH] Player {0} logged out via Velocity cross-server sync
+session_sync_parse_error=[AUTH] Failed to parse cross-server sync message: {0}
+config_loaded_debug=[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}
+config_reloading=[Config] Reloading config...
+packetevents_loaded=[MultiAuth] PacketEvents loaded, encryption handshake mode enabled
+packetevents_not_installed=[MultiAuth] PacketEvents not installed, proxy=false mode degraded to API-only (username check only, premium players cannot login)
+packetevents_install_required=[MultiAuth] Please install PacketEvents to enable encryption handshake verification
+auth_module_enabled=[MultiAuth] Offline player register/login module enabled (with security enhancements)
+session_clean_failed=Failed to clean expired sessions: {0}
+db_save_failed=Failed to save player record: {0}
+auth_account_unregistered_log=[AUTH] Account unregistered: {0}
+packet_listener_registered=[PACKET] PacketEvents listener registered (Plan A: LOGIN_START interception + fake packet)
+packet_login_start_verified=[PACKET][LOGIN_START] Verified user {0}, passing fake packet
+packet_login_start_username=[PACKET][LOGIN_START] username={0}, not in verifiedChannels, processing
+packet_enc_response_received=[PACKET][ENCRYPTION_RESPONSE] Received encryption response, user={0}
+packet_enc_request_sent=[PACKET][ENCRYPTION_REQUEST] Sent (PacketEvents Wrapper)
+packet_verify_channel_closed=[AUTH] Player {0} channel closed during verification, skipping cache
+packet_fake_login_start_sent=[PACKET][FAKE_LOGIN_START] Sent fake packet username={0} uuid={1}
+packet_disconnect_channel_closed=[PACKET][DISCONNECT] Channel already disconnected, skipping Disconnect packet
+packet_disconnect_already_sent=[PACKET][DISCONNECT] Disconnect packet already sent, skipping duplicate
+packet_disconnect_sent=[PACKET][DISCONNECT] Sent disconnect packet: {0}
+auth_player_verified_debug=[AUTH] Player {0} verified, allowing login (UUID={1})
+auth_no_login_summary_debug=[AUTH] Player {0} has no pre-login summary (reload race), determining by UUID
+verify_handshake_start=[VERIFY][{0}] Starting encrypted handshake (PacketEvents + NMS)
+verify_enc_request_sent_waiting=[VERIFY][{0}] EncryptionRequest sent, waiting for response (5s timeout)...
+verify_enc_response_received_debug=[VERIFY][{0}] EncryptionResponse received, starting verification...
+verify_hasjoined_passed=[VERIFY][{0}] hasJoined verification passed, UUID={1}
+verify_skip_spoofed_uuid=[VERIFY][{0}] use-mojang-uuid=false, skipping spoofedUUID (keeping offline UUID)
+verify_aes_enabled=[VERIFY] AES encryption enabled (Netty Handler, anchors: {0} / {1})
+verify_spoofed_uuid_set=[VERIFY] spoofedUUID set: {0}
+multiverse_load_world_failed=[MultiAuth] Multiverse loadWorld failed for '{0}'
+auth_proxy_skip_spigot=[AUTH] proxy=true, skipping Spigot-side verification (handled by Velocity proxy)
+auth_player_verified_send_fake=[AUTH] Player {0} verified, sending fake LOGIN_START packet (UUID={1})
+msg_status_notify_sent=[MSG] Player {0} received status notification: {1}
+packet_fake_login_start_fallback_sent=[PACKET][FAKE_LOGIN_START] Sent fake packet (receivePacket fallback)
+packet_enc_request_raw_sent=[PACKET][ENCRYPTION_REQUEST] Sent (raw binary)
+velocity_config_debug=Config loaded: use-mojang-uuid={0}, auth-list={1}, db-type={2}
+prelogin_other_plugin_denied=[PRELOGIN] Player {0} already denied by another plugin, skipping verification
+prelogin_verify_exception=[PRELOGIN] Player {0} verification exception: {1}
+login_premium_decision=[LOGIN] Player {0} premium decision, waiting for hasJoined (IP={1})
+login_offline_decision=[LOGIN] Player {0} offline decision (IP={1})
+state_cleanup_removed=[STATE-CLEANUP][{0}] 3s elapsed without hasJoined pass and connection disconnected, cleaning residual state
+rewrite_premium_uuid_offline=use-mojang-uuid=false: rewritten premium profile UUID -> {0}
+disconnect_before_hasjoined=[DISCONNECT] Player {0} disconnected before hasJoined passed (pirate client verification failure or player-initiated disconnect)
 
 # Generic
-generic_prefix=§6[MultiAuth] 
 generic_permission_denied=§cYou don't have permission to use this command.
 generic_player_only=§cThis command can only be used by players.
-generic_number_required=§cPlease enter a valid number.
-generic_no_player=§cNo player specified.
 generic_player_not_found=§cPlayer not found: {0}
 generic_unknown=unknown
 

@@ -66,10 +66,10 @@ public final class MultiAuth extends JavaPlugin {
             if (SpigotPacketListener.isAvailable()) {
                 this.packetListener = new SpigotPacketListener(julLogger);
                 this.packetListener.register();
-                julLogger.info("[MultiAuth] PacketEvents 已加载，加密握手模式已启用");
+                julLogger.info(Messages.get(Messages.PACKETEVENTS_LOADED));
             } else {
-                julLogger.warning("[MultiAuth] PacketEvents 未安装，proxy=false 模式降级为 API-only（仅第一层用户名检查，正版玩家无法登录）");
-                julLogger.warning("[MultiAuth] 请安装 PacketEvents 插件以启用加密握手验证");
+                julLogger.warning(Messages.get(Messages.PACKETEVENTS_NOT_INSTALLED));
+                julLogger.warning(Messages.get(Messages.PACKETEVENTS_INSTALL_REQUIRED));
             }
         }
 
@@ -96,7 +96,7 @@ public final class MultiAuth extends JavaPlugin {
             this.authListener.setAuthState(this.authState);
             // 注册 register / login / changepassword 命令（AuthCommandManager 内部完成注册）
             new AuthCommandManager(this, authService);
-            julLogger.info("[MultiAuth] 离线玩家注册登录模块已启用（含安全增强）");
+            julLogger.info(Messages.get(Messages.AUTH_MODULE_ENABLED));
 
             // proxy=true 模式下注册跨服会话同步接收器
             if (config.isProxy()) {
@@ -109,11 +109,11 @@ public final class MultiAuth extends JavaPlugin {
                 try {
                     authService.cleanExpiredSessions();
                 } catch (Exception e) {
-                    julLogger.warning("Failed to clean expired sessions: " + e.getMessage());
+                    julLogger.warning(Messages.get(Messages.SESSION_CLEAN_FAILED, e.getMessage()));
                 }
             }, 6000L, 6000L); // 5分钟 = 6000 ticks
         } else {
-            julLogger.info("[MultiAuth] 离线玩家注册登录模块已禁用");
+            julLogger.info(Messages.get(Messages.AUTH_MODULE_DISABLED));
         }
 
         // proxy=false 模式检查：要求 online-mode=false

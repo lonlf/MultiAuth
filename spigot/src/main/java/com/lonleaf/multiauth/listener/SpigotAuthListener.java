@@ -143,7 +143,7 @@ public class SpigotAuthListener implements Listener {
     private void runVerification(String username, Channel channel, InetAddress address) {
         // proxy=true：Spigot 端不参与加密握手（由 Velocity 完成），防御 reload 切换瞬时窗口
         if (config.isProxy()) {
-            logger.fine("[AUTH] proxy=true，跳过 Spigot 端验证（由 Velocity 代理完成）");
+            logger.fine(Messages.get(Messages.AUTH_PROXY_SKIP_SPIGOT));
             return;
         }
         // 插件禁用检查：避免访问已关闭的数据库 / AuthManager
@@ -166,8 +166,7 @@ public class SpigotAuthListener implements Listener {
         switch (result.decision()) {
             case ALLOW -> {
                 // 验证成功：标记已验证，缓存结果，发送假 LOGIN_START 包
-                logger.fine("[AUTH] 玩家 " + username + " 验证通过，发送假 LOGIN_START 包（UUID="
-                        + result.uuid() + "）");
+                logger.fine(Messages.get(Messages.AUTH_PLAYER_VERIFIED_SEND_FAKE, username, String.valueOf(result.uuid())));
                 // 聚合日志（生产必要）：正版/离线 + UUID + 连接信息，每个玩家 1 条
                 // use-mojang-uuid=false 时正版玩家实际使用离线 UUID，标注以示区分
                 String type = result.isPremium()
@@ -272,8 +271,7 @@ public class SpigotAuthListener implements Listener {
 
         if (result.allowed()) {
             // 过程细节：玩家最终通过预登录检查（聚合结果日志已在 handleLoginStartAsync 输出）
-            logger.fine("[AUTH] 玩家 " + username + " 已通过验证，允许登录（UUID="
-                    + result.uuid() + "）");
+            logger.fine(Messages.get(Messages.AUTH_PLAYER_VERIFIED_DEBUG, username, String.valueOf(result.uuid())));
             cacheLoginSummary(username, result.uuid(), null);
             event.allow();
         } else {
@@ -519,7 +517,7 @@ public class SpigotAuthListener implements Listener {
         LoginSummary summary = loginSummaries.remove(username);
         if (summary == null) {
             // 异常情况（reload 竞态/摘要被覆盖）：无法读取缓存快照，退化为按 UUID 判断身份
-            logger.fine("[AUTH] 玩家 " + username + " 无预登录摘要（reload 竞态），按 UUID 判断身份");
+            logger.fine(Messages.get(Messages.AUTH_NO_LOGIN_SUMMARY_DEBUG, username));
             boolean prem = config.isUseMojangUuid()
                     && !AuthManager.generateOfflineUuid(username).equals(playerUuid);
             // 预填充 premiumCache（即使无摘要，也尽量避免 AuthState 主线程查库）
@@ -575,7 +573,7 @@ public class SpigotAuthListener implements Listener {
         if (config.isNotifyPlayerStatus()) {
             String notifyMsg = Messages.get(Messages.SESSION_STATUS_NOTIFY, status, playerUuid.toString());
             player.sendMessage(notifyMsg);
-            logger.fine("[MSG] 玩家 " + username + " 收到状态通知: " + notifyMsg.replace("\n", "\\n"));
+            logger.fine(Messages.get(Messages.MSG_STATUS_NOTIFY_SENT, username, notifyMsg.replace("\n", "\\n")));
         }
         // 生产必要日志：登录状态留痕，不受 notify-player-status 开关影响
         logger.info(Messages.get(Messages.SESSION_STATUS_LOG, username, status, playerUuid.toString()));

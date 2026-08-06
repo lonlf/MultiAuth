@@ -91,7 +91,7 @@ public class SpigotPacketListener extends PacketListenerAbstract {
     /** 注册到 PacketEvents */
     public void register() {
         PacketEvents.getAPI().getEventManager().registerListener(this);
-        logger.fine("[PACKET] PacketEvents 监听器已注册（方案 A：LOGIN_START 拦截 + 假包）");
+        logger.fine(Messages.get(Messages.PACKET_LISTENER_REGISTERED));
     }
 
     /** 注销 */
@@ -141,14 +141,13 @@ public class SpigotPacketListener extends PacketListenerAbstract {
             // 此时放行假包让服务器处理（receivePacketSilently 主路径不经过本监听器）
             if (verifiedChannels.remove(channel)) {
                 // 已验证，放行假包让服务器处理
-                logger.fine("[PACKET][LOGIN_START] 已验证用户 " + username + "，放行假包");
+                logger.fine(Messages.get(Messages.PACKET_LOGIN_START_VERIFIED, username));
                 return;
             }
 
             // 第一次收到：取消包，不让服务器处理
             event.setCancelled(true);
-            logger.fine("[PACKET][LOGIN_START] 用户名=" + username
-                    + " channel=" + channel.remoteAddress() + "（已拦截，等待异步验证）");
+            logger.fine(Messages.get(Messages.PACKET_LOGIN_START_USERNAME, username));
 
             // 记录 channel → 登录状态 映射，并注册 close future 监听器
             // channel 断开时主动清理 verifiedUsers / pendingHandshakes，避免内存泄漏
@@ -211,8 +210,7 @@ public class SpigotPacketListener extends PacketListenerAbstract {
                 throw new IllegalStateException("加密响应数据缺失");
             }
 
-            logger.fine("[PACKET][ENCRYPTION_RESPONSE] 收到加密响应，用户=" + handshake.username
-                    + " sharedSecret.len=" + sharedSecret.length + " verifyToken.len=" + verifyToken.length);
+            logger.fine(Messages.get(Messages.PACKET_ENC_RESPONSE_RECEIVED, handshake.username));
 
             event.setCancelled(true);
             handshake.future.complete(new EncryptionResponseData(sharedSecret, verifyToken));
@@ -249,7 +247,7 @@ public class SpigotPacketListener extends PacketListenerAbstract {
             WrapperLoginServerEncryptionRequest request = new WrapperLoginServerEncryptionRequest(
                     serverId, publicKey, verifyToken);
             PacketEvents.getAPI().getProtocolManager().sendPacket(channel, request);
-            logger.fine("[PACKET][ENCRYPTION_REQUEST] 已发送 (PacketEvents Wrapper)");
+            logger.fine(Messages.get(Messages.PACKET_ENC_REQUEST_SENT));
         } catch (Throwable e) {
             logger.warning(Messages.get(Messages.PACKET_ENC_REQUEST_WRAPPER_FAILED, e.getMessage()));
             sendRawEncryptionRequest(channel, serverId, publicKey, verifyToken);
@@ -271,7 +269,7 @@ public class SpigotPacketListener extends PacketListenerAbstract {
     public void putVerificationResult(String username, Channel channel, VerificationResult result) {
         LoginState state = channelToUsername.get(channel);
         if (state != null && state.closed.get()) {
-            logger.fine("[AUTH] 玩家 " + username + " 验证完成时 channel 已关闭，跳过缓存验证结果");
+            logger.fine(Messages.get(Messages.PACKET_VERIFY_CHANNEL_CLOSED, username));
             return;
         }
         // ALLOW 覆盖保护：同一用户名已有其他连接的 ALLOW 结果时，
@@ -307,7 +305,7 @@ public class SpigotPacketListener extends PacketListenerAbstract {
             );
             // receivePacketSilently：不触发 PacketEvents 监听器，避免循环拦截
             PacketEvents.getAPI().getProtocolManager().receivePacketSilently(channel, fakePacket);
-            logger.fine("[PACKET][FAKE_LOGIN_START] 已发送假包 username=" + username + " uuid=" + uuid);
+            logger.fine(Messages.get(Messages.PACKET_FAKE_LOGIN_START_SENT, username, String.valueOf(uuid)));
             return true;
         } catch (Exception e) {
             logger.warning(Messages.get(Messages.PACKET_FAKE_LOGIN_START_FAILED, e.getMessage()));
@@ -316,7 +314,7 @@ public class SpigotPacketListener extends PacketListenerAbstract {
                 WrapperLoginClientLoginStart fakePacket = new WrapperLoginClientLoginStart(
                         ClientVersion.UNKNOWN, username, null, uuid);
                 PacketEvents.getAPI().getProtocolManager().receivePacket(channel, fakePacket);
-                logger.fine("[PACKET][FAKE_LOGIN_START] 已发送假包 (receivePacket 回退)");
+                logger.fine(Messages.get(Messages.PACKET_FAKE_LOGIN_START_FALLBACK_SENT));
                 return true;
             } catch (Exception e2) {
                 // 兜底：注入失败时玩家会卡死在登录界面（LOGIN_START 已被取消且服务器不再收到包），
@@ -336,18 +334,18 @@ public class SpigotPacketListener extends PacketListenerAbstract {
         LoginState state = channelToUsername.get(channel);
         String username = state != null ? state.username : null;
         if (!channel.isActive()) {
-            logger.fine("[PACKET][DISCONNECT] Channel 已断开（客户端自行离开），跳过 Disconnect 包");
+            logger.fine(Messages.get(Messages.PACKET_DISCONNECT_CHANNEL_CLOSED));
             return;
         }
         if (!disconnectedChannels.add(channel)) {
-            logger.fine("[PACKET][DISCONNECT] 已发送过 Disconnect 包，跳过重复发送");
+            logger.fine(Messages.get(Messages.PACKET_DISCONNECT_ALREADY_SENT));
             return;
         }
         try {
             WrapperLoginServerDisconnect disconnect = new WrapperLoginServerDisconnect(
                     Component.text(message));
             PacketEvents.getAPI().getProtocolManager().sendPacket(channel, disconnect);
-            logger.fine("[PACKET][DISCONNECT] 已发送踢出包: " + message);
+            logger.fine(Messages.get(Messages.PACKET_DISCONNECT_SENT, message));
             logger.warning(Messages.get(Messages.KICK_MESSAGE_SENT,
                     username != null ? username : "?", message.replace("\n", "\\n")));
         } catch (Exception e) {
@@ -365,7 +363,7 @@ public class SpigotPacketListener extends PacketListenerAbstract {
         writeByteArray(buf, publicKey);
         writeByteArray(buf, verifyToken);
         channel.writeAndFlush(buf);
-        logger.fine("[PACKET][ENCRYPTION_REQUEST] 已发送 (原始二进制)");
+        logger.fine(Messages.get(Messages.PACKET_ENC_REQUEST_RAW_SENT));
     }
 
     private void writeVarInt(io.netty.buffer.ByteBuf buf, int value) {

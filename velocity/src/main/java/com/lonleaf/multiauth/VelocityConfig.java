@@ -57,9 +57,10 @@ public class VelocityConfig {
                 try { old.close(); } catch (Exception ignored) {}
             }
 
-            debug("Config loaded: use-mojang-uuid=" + config.isUseMojangUuid()
-                    + ", auth-list=" + config.getAuthList()
-                    + ", db-type=" + config.getDatabaseType());
+            debug(Messages.get(Messages.VELOCITY_CONFIG_DEBUG,
+                    String.valueOf(config.isUseMojangUuid()),
+                    String.valueOf(config.getAuthList()),
+                    config.getDatabaseType()));
 
         } catch (Exception e) {
             // 配置加载失败（TOML 格式错误 / IO 异常等）：关闭新建的 fileConfig 避免资源泄漏，
@@ -72,7 +73,7 @@ public class VelocityConfig {
     }
 
     public void reload() {
-        debug("Reloading config...");
+        debug(Messages.get(Messages.CONFIG_RELOADING));
         load();
     }
 

@@ -1,5 +1,6 @@
 package com.lonleaf.multiauth.listener;
 
+import com.lonleaf.multiauth.Messages;
 import com.lonleaf.multiauth.MultiAuth;
 import com.lonleaf.multiauth.auth.AuthService;
 import com.lonleaf.multiauth.auth.SessionSyncProtocol;
@@ -42,18 +43,17 @@ public class SessionSyncReceiver implements PluginMessageListener {
                 if (authState != null) {
                     authState.cancelTimeout(uuid);
                 }
-                logger.info("[AUTH] " + username + " 通过 Velocity 跨服会话同步登录（IP: " + msg.ip()
-                        + ", 正版: " + msg.isPremium() + "）");
+                logger.fine(Messages.get(Messages.SESSION_SYNC_LOGIN, username, msg.ip(), String.valueOf(msg.isPremium())));
             } else if (SessionSyncProtocol.ACTION_LOGOUT.equals(msg.action())) {
                 // Velocity 同步登出状态：清理登录状态
                 authService.logout(uuid);
                 if (authState != null) {
                     authState.clearPlayerState(uuid);
                 }
-                logger.fine("[AUTH] " + username + " 通过 Velocity 跨服会话同步登出");
+                logger.fine(Messages.get(Messages.SESSION_SYNC_LOGOUT, username));
             }
         } catch (Exception e) {
-            logger.warning("[AUTH] 解析跨服会话同步消息失败: " + e.getMessage());
+            logger.warning(Messages.get(Messages.SESSION_SYNC_PARSE_ERROR, e.getMessage()));
         }
     }
 
@@ -61,7 +61,7 @@ public class SessionSyncReceiver implements PluginMessageListener {
     public void register() {
         plugin.getServer().getMessenger().registerIncomingPluginChannel(
                 plugin, SessionSyncProtocol.CHANNEL_ID, this);
-        logger.info("[MultiAuth] 跨服会话同步接收器已注册（通道: " + SessionSyncProtocol.CHANNEL_ID + "）");
+        logger.fine(Messages.get(Messages.SESSION_SYNC_RECEIVER_REGISTERED, SessionSyncProtocol.CHANNEL_ID));
     }
 
     /** 注销通道 */

@@ -67,7 +67,7 @@ public class SpigotMojangVerifier {
             return null;
         }
 
-        logger.fine("[VERIFY][" + username + "] 开始加密握手（PacketEvents + NMS）");
+        logger.fine(Messages.get(Messages.VERIFY_HANDSHAKE_START, username));
 
         // 复用全局 RSA 密钥对，仅生成随机 verify token（每次握手独立）
         AuthCrypto crypto = new AuthCrypto(SHARED_RSA_KEY_PAIR);
@@ -78,7 +78,7 @@ public class SpigotMojangVerifier {
         try {
             // 发送 EncryptionRequest
             packetListener.sendEncryptionRequest(channel, crypto);
-            logger.fine("[VERIFY][" + username + "] EncryptionRequest 已发送，等待响应（5s 超时）...");
+            logger.fine(Messages.get(Messages.VERIFY_ENC_REQUEST_SENT_WAITING, username));
 
             // 等待 EncryptionResponse（5s 超时）
             // 注意：盗版客户端收到 EncryptionRequest 后会自行断开（约 1s），显示客户端默认消息。
@@ -107,7 +107,7 @@ public class SpigotMojangVerifier {
                         MojangSessionService.HasJoinedResult.Status.NOT_PREMIUM, null);
             }
 
-            logger.fine("[VERIFY][" + username + "] 收到 EncryptionResponse，开始验证...");
+            logger.fine(Messages.get(Messages.VERIFY_ENC_RESPONSE_RECEIVED_DEBUG, username));
 
             // 先解密 sharedSecret（RSA→16 字节 AES 密钥），后续启用加密需要解密后的密钥
             byte[] decryptedSharedSecret;
@@ -127,7 +127,7 @@ public class SpigotMojangVerifier {
             if (result.status() == MojangSessionService.HasJoinedResult.Status.SUCCESS) {
                 UUID premiumUuid = result.profile().uuid();
                 // 过程细节：hasJoined 验证通过（最终结果由 [LOGIN] 聚合日志输出）
-                logger.fine("[VERIFY][" + username + "] hasJoined 验证通过，UUID=" + premiumUuid);
+                logger.fine(Messages.get(Messages.VERIFY_HASJOINED_PASSED, username, String.valueOf(premiumUuid)));
 
                 // 启用 AES 加密（使用解密后的 16 字节密钥）
                 // 必须在发送假 LOGIN_START 包之前启用，否则服务器发送的 LoginSuccess 是明文，客户端会断开
@@ -143,7 +143,7 @@ public class SpigotMojangVerifier {
                 if (useMojangUuid) {
                     setSpoofedUUID(channel, premiumUuid);
                 } else {
-                    logger.fine("[VERIFY][" + username + "] use-mojang-uuid=false，跳过 spoofedUUID（保留离线 UUID）");
+                    logger.fine(Messages.get(Messages.VERIFY_SKIP_SPOOFED_UUID, username));
                 }
 
                 // 方案 A：不修改 gameProfile 字段，而是由 SpigotAuthListener 发送假 LOGIN_START 包
@@ -209,8 +209,7 @@ public class SpigotMojangVerifier {
             channel.pipeline().addBefore(encryptAnchor, "multiauth-encrypt",
                     new AesEncryptHandler(encryptCipher));
 
-            logger.fine("[VERIFY] AES 加密已启用 (Netty Handler，锚点: "
-                    + decryptAnchor + " / " + encryptAnchor + ")");
+            logger.fine(Messages.get(Messages.VERIFY_AES_ENABLED, decryptAnchor, encryptAnchor));
             return true;
         } catch (Exception e) {
             // 回滚已添加的 decrypt/encrypt handler，避免半启用状态
@@ -245,7 +244,7 @@ public class SpigotMojangVerifier {
                 return;
             }
             connection.getClass().getField("spoofedUUID").set(connection, uuid);
-            logger.fine("[VERIFY] spoofedUUID 已设置: " + uuid);
+            logger.fine(Messages.get(Messages.VERIFY_SPOOFED_UUID_SET, String.valueOf(uuid)));
         } catch (Exception e) {
             logger.warning(Messages.get(Messages.VERIFY_SPOOFED_FAILED, e.getMessage()));
         }

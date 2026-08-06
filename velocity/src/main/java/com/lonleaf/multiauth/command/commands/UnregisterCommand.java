@@ -50,7 +50,7 @@ public class UnregisterCommand implements Command {
             // 如果玩家在线，踢出
             server.getPlayer(targetName).ifPresent(player ->
                     player.disconnect(Command.legacy(Messages.get(Messages.AUTH_UNREGISTER_KICK))));
-            logger.info("[AUTH] Account unregistered: " + targetName);
+            logger.info(Messages.get(Messages.AUTH_ACCOUNT_UNREGISTERED_LOG, targetName));
             source.sendMessage(Command.legacy(Messages.get(Messages.AUTH_UNREGISTER_SUCCESS, targetName)));
         } else {
             source.sendMessage(Command.legacy(Messages.get(Messages.AUTH_UNREGISTER_NOT_FOUND, targetName)));

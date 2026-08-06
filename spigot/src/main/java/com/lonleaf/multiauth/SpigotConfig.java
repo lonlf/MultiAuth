@@ -1,6 +1,7 @@
 package com.lonleaf.multiauth;
 
 import com.lonleaf.multiauth.config.AuthConfig;
+import com.lonleaf.multiauth.Messages;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -33,15 +34,14 @@ public class SpigotConfig {
         FileConfiguration fileConfig = plugin.getConfig();
         applyConfig(fileConfig);
 
-        logger.fine("Config loaded: proxy=" + config.isProxy()
-                + ", db-type=" + config.getDatabaseType());
+        logger.fine(Messages.get(Messages.CONFIG_LOADED_DEBUG, String.valueOf(config.isProxy()), String.valueOf(config.isUseMojangUuid()), String.valueOf(config.isDebug())));
     }
 
     /**
      * 重新加载配置文件。
      */
     public void reload() {
-        logger.fine("Reloading config...");
+        logger.fine(Messages.get(Messages.CONFIG_RELOADING));
         load();
     }
 

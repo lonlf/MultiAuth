@@ -133,7 +133,7 @@ public class VelocityAuthListener {
         // 但只有 denied(Component) 会设置 reason，故用 getReasonComponent().isPresent() 判定"已被拒绝"。
         // 未设置 result 时默认是 forceOfflineMode（无 reason），不影响本插件正常决策。
         if (event.getResult().getReasonComponent().isPresent()) {
-            debug("[PRELOGIN] 其他插件已拒绝玩家 " + event.getUsername() + "，本插件跳过验证");
+            debug(Messages.get(Messages.PRELOGIN_OTHER_PLUGIN_DENIED, event.getUsername()));
             return;
         }
 
@@ -169,7 +169,7 @@ public class VelocityAuthListener {
             } catch (ExecutionException ee) {
                 // 验证线程抛出未预期异常：拒绝登录，避免误放行
                 Throwable cause = ee.getCause() != null ? ee.getCause() : ee;
-                logger.warn("[PRELOGIN] 玩家 " + username + " 验证异常: " + cause.getMessage(), cause);
+                logger.warn(Messages.get(Messages.PRELOGIN_VERIFY_EXCEPTION, username, cause.getMessage()), cause);
                 String kickMsg = Messages.get(Messages.AUTH_INVALID_SESSION, username).replace("\\n", "\n");
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
                         LegacyComponentSerializer.legacySection().deserialize(kickMsg)));
@@ -189,7 +189,7 @@ public class VelocityAuthListener {
                     // 正版用户名：让 Velocity 自己执行加密握手 + hasJoined
                     handshakeStates.put(username, new HandshakeState(true, false, connection));
                     // 过程细节：hasJoined 尚未通过，聚合登录日志在 onGameProfileRequest 输出
-                    debug("[LOGIN] 玩家 " + username + " 正版决策，等待 hasJoined（IP=" + getRemoteIp(connection) + "）");
+                    debug(Messages.get(Messages.LOGIN_PREMIUM_DECISION, username, getRemoteIp(connection)));
                     // 状态清理兜底：防止极端情况下 handshakeStates 残留（不执行任何抢先踢出）
                     scheduleStateCleanup(username, connection);
                     event.setResult(PreLoginEvent.PreLoginComponentResult.allowed());
@@ -201,7 +201,7 @@ public class VelocityAuthListener {
                     // GameProfileRequest 之间断开（onDisconnect 早退不清理）导致状态永久残留
                     scheduleStateCleanup(username, connection);
                     // 过程细节：聚合登录日志在 onGameProfileRequest 输出
-                    debug("[LOGIN] 玩家 " + username + " 离线决策（IP=" + getRemoteIp(connection) + "）");
+                    debug(Messages.get(Messages.LOGIN_OFFLINE_DECISION, username, getRemoteIp(connection)));
                     event.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
                 }
                 case DENY -> {
@@ -231,7 +231,7 @@ public class VelocityAuthListener {
             // 仅当状态归属本连接、未通过 hasJoined 且连接已断开时清理
             if (state != null && state.connection() == conn
                     && !state.hasJoinedPassed() && !conn.isActive()) {
-                debug("[STATE-CLEANUP][" + username + "] 3 秒后仍未通过 hasJoined 且连接已断开，清理残留状态");
+                debug(Messages.get(Messages.STATE_CLEANUP_REMOVED, username));
                 handshakeStates.remove(username, state);
             }
             // 连接仍活跃（hasJoined 响应慢）或已被同名新连接覆盖 → 保留状态
@@ -256,7 +256,7 @@ public class VelocityAuthListener {
             try {
                 core.getAuthManager().savePlayerRecord(username, premium, uuid);
             } catch (Exception e) {
-                logger.warn("Failed to save player record: " + e.getMessage());
+                logger.warn(Messages.get(Messages.DB_SAVE_FAILED, e.getMessage()));
             }
         }).schedule();
     }
@@ -295,7 +295,7 @@ public class VelocityAuthListener {
                     uuid = offlineUuid;
                     profile = new GameProfile(offlineUuid, profile.getName(), profile.getProperties());
                     event.setGameProfile(profile);
-                    debug("use-mojang-uuid=false: rewritten premium profile UUID -> " + offlineUuid);
+                    debug(Messages.get(Messages.REWRITE_PREMIUM_UUID_OFFLINE, String.valueOf(offlineUuid)));
                 }
             }
             savePlayerRecordAsync(username, inferredPremium, uuid);
@@ -310,7 +310,7 @@ public class VelocityAuthListener {
                     uuid = offlineUuid;
                     profile = new GameProfile(offlineUuid, profile.getName(), profile.getProperties());
                     event.setGameProfile(profile);
-                    debug("use-mojang-uuid=false: rewritten premium profile UUID -> " + offlineUuid);
+                    debug(Messages.get(Messages.REWRITE_PREMIUM_UUID_OFFLINE, String.valueOf(offlineUuid)));
                 }
             }
             handshakeStates.put(username, new HandshakeState(true, true, event.getConnection()));
@@ -377,8 +377,7 @@ public class VelocityAuthListener {
             // 因无法确认是验证失败，故仅 debug 输出，避免生产环境误报"盗版客户端或无效会话"
             // （踢出本身由 Velocity 协议层执行，功能不受影响；真实拒绝的审计见 Spigot 端
             //   AUTH_MOJANG_VERIFY_FAILED_PIRATE 或 API-only 模式的对应审计）
-            debug("[DISCONNECT] 玩家 " + username + " 在 hasJoined 通过前断开"
-                    + "（可能是盗版客户端验证失败，也可能是玩家主动断开）");
+            debug(Messages.get(Messages.DISCONNECT_BEFORE_HASJOINED, username));
             logger.warn(Messages.get(Messages.AUTH_HANDSHAKE_FAILED, username));
         }
 
