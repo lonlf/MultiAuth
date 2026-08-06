@@ -336,13 +336,13 @@ public class VelocityAuthListener {
     @Subscribe
     public void onLogin(LoginEvent event) {
         String username = event.getPlayer().getUsername();
-        cleanupHandshakeState(username);
-        // 记录会话到 Velocity 内存，并同步到目标服务器
+        // 先读取握手状态再清理，避免 cleanupHandshakeState 移除后读取恒为 null
         if (sessionSyncManager != null) {
             HandshakeState state = handshakeStates.get(username);
             boolean isPremium = state != null && state.premiumDecision;
             sessionSyncManager.markLoggedIn(event.getPlayer(), isPremium);
         }
+        cleanupHandshakeState(username);
         debug(Messages.get(Messages.SESSION_COMPLETE, username, "login completed"));
     }
 

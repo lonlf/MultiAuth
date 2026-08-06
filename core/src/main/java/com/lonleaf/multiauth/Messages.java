@@ -284,6 +284,8 @@ public class Messages {
     public static volatile String SESSION_SYNC_LOGIN;
     public static volatile String SESSION_SYNC_LOGOUT;
     public static volatile String SESSION_SYNC_PARSE_ERROR;
+    public static volatile String SESSION_SYNC_REJECT_CLIENT;
+    public static volatile String SESSION_SYNC_TTL_REMOVED;
     // 硬编码日志消息配置化
     public static volatile String CONFIG_LOADED_DEBUG;
     public static volatile String CONFIG_RELOADING;
@@ -740,7 +742,11 @@ public class Messages {
         SESSION_SYNC_LOGOUT = messages.getOrDefault("session_sync_logout",
                 "[AUTH] Player {0} logged out via Velocity cross-server sync");
         SESSION_SYNC_PARSE_ERROR = messages.getOrDefault("session_sync_parse_error",
-                "[AUTH] Failed to parse cross-server sync message: {0}");
+                "[AUTH] Failed to parse cross-server session sync message: {0}");
+        SESSION_SYNC_REJECT_CLIENT = messages.getOrDefault("session_sync_reject_client",
+                "[AUTH] Rejected forged cross-server session sync message from client (only Velocity proxy messages accepted)");
+        SESSION_SYNC_TTL_REMOVED = messages.getOrDefault("session_sync_ttl_removed",
+                "[SESSION] Removed expired session record (TTL): {0} (UUID: {1})");
         CONFIG_LOADED_DEBUG = messages.getOrDefault("config_loaded_debug",
                 "[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}");
         CONFIG_RELOADING = messages.getOrDefault("config_reloading",
@@ -1072,6 +1078,8 @@ public class Messages {
             sb.append("session_sync_login=[AUTH] 玩家 {0} 通过 Velocity 跨服会话同步登录（IP: {1}, 正版: {2}）\n");
             sb.append("session_sync_logout=[AUTH] 玩家 {0} 通过 Velocity 跨服会话同步登出\n");
             sb.append("session_sync_parse_error=[AUTH] 解析跨服会话同步消息失败: {0}\n");
+            sb.append("session_sync_reject_client=[AUTH] 拒绝客户端伪造的跨服会话同步消息（仅接受 Velocity 代理消息）\n");
+            sb.append("session_sync_ttl_removed=[SESSION] 清理过期会话记录（TTL）: {0} (UUID: {1})\n");
             sb.append("config_loaded_debug=[Config] 已加载: proxy={0}, useMojangUuid={1}, debug={2}\n");
             sb.append("config_reloading=[Config] 正在重载配置...\n");
             sb.append("packetevents_loaded=[MultiAuth] PacketEvents 已加载，加密握手模式已启用\n");
@@ -1345,7 +1353,9 @@ public class Messages {
             sb.append("session_sync_receiver_registered=[MultiAuth] Cross-server session sync receiver registered (channel: {0})\n");
             sb.append("session_sync_login=[AUTH] Player {0} logged in via Velocity cross-server sync (IP: {1}, Premium: {2})\n");
             sb.append("session_sync_logout=[AUTH] Player {0} logged out via Velocity cross-server sync\n");
-            sb.append("session_sync_parse_error=[AUTH] Failed to parse cross-server sync message: {0}\n");
+            sb.append("session_sync_parse_error=[AUTH] Failed to parse cross-server session sync message: {0}\n");
+            sb.append("session_sync_reject_client=[AUTH] Rejected forged cross-server session sync message from client (only Velocity proxy messages accepted)\n");
+            sb.append("session_sync_ttl_removed=[SESSION] Removed expired session record (TTL): {0} (UUID: {1})\n");
             sb.append("config_loaded_debug=[Config] Loaded: proxy={0}, useMojangUuid={1}, debug={2}\n");
             sb.append("config_reloading=[Config] Reloading config...\n");
             sb.append("packetevents_loaded=[MultiAuth] PacketEvents loaded, encryption handshake mode enabled\n");

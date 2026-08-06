@@ -30,6 +30,13 @@ public class SessionSyncReceiver implements PluginMessageListener {
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
         if (!SessionSyncProtocol.CHANNEL_ID.equals(channel)) return;
+        // 仅接受来自 Velocity 代理的消息：代理发送的消息 player 参数为 null，
+        // 客户端（模组）发来的同名通道消息 player 非 null，属于伪造，直接拒绝，
+        // 防止盗版客户端绕过注册/登录限制把自己标记为已登录
+        if (player != null) {
+            logger.warning(Messages.get(Messages.SESSION_SYNC_REJECT_CLIENT));
+            return;
+        }
         try {
             SessionSyncProtocol.SessionSyncMessage msg = SessionSyncProtocol.parse(message);
             UUID uuid = msg.uuid();
