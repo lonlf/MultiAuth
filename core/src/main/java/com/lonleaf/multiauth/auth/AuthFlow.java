@@ -114,6 +114,11 @@ public class AuthFlow {
                     logger.warning(Messages.get(Messages.AUTH_DOWNTIME_FLOW, username));
                     yield handleDowntime(authManager, username, logger);
                 }
+                case RATE_LIMITED -> {
+                    // 本地 API 限流（并发洪峰触发）：fail-closed 拒绝，禁止走宕机放行路径
+                    logger.warning(Messages.get(Messages.AUTH_API_RATE_LIMITED, username));
+                    yield Result.deny(Messages.AUTH_API_RATE_LIMITED);
+                }
             };
         } finally {
             authManager.endVerification(username);
@@ -232,6 +237,11 @@ public class AuthFlow {
                     logger.warning(Messages.get(Messages.AUTH_DOWNTIME_FLOW, username));
                     yield handleDowntime(authManager, username, logger);
                 }
+                case RATE_LIMITED -> {
+                    // 本地 API 限流（并发洪峰触发）：fail-closed 拒绝，禁止走宕机放行路径
+                    logger.warning(Messages.get(Messages.AUTH_API_RATE_LIMITED, username));
+                    yield Result.deny(Messages.AUTH_API_RATE_LIMITED);
+                }
             };
         } finally {
             authManager.endVerification(username);
@@ -321,6 +331,11 @@ public class AuthFlow {
                 case API_UNREACHABLE -> {
                     logger.warning(Messages.get(Messages.AUTH_DOWNTIME_FLOW, username));
                     yield handleDowntimeForProxy(authManager, username, logger);
+                }
+                case RATE_LIMITED -> {
+                    // 本地 API 限流（并发洪峰触发）：fail-closed 拒绝，禁止走宕机放行路径
+                    logger.warning(Messages.get(Messages.AUTH_API_RATE_LIMITED, username));
+                    yield ProxyAuthResult.deny(Messages.AUTH_API_RATE_LIMITED);
                 }
             };
         } finally {

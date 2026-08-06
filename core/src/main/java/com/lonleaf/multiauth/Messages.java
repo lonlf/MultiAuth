@@ -152,6 +152,7 @@ public class Messages {
     public static volatile String AUTH_NO_LOGIN_SUMMARY;
     public static volatile String AUTH_ALLOW_WINS_DENY_IGNORED;
     public static volatile String AUTH_CONCURRENCY_FULL;
+    public static volatile String AUTH_API_RATE_LIMITED;
 
     // --- 离线玩家注册登录 ---
     public static volatile String AUTH_REGISTER_PROMPT;
@@ -709,6 +710,7 @@ public class Messages {
         AUTH_NO_LOGIN_SUMMARY = messages.getOrDefault("auth_no_login_summary", "[AUTH] Player {0} has no pre-login summary (reload race), treating as passed");
         AUTH_ALLOW_WINS_DENY_IGNORED = messages.getOrDefault("auth_allow_wins_deny_ignored", "[AUTH] Player {0} already has another connection verified (ALLOW), ignoring this DENY result from another connection");
         AUTH_CONCURRENCY_FULL = messages.getOrDefault("auth_concurrency_full", "[AUTH] Login verification concurrency limit reached, rejecting player {0} (try again later)");
+        AUTH_API_RATE_LIMITED = messages.getOrDefault("auth_api_rate_limited", "[AUTH] Mojang API rate limit reached for {0}, please try again later");
 
         AUTH_REGISTER_PROMPT = messages.getOrDefault("auth_register_prompt", "§e请先注册账号！使用 §f/register <密码> <确认密码> §e注册");
         AUTH_LOGIN_PROMPT = messages.getOrDefault("auth_login_prompt", "§e请先登录！使用 §f/login <密码> §e登录");
@@ -1282,6 +1284,7 @@ public class Messages {
             sb.append("auth_no_login_summary=[AUTH] 玩家 {0} 无预登录摘要（reload 竞态），视为通过\n");
             sb.append("auth_allow_wins_deny_ignored=[AUTH] 玩家 {0} 已有其他连接验证通过（ALLOW），忽略来自其他连接的本次 DENY 结果\n");
             sb.append("auth_concurrency_full=[AUTH] 登录验证并发已满，拒绝玩家 {0}（请稍后重试）\n");
+            sb.append("auth_api_rate_limited=[AUTH] Mojang API 请求过于频繁（{0}），请稍后再试\n");
             sb.append("# 离线玩家注册登录\n");
             sb.append("auth_register_prompt=§e请先注册账号！使用 §f/register <密码> <确认密码> §e注册\n");
             sb.append("auth_login_prompt=§e请先登录！使用 §f/login <密码> §e登录\n");
@@ -1658,6 +1661,7 @@ public class Messages {
             sb.append("auth_no_login_summary=[AUTH] Player {0} has no pre-login summary (reload race), treating as passed\n");
             sb.append("auth_allow_wins_deny_ignored=[AUTH] Player {0} already has another connection verified (ALLOW), ignoring this DENY result from another connection\n");
             sb.append("auth_concurrency_full=[AUTH] Login verification concurrency limit reached, rejecting player {0} (try again later)\n");
+            sb.append("auth_api_rate_limited=[AUTH] Mojang API rate limit reached for {0}, please try again later\n");
             sb.append("# Offline player register/login\n");
             sb.append("auth_register_prompt=§ePlease register first! Use §f/register <password> <confirm> §eto register\n");
             sb.append("auth_login_prompt=§ePlease login first! Use §f/login <password> §eto login\n");

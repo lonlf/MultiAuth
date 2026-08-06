@@ -56,6 +56,10 @@ public class AuthManager {
                 return new UsernameCheckResult(UsernameCheckResult.Status.PREMIUM, opt.get());
             }
             return new UsernameCheckResult(UsernameCheckResult.Status.NOT_PREMIUM, null);
+        } catch (MojangApiService.RateLimitException e) {
+            // 本地速率限制（并发信号量超时 / 线程中断），非 API 宕机：
+            // fail-closed 拒绝，禁止走宕机放行路径（防限流混淆绕过加密握手）
+            return new UsernameCheckResult(UsernameCheckResult.Status.RATE_LIMITED, null);
         } catch (Exception e) {
             return new UsernameCheckResult(UsernameCheckResult.Status.API_UNREACHABLE, null);
         }
@@ -63,7 +67,7 @@ public class AuthManager {
 
     /** 用户名检查结果 */
     public record UsernameCheckResult(Status status, UUID uuid) {
-        public enum Status { PREMIUM, NOT_PREMIUM, API_UNREACHABLE }
+        public enum Status { PREMIUM, NOT_PREMIUM, API_UNREACHABLE, RATE_LIMITED }
     }
 
     // ==================== Mojang 加密验证 ====================

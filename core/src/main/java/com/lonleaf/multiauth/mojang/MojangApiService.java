@@ -25,6 +25,20 @@ import java.util.logging.Logger;
 
 public class MojangApiService {
 
+    /**
+     * 本地速率限制触发（并发信号量获取超时 / 线程中断），非 Mojang API 宕机。
+     * 调用方必须 fail-closed 拒绝，禁止按宕机策略放行（防限流混淆绕过）。
+     */
+    public static class RateLimitException extends IOException {
+        public RateLimitException(String message) {
+            super(message);
+        }
+
+        public RateLimitException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
     private final Logger logger;
 
     private static final String OFFICIAL_API_BASE = "https://api.mojang.com";
@@ -151,11 +165,11 @@ public class MojangApiService {
         try {
             if (!apiRateLimiter.tryAcquire(API_ACQUIRE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 logger.warning(Messages.API_RATE_LIMIT_REACHED);
-                throw new IOException("Mojang API rate limit reached");
+                throw new RateLimitException("Mojang API rate limit reached");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IOException("Thread interrupted while waiting for rate limiter", e);
+            throw new RateLimitException("Thread interrupted while waiting for rate limiter", e);
         }
 
         try {

@@ -245,14 +245,30 @@ public class AuthService {
 
         // 异步查询账号 + 冷却检查（避免阻塞主线程）
         return CompletableFuture.supplyAsync(() -> {
+            // IP 级限流检查前置（不依赖账号是否存在）：避免未注册用户名绕过 IP 冷却
+            if (securityManager != null && config.isSecFailedLoginEnabled()) {
+                LoginSecurityManager.CheckResult ipCooldown =
+                        securityManager.checkIpCooldown(finalIp);
+                if (!ipCooldown.canProceed()) {
+                    return new LoginPreflightResult(null,
+                            Messages.get(Messages.AUTH_IP_COOLDOWN,
+                                    String.valueOf(ipCooldown.remainingSeconds())), false);
+                }
+            }
+
             AuthAccount account = database.getAuthAccount(username);
             if (account == null) {
+                // 未注册用户名：同样记录失败尝试（消耗 IP 失败计数、触发 IP 冷却），
+                // 抬高账号枚举与限流绕过成本；文案仍区分"未注册"以引导注册
+                if (securityManager != null && config.isSecFailedLoginEnabled()) {
+                    securityManager.recordFailedAttempt(username, finalIp);
+                }
                 return new LoginPreflightResult(null, Messages.AUTH_LOGIN_NOT_REGISTERED, false);
             }
             if (!sessionManager.beginProcessing(uuid)) {
                 return new LoginPreflightResult(null, Messages.AUTH_LOGIN_PROCESSING, false);
             }
-            // 安全检查：账户/IP 冷却期（命中冷却直接拒绝，不消耗密码验证线程）
+            // 安全检查：账户冷却期（IP 冷却已在上方前置检查，此处仅账户级）
             if (securityManager != null && config.isSecFailedLoginEnabled()) {
                 LoginSecurityManager.CheckResult acctCooldown =
                         securityManager.checkAccountCooldown(username);
@@ -261,14 +277,6 @@ public class AuthService {
                     return new LoginPreflightResult(null,
                             Messages.get(Messages.AUTH_ACCOUNT_COOLDOWN,
                                     String.valueOf(acctCooldown.remainingSeconds())), false);
-                }
-                LoginSecurityManager.CheckResult ipCooldown =
-                        securityManager.checkIpCooldown(finalIp);
-                if (!ipCooldown.canProceed()) {
-                    sessionManager.endProcessing(uuid);
-                    return new LoginPreflightResult(null,
-                            Messages.get(Messages.AUTH_IP_COOLDOWN,
-                                    String.valueOf(ipCooldown.remainingSeconds())), false);
                 }
             }
             return new LoginPreflightResult(account, null, true);

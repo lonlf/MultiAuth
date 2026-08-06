@@ -110,6 +110,7 @@ auth_api_only_mode=[AUTH] PacketEvents 未安装，proxy=false 降级为 API-onl
 auth_no_login_summary=[AUTH] 玩家 {0} 无预登录摘要（reload 竞态），视为通过
 auth_allow_wins_deny_ignored=[AUTH] 玩家 {0} 已有其他连接验证通过（ALLOW），忽略来自其他连接的本次 DENY 结果
 auth_concurrency_full=[AUTH] 登录验证并发已满，拒绝玩家 {0}（请稍后重试）
+auth_api_rate_limited=[AUTH] Mojang API 请求过于频繁（{0}），请稍后再试
 deny_reason_db_unavailable=数据库不可用
 deny_reason_authmanager_not_initialized=AuthManager 未初始化
 deny_reason_concurrent_login=并发登录被阻止

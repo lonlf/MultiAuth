@@ -110,6 +110,7 @@ auth_api_only_mode=[AUTH] PacketEvents not installed, proxy=false degraded to AP
 auth_no_login_summary=[AUTH] Player {0} has no pre-login summary (reload race), treating as passed
 auth_allow_wins_deny_ignored=[AUTH] Player {0} already has another connection verified (ALLOW), ignoring this DENY result from another connection
 auth_concurrency_full=[AUTH] Login verification concurrency limit reached, rejecting player {0} (try again later)
+auth_api_rate_limited=[AUTH] Mojang API rate limit reached for {0}, please try again later
 deny_reason_db_unavailable=database unavailable
 deny_reason_authmanager_not_initialized=AuthManager not initialized
 deny_reason_concurrent_login=concurrent login blocked
