@@ -199,6 +199,7 @@ public class Messages {
     public static volatile String SEC_QUERY_IP_STATS_FAILED;
     public static volatile String SEC_INCREMENT_IP_ACCOUNT_FAILED;
     public static volatile String SEC_DECREMENT_IP_ACCOUNT_FAILED;
+    public static volatile String SEC_GEO_CHECK_SKIPPED_LOG;
 
     // --- 日志参数：拒绝/放行原因与登录类型标签（可配置） ---
     public static volatile String DENY_REASON_DB_UNAVAILABLE;
@@ -753,6 +754,7 @@ public class Messages {
         AUTH_GEO_CROSS_CITY = messages.getOrDefault("auth_geo_cross_city", "§e警告：检测到跨城市登录（上次：§f{0}§e，当前：§f{1}§e）。");
         AUTH_GEO_REQUIRE_LOGIN = messages.getOrDefault("auth_geo_require_login", "§e检测到异地登录，需重新输入密码验证。");
         SEC_QUERY_IP_STATS_FAILED = messages.getOrDefault("sec_query_ip_stats_failed", "[SEC] Failed to query ip stats for {0}: {1}");
+        SEC_GEO_CHECK_SKIPPED_LOG = messages.getOrDefault("sec_geo_check_skipped_log", "[SEC] Geo/history query failed for {0}, geo security checks skipped (fail-open)");
         SEC_INCREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("sec_increment_ip_account_failed", "[SEC] Failed to increment ip account count for {0}: {1}");
         SEC_DECREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("sec_decrement_ip_account_failed", "[SEC] Failed to decrement ip account count for {0}: {1}");
         DENY_REASON_DB_UNAVAILABLE = messages.getOrDefault("deny_reason_db_unavailable", "database unavailable");
@@ -1317,6 +1319,7 @@ public class Messages {
 
             sb.append("# 安全增强（SEC）\n");
             sb.append("sec_query_ip_stats_failed=[SEC] 查询 IP {0} 的统计信息失败: {1}\n");
+            sb.append("sec_geo_check_skipped_log=[SEC] 玩家 {0} 的地理/历史查询失败，异地登录安全检测已跳过\n");
             sb.append("sec_increment_ip_account_failed=[SEC] 递增 IP {0} 的账号计数失败: {1}\n");
             sb.append("sec_decrement_ip_account_failed=[SEC] 递减 IP {0} 的账号计数失败: {1}\n\n");
 
@@ -1694,6 +1697,7 @@ public class Messages {
 
             sb.append("# Security (SEC)\n");
             sb.append("sec_query_ip_stats_failed=[SEC] Failed to query ip stats for {0}: {1}\n");
+            sb.append("sec_geo_check_skipped_log=[SEC] Geo/history query failed for {0}, geo security checks skipped (fail-open)\n");
             sb.append("sec_increment_ip_account_failed=[SEC] Failed to increment ip account count for {0}: {1}\n");
             sb.append("sec_decrement_ip_account_failed=[SEC] Failed to decrement ip account count for {0}: {1}\n\n");
 

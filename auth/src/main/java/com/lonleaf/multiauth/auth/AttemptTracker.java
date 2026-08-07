@@ -36,8 +36,11 @@ public record AttemptTracker(int count, long lastTime, long cooldownUntil) {
         return new AttemptTracker(0, 0, 0);
     }
 
-    /** 是否达到阈值 */
+    /** 是否达到阈值（maxAttempts <= 0 视为不限制，避免 count >= 0 恒真导致每次失败即触发） */
     public boolean reachedThreshold(int maxAttempts) {
+        if (maxAttempts <= 0) {
+            return false;
+        }
         return count >= maxAttempts;
     }
 }

@@ -146,12 +146,12 @@ auth:
       enabled: true
       # 账户级别：保护单个账户不被暴力破解
       account:
-        max-attempts: 5            # 最大失败次数，达到后进入冷却
+        max-attempts: 5            # 最大失败次数，达到后进入冷却（0=不限制）
         cooldown: 300              # 冷却时间（秒），冷却期内拒绝登录
         reset-on-success: true     # 登录成功后重置计数
       # IP 级别：防止同一 IP 对多账户批量尝试
       ip:
-        max-attempts: 10           # 单 IP 跨账户最大失败次数
+        max-attempts: 10           # 单 IP 跨账户最大失败次数（0=不限制）
         cooldown: 600              # IP 封禁冷却时间（秒）
         reset-on-success: false    # IP 级别不随单次成功重置
 

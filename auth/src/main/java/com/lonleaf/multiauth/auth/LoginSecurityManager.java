@@ -110,7 +110,8 @@ public class LoginSecurityManager {
         }
 
         boolean shouldKick = accountCooldownTriggered.get() || ipCooldownTriggered.get();
-        int remaining = Math.max(0, accountMax - accountCount.get());
+        // 0=不限制时 remaining 用 MAX_VALUE 表示"无限"，调用方据此不展示剩余次数提示
+        int remaining = (accountMax <= 0) ? Integer.MAX_VALUE : Math.max(0, accountMax - accountCount.get());
         return new FailureResult(shouldKick, remaining,
                 accountCooldownTriggered.get(), ipCooldownTriggered.get());
     }
@@ -192,8 +193,13 @@ public class LoginSecurityManager {
 
     // ==================== IP 在线限制 ====================
 
-    /** 该 IP 是否还可以有账号加入服务器 */
-    public boolean canJoin(String ip) {
+    /**
+     * 原子检查并登记在线账号（检查与登记在同一 compute 内完成，避免 TOCTOU 竞态：
+     * 分离的 canJoin + onPlayerJoin 在高并发下可同时通过检查导致在线数超出上限）。
+     *
+     * @return true = 允许加入并已登记；false = 达到在线上限
+     */
+    public boolean canJoinAndRegister(String ip, String username) {
         if (!config.isSecIpLimitsEnabled()) {
             return true;
         }
@@ -201,22 +207,20 @@ public class LoginSecurityManager {
         if (max <= 0) {
             return true;
         }
-        if (ip == null) {
-            return true;
-        }
-        Set<String> accounts = ipOnlineAccounts.get(ip);
-        if (accounts == null) {
-            return true;
-        }
-        return accounts.size() < max;
-    }
-
-    /** 玩家加入服务器时记录在线账号 */
-    public void onPlayerJoin(String ip, String username) {
         if (ip == null || username == null) {
-            return;
+            return true;
         }
-        ipOnlineAccounts.computeIfAbsent(ip, k -> ConcurrentHashMap.newKeySet()).add(username);
+        AtomicBoolean allowed = new AtomicBoolean(true);
+        ipOnlineAccounts.compute(ip, (k, set) -> {
+            Set<String> cur = (set == null) ? ConcurrentHashMap.newKeySet() : set;
+            if (cur.size() >= max) {
+                allowed.set(false);
+                return cur;
+            }
+            cur.add(username);
+            return cur;
+        });
+        return allowed.get();
     }
 
     /** 玩家退出服务器时移除在线账号 */
@@ -232,11 +236,13 @@ public class LoginSecurityManager {
 
     // ==================== 清理 ====================
 
-    /** 清空所有内存数据（reload 时调用） */
+    /**
+     * 清空失败计数（reload 时调用，解除冷却）。
+     * 保留 ipOnlineAccounts（在线玩家未退出，计数仍有效）与 registeringIps
+     * （进行中的注册不受 reload 影响，避免并发注册竞态）。
+     */
     public void clear() {
         accountAttempts.clear();
         ipAttempts.clear();
-        ipOnlineAccounts.clear();
-        registeringIps.clear();
     }
 }

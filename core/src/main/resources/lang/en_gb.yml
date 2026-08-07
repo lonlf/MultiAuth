@@ -376,5 +376,6 @@ auth_unregister_kick=§cYour account has been deleted by an admin. Please re-reg
 
 # Security (SEC)
 sec_query_ip_stats_failed=[SEC] Failed to query ip stats for {0}: {1}
+sec_geo_check_skipped_log=[SEC] Geo/history query failed for {0}, geo security checks skipped (fail-open)
 sec_increment_ip_account_failed=[SEC] Failed to increment ip account count for {0}: {1}
 sec_decrement_ip_account_failed=[SEC] Failed to decrement ip account count for {0}: {1}

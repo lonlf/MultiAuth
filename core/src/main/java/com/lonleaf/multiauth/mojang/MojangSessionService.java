@@ -44,7 +44,7 @@ public class MojangSessionService {
         }
     }
 
-    public HasJoinedResult hasJoinedDetailed(String username, String serverId) {
+    public HasJoinedResult hasJoinedDetailed(String username, String serverId, String ip) {
         try {
             // tryAcquire 带超时：并发槽位长时间无法获取时按宕机处理，避免无限阻塞验证线程（#6）
             if (!HAS_JOINED_SEMAPHORE.tryAcquire(5, java.util.concurrent.TimeUnit.SECONDS)) {
@@ -55,19 +55,24 @@ public class MojangSessionService {
             return new HasJoinedResult(HasJoinedResult.Status.MOJANG_UNREACHABLE, null);
         }
         try {
-            return doHasJoined(username, serverId);
+            return doHasJoined(username, serverId, ip);
         } finally {
             HAS_JOINED_SEMAPHORE.release();
         }
     }
 
-    private HasJoinedResult doHasJoined(String username, String serverId) {
+    private HasJoinedResult doHasJoined(String username, String serverId, String ip) {
         try {
             String encodedUsername = URLEncoder.encode(username, StandardCharsets.UTF_8);
-            String url = SESSION_SERVER + "/session/minecraft/hasJoined?username=" + encodedUsername + "&serverId=" + serverId;
+            StringBuilder url = new StringBuilder(SESSION_SERVER
+                    + "/session/minecraft/hasJoined?username=" + encodedUsername + "&serverId=" + serverId);
+            // ip 参数：让 Mojang 校验会话须来自该 IP（防止 serverId 被跨 IP 重放）；IP 未知时不携带
+            if (ip != null && !ip.isBlank()) {
+                url.append("&ip=").append(URLEncoder.encode(ip, StandardCharsets.UTF_8));
+            }
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(URI.create(url.toString()))
                     .timeout(Duration.ofSeconds(10))
                     .GET()
                     .build();

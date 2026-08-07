@@ -57,14 +57,14 @@ public class AuthJoinListener implements Listener {
 
         AuthConfig authConfig = config.getConfig();
 
-        // 安全检查：单 IP 在线账号数限制（正版和离线玩家均受限）
-        if (!authService.canJoin(ip)) {
+        // 安全检查：单 IP 在线账号数限制（正版和离线玩家均受限）。
+        // canJoinAndRegister 原子完成检查+登记，避免 TOCTOU 竞态超限
+        if (!authService.canJoinAndRegister(ip, username)) {
             player.kickPlayer(Messages.AUTH_IP_ONLINE_LIMIT);
             plugin.getLogger().warning(Messages.get(Messages.SEC_JOIN_ONLINE_LIMIT_KICK_LOG,
                     username, ip, String.valueOf(authConfig.getSecMaxOnlinePerIp())));
             return;
         }
-        authService.onPlayerJoin(ip, username);
 
         // 正版玩家标记为已登录，离线玩家为未登录
         if (!state.isOfflinePlayer(username, uuid)) {

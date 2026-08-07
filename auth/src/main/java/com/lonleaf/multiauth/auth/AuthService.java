@@ -213,6 +213,9 @@ public class AuthService {
                 return new AuthResult(false, Messages.AUTH_REGISTER_FAILED);
             });
         }).exceptionally(e -> {
+            // 最外层兜底：内层 exceptionally/finally 已覆盖常规异常，此处防御 Error 等极端场景
+            // （remove 幂等安全；IP 注册锁已在 thenCompose 内 finally 覆盖）
+            registeringUsernames.remove(username);
             logger.log(Level.WARNING, Messages.get(Messages.AUTH_REGISTER_FAILED_LOG,
                     username, e.getMessage()), e);
             return new AuthResult(false, Messages.AUTH_REGISTER_FAILED);
@@ -298,6 +301,8 @@ public class AuthService {
                 } catch (Exception ex) {
                     logger.log(Level.WARNING, Messages.get(Messages.AUTH_GEO_HISTORY_QUERY_FAILED_LOG,
                             username, ex.getMessage()), ex);
+                    // 地理/历史上下文不可用：异地登录安全检测将被跳过（fail-open + 显式留痕）
+                    logger.warning(Messages.get(Messages.SEC_GEO_CHECK_SKIPPED_LOG, username));
                     return new GeoContext(null, null, null);
                 }
             });
@@ -723,27 +728,18 @@ public class AuthService {
     }
 
     /**
-     * 检查 IP 是否允许新玩家加入（基于单 IP 在线账号数限制）。
-     * 由 AuthListener 在玩家加入时调用。
+     * 原子检查并登记在线账号（基于单 IP 在线账号数限制）。
+     * 由 AuthListener 在玩家加入时调用；检查与登记在同一原子操作内完成，避免 TOCTOU 竞态。
      *
-     * @param ip 玩家 IP
-     * @return true 表示允许加入
+     * @param ip       玩家 IP
+     * @param username 玩家名
+     * @return true = 允许加入并已登记；false = 达到在线上限
      */
-    public boolean canJoin(String ip) {
+    public boolean canJoinAndRegister(String ip, String username) {
         if (securityManager == null || !config.isSecIpLimitsEnabled()) {
             return true;
         }
-        return securityManager.canJoin(ip);
-    }
-
-    /**
-     * 通知安全管理器玩家已加入服务器（用于 IP 在线账号计数）。
-     * 由 AuthListener 在玩家加入时调用。
-     */
-    public void onPlayerJoin(String ip, String username) {
-        if (securityManager != null) {
-            securityManager.onPlayerJoin(ip, username);
-        }
+        return securityManager.canJoinAndRegister(ip, username);
     }
 
     // ==================== 关闭 ====================

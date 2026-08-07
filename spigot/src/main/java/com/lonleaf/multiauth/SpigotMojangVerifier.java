@@ -126,9 +126,25 @@ public class SpigotMojangVerifier {
                         MojangSessionService.HasJoinedResult.Status.NOT_PREMIUM, null);
             }
 
+            // 获取客户端 IP 随 hasJoined 请求提交（Mojang 校验会话须来自该 IP，防止 serverId 跨 IP 重放）。
+            // 仅公网 IPv4 携带 ip 参数（参考 FastLogin/CraftAPI 的处理）：
+            // 1) 回环/私网/链路本地：Mojang 会话记录的是客户端公网出口 IP，本地/内网测试时与服务器看到的内网
+            //    地址必然不一致，带 ip 会返回 204 导致验证失败；
+            // 2) IPv6 一律不携带：Mojang 对 IPv6 地址校验存在缺陷，CraftAPI 亦跳过（含 ULA fc00::/7，
+            //    其不在 Java isSiteLocalAddress 覆盖范围内）
+            String clientIp = null;
+            if (channel.remoteAddress() instanceof java.net.InetSocketAddress socketAddr) {
+                java.net.InetAddress addr = socketAddr.getAddress();
+                if (addr != null && !(addr instanceof java.net.Inet6Address)
+                        && !addr.isLoopbackAddress()
+                        && !addr.isSiteLocalAddress() && !addr.isLinkLocalAddress()) {
+                    clientIp = addr.getHostAddress();
+                }
+            }
+
             // 计算 serverId 并调用 hasJoined 验证（复用已解密的 sharedSecret，避免重复 RSA 解密）
             MojangSessionService.HasJoinedResult result = authManager.verifyWithMojangDetailed(
-                    username, crypto, decryptedSharedSecret);
+                    username, crypto, decryptedSharedSecret, clientIp);
 
             if (result.status() == MojangSessionService.HasJoinedResult.Status.SUCCESS) {
                 UUID premiumUuid = result.profile().uuid();

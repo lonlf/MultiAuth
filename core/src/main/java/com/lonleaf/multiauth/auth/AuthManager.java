@@ -76,10 +76,10 @@ public class AuthManager {
      * 基于已解密的 sharedSecret 计算 serverId 并调用 hasJoined，返回详细结果（区分盗版与 Mojang 宕机）。
      */
     public MojangSessionService.HasJoinedResult verifyWithMojangDetailed(String username, AuthCrypto crypto,
-                                                                         byte[] sharedSecret) {
+                                                                         byte[] sharedSecret, String ip) {
         try {
             String serverId = crypto.computeServerId(sharedSecret);
-            return mojangService.hasJoinedDetailed(username, serverId);
+            return mojangService.hasJoinedDetailed(username, serverId, ip);
         } catch (Exception e) {
             return new MojangSessionService.HasJoinedResult(
                     MojangSessionService.HasJoinedResult.Status.MOJANG_UNREACHABLE, null);

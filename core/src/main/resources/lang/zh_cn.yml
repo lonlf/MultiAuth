@@ -376,5 +376,6 @@ auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。
 
 # 安全增强（SEC）
 sec_query_ip_stats_failed=[SEC] 查询 IP {0} 的统计信息失败: {1}
+sec_geo_check_skipped_log=[SEC] 玩家 {0} 的地理/历史查询失败，异地登录安全检测已跳过
 sec_increment_ip_account_failed=[SEC] 递增 IP {0} 的账号计数失败: {1}
 sec_decrement_ip_account_failed=[SEC] 递减 IP {0} 的账号计数失败: {1}
