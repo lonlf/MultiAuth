@@ -305,6 +305,13 @@ public class SpigotAuthListener implements Listener {
 
         PlayerRecord record = authManager.getPlayerRecord(username);
         if (record == null) {
+            // 查询失败与"确无记录"无法区分（getPlayerRecord 内部吞异常返回 null）：
+            // 二次校验数据库健康，心跳窗口内 DB 故障时按拒绝处理，禁止按"首次登录"放行（fail-closed）
+            if (!core.isDatabaseHealthy()) {
+                logger.warning(Messages.get(Messages.AUTH_PLAYER_DENIED, username, Messages.DENY_REASON_DB_UNAVAILABLE));
+                denyAsync(event, Messages.AUTH_DATABASE_UNAVAILABLE);
+                return;
+            }
             // 无记录 → 首次登录，允许（代理端会写入记录；如数据库未共享则本机同步写入正版记录）
             logger.info(Messages.get(Messages.AUTH_PLAYER_ALLOWED, username,
                     Messages.ALLOW_REASON_NO_RECORD, playerUuid.toString()));

@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -71,7 +72,10 @@ public class VelocityAuthListener {
             4, 16, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(100),
             r -> { Thread t = new Thread(r, "multiauth-velocity-verify-" + velocityThreadCounter.incrementAndGet()); t.setDaemon(true); return t; },
-            new ThreadPoolExecutor.CallerRunsPolicy());
+            // AbortPolicy：队列满时 submit 抛 RejectedExecutionException（onPreLogin 捕获后快速拒绝）。
+            // 禁用 CallerRunsPolicy——它会将阻塞 HTTP 验证内联到事件线程，使 12s 硬超时失效
+            // 并阻塞该 eventLoop 上所有连接的握手
+            new ThreadPoolExecutor.AbortPolicy());
 
     /** 单次预登录验证的硬超时（秒）：兜底防止 evaluateForProxy 内部异常/死循环导致事件线程长期挂起 */
     private static final long VERIFY_TIMEOUT_SECONDS = 12L;
@@ -154,8 +158,19 @@ public class VelocityAuthListener {
             InboundConnection connection = event.getConnection();
             // PreLoginEvent 需同步设置结果，无法完全异步化。将阻塞 HTTP 调度到独立有界线程池执行，
             // event 线程通过 future.get(timeout) 等待结果，硬超时兜底防止验证异常导致事件线程长期挂起。
-            Future<AuthFlow.ProxyAuthResult> future = verificationExecutor.submit(() ->
-                    AuthFlow.evaluateForProxy(core, config.getConfig(), username, core.getLogger()));
+            Future<AuthFlow.ProxyAuthResult> future;
+            try {
+                future = verificationExecutor.submit(() ->
+                        AuthFlow.evaluateForProxy(core, config.getConfig(), username, core.getLogger()));
+            } catch (RejectedExecutionException ree) {
+                // 队列已满：快速拒绝而非阻塞事件线程（CallerRunsPolicy 会把 HTTP 内联到事件线程，
+                // 使超时失效并阻塞该 eventLoop 上的其他连接）
+                logger.warn(Messages.get(Messages.AUTH_CONCURRENCY_FULL, username));
+                String busyMsg = Messages.get(Messages.AUTH_SERVER_BUSY).replace("\\n", "\n");
+                event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
+                        LegacyComponentSerializer.legacySection().deserialize(busyMsg)));
+                return;
+            }
             AuthFlow.ProxyAuthResult result;
             try {
                 result = future.get(VERIFY_TIMEOUT_SECONDS, TimeUnit.SECONDS);

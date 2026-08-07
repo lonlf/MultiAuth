@@ -166,7 +166,12 @@ public class SpigotPacketListener extends PacketListenerAbstract {
                         verifiedUsers.remove(st.username);
                     }
                 }
-                pendingHandshakes.remove(ch);
+                PendingHandshake hs = pendingHandshakes.remove(ch);
+                if (hs != null) {
+                    // 立即释放 verify() 等待线程：channel 已关闭，EncryptionResponse 永远不会到来，
+                    // 不 complete future 会让 verify 线程白等满 5s（恶意"连上即断"可打满验证线程池）
+                    hs.future.completeExceptionally(new java.nio.channels.ClosedChannelException());
+                }
             });
 
             // 获取客户端 IP

@@ -95,9 +95,15 @@ public class SpigotMojangVerifier {
                 return new MojangSessionService.HasJoinedResult(
                         MojangSessionService.HasJoinedResult.Status.NOT_PREMIUM, null);
             } catch (java.util.concurrent.ExecutionException e) {
-                // 客户端发送了非法/损坏的 EncryptionResponse（解析失败）
-                logger.warning(Messages.get(Messages.VERIFY_ENC_RESPONSE_PARSE_FAILED, username,
-                        e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
+                // 客户端发送了非法/损坏的 EncryptionResponse（解析失败），
+                // 或连接在验证完成前断开（closeFuture 主动 completeExceptionally）
+                Throwable cause = e.getCause() != null ? e.getCause() : e;
+                if (cause instanceof java.nio.channels.ClosedChannelException) {
+                    logger.warning(Messages.get(Messages.AUTH_DENY_CLIENT_DISCONNECTED, username));
+                } else {
+                    logger.warning(Messages.get(Messages.VERIFY_ENC_RESPONSE_PARSE_FAILED, username,
+                            cause.getMessage()));
+                }
                 return new MojangSessionService.HasJoinedResult(
                         MojangSessionService.HasJoinedResult.Status.NOT_PREMIUM, null);
             } catch (InterruptedException e) {
