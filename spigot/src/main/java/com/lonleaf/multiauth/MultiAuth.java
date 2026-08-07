@@ -92,7 +92,7 @@ public final class MultiAuth extends JavaPlugin {
             getServer().getPluginManager().registerEvents(authJoinListener, this);
             getServer().getPluginManager().registerEvents(restrictionListener, this);
             // 建立 SpigotAuthListener → AuthState 的引用，
-            // 使 SpigotAuthListener.onPlayerJoin 能预填充 premiumCache
+            // 使 SpigotAuthListener.onPlayerJoin 能预填充 offlinePlayerCache
             this.authListener.setAuthState(this.authState);
             // 注册 register / login / changepassword 命令（AuthCommandManager 内部完成注册）
             new AuthCommandManager(this, authService);

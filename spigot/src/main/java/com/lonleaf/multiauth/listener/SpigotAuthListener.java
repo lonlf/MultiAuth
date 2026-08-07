@@ -44,7 +44,7 @@ public class SpigotAuthListener implements Listener {
     // volatile：reload 时在主线程更新，验证回调在 PacketEvents 线程读取，需保证可见性（#7）
     private volatile SpigotPacketListener packetListener;
 
-    /** AuthState 引用（用于 onPlayerJoin 时预填充 premiumCache，避免主线程查库） */
+    /** AuthState 引用（用于 onPlayerJoin 时预填充 offlinePlayerCache，避免主线程查库） */
     private AuthState authState;
 
     /** 验证线程计数器（用于线程命名，提为字段避免每次创建新实例） */
@@ -99,7 +99,7 @@ public class SpigotAuthListener implements Listener {
     }
 
     /**
-     * 设置 AuthState 引用（onPlayerJoin 时预填充 premiumCache，避免主线程查库）。
+     * 设置 AuthState 引用（onPlayerJoin 时预填充 offlinePlayerCache，避免主线程查库）。
      */
     public void setAuthState(AuthState state) {
         this.authState = state;
@@ -528,9 +528,9 @@ public class SpigotAuthListener implements Listener {
             logger.fine(Messages.get(Messages.AUTH_NO_LOGIN_SUMMARY_DEBUG, username));
             boolean prem = config.isUseMojangUuid()
                     && !AuthManager.generateOfflineUuid(username).equals(playerUuid);
-            // 预填充 premiumCache（即使无摘要，也尽量避免 AuthState 主线程查库）
+            // 预填充 offlinePlayerCache（即使无摘要，也尽量避免 AuthState 主线程查库）
             if (authState != null) {
-                authState.preFillPremiumCache(playerUuid, prem);
+                authState.preFillOfflineCache(playerUuid, !prem);
             }
             notifyLoginStatus(player, username, playerUuid, prem);
             return;
@@ -539,9 +539,9 @@ public class SpigotAuthListener implements Listener {
         boolean isActualPremium = summary.isPremium();
         PlayerRecord record = summary.record();
 
-        // 预填充 AuthState 的 premiumCache（use-mojang-uuid=false 时避免主线程查库）
+        // 预填充 AuthState 的 offlinePlayerCache（use-mojang-uuid=false 时避免主线程查库）
         if (authState != null) {
-            authState.preFillPremiumCache(playerUuid, isActualPremium);
+            authState.preFillOfflineCache(playerUuid, !isActualPremium);
         }
 
         // 代理模式 + 实际是正版 UUID：记录同步已在预登录异步阶段完成

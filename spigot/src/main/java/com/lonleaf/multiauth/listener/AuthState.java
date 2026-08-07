@@ -36,8 +36,8 @@ public class AuthState {
     /** 玩家被强制冒险模式前的原始游戏模式，玩家 UUID → GameMode */
     private final ConcurrentMap<UUID, GameMode> originalGameModes = new ConcurrentHashMap<>();
 
-    /** 玩家是否为离线玩家缓存（use-mojang-uuid=false 时避免每次事件查库），UUID → isOffline */
-    private final ConcurrentMap<UUID, Boolean> premiumCache = new ConcurrentHashMap<>();
+    /** 离线玩家标记缓存（use-mojang-uuid=false 时避免每次事件查库），UUID → isOffline */
+    private final ConcurrentMap<UUID, Boolean> offlinePlayerCache = new ConcurrentHashMap<>();
 
     /** 允许未登录玩家使用的命令（从配置加载，不区分大小写） */
     private volatile Set<String> allowedCommands = Set.of("register", "login", "reg", "l");
@@ -65,14 +65,17 @@ public class AuthState {
         return allowedCommands.contains(cmdName);
     }
 
-    // ==================== 正版玩家缓存 ====================
+    // ==================== 离线玩家标记缓存 ====================
 
     /**
-     * 预填充 premiumCache（由 SpigotAuthListener.onPlayerJoin 调用，先于 AuthJoinListener.onPlayerJoin 执行）。
+     * 预填充 offlinePlayerCache（由 SpigotAuthListener.onPlayerJoin 调用，先于 AuthJoinListener.onPlayerJoin 执行）。
      * 利用预登录异步阶段已查到的 PlayerRecord 判断是否正版，避免主线程查库。
+     *
+     * @param uuid      玩家 UUID
+     * @param isOffline 是否为离线玩家（调用方需将 isPremium 反相后传入）
      */
-    public void preFillPremiumCache(UUID uuid, boolean isPremium) {
-        premiumCache.put(uuid, !isPremium);
+    public void preFillOfflineCache(UUID uuid, boolean isOffline) {
+        offlinePlayerCache.put(uuid, isOffline);
     }
 
     // ==================== 位置冻结 ====================
@@ -131,7 +134,7 @@ public class AuthState {
         if (config.isUseMojangUuid()) {
             return uuid.equals(offlineUuid);
         }
-        Boolean cached = premiumCache.get(uuid);
+        Boolean cached = offlinePlayerCache.get(uuid);
         if (cached != null) {
             return cached;
         }
@@ -142,7 +145,7 @@ public class AuthState {
         }
         PlayerRecord record = core.getAuthManager().getPlayerRecord(username);
         boolean offline = record == null || !record.isPremium();
-        premiumCache.put(uuid, offline);
+        offlinePlayerCache.put(uuid, offline);
         return offline;
     }
 
@@ -183,7 +186,7 @@ public class AuthState {
     public void clearAll() {
         frozenLocations.clear();
         originalGameModes.clear();
-        premiumCache.clear();
+        offlinePlayerCache.clear();
         for (BukkitTask task : timeoutTasks.values()) {
             task.cancel();
         }
@@ -194,7 +197,7 @@ public class AuthState {
     public void clearPlayerState(UUID uuid) {
         originalGameModes.remove(uuid);
         frozenLocations.remove(uuid);
-        premiumCache.remove(uuid);
+        offlinePlayerCache.remove(uuid);
         cancelTimeout(uuid);
     }
 }
