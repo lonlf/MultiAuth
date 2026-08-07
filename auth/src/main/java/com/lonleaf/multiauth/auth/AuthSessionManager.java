@@ -1,5 +1,6 @@
 package com.lonleaf.multiauth.auth;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -19,6 +20,11 @@ public class AuthSessionManager {
 
     /** 持久化会话信息：玩家用户名 → SessionInfo（退出后保留，用于重连免登录） */
     private final Map<String, SessionInfo> persistentSessions = new ConcurrentHashMap<>();
+
+    /** 规范化用户名：统一小写（与 DAO 层一致，避免大小写变体产生重复会话记录） */
+    private static String normName(String username) {
+        return username == null ? null : username.toLowerCase(Locale.ROOT);
+    }
 
     /**
      * 会话信息记录。
@@ -49,7 +55,7 @@ public class AuthSessionManager {
     public void setLoggedIn(UUID uuid, String username, String ip) {
         loggedInPlayers.add(uuid);
         processingPlayers.remove(uuid);
-        persistentSessions.put(username, new SessionInfo(username, System.currentTimeMillis(), ip));
+        persistentSessions.put(normName(username), new SessionInfo(username, System.currentTimeMillis(), ip));
     }
 
     /**
@@ -94,7 +100,7 @@ public class AuthSessionManager {
         if (timeoutMinutes <= 0) {
             return false; // 会话超时禁用
         }
-        SessionInfo info = persistentSessions.get(username);
+        SessionInfo info = persistentSessions.get(normName(username));
         if (info == null) {
             return false; // 无历史会话
         }
@@ -105,7 +111,7 @@ public class AuthSessionManager {
         // 检查是否在超时时间内
         long elapsed = System.currentTimeMillis() - info.loginTime();
         if (elapsed > timeoutMinutes * 60_000L) {
-            persistentSessions.remove(username); // 超时，清除会话
+            persistentSessions.remove(normName(username)); // 超时，清除会话
             return false;
         }
         // 会话有效，恢复登录状态（不更新时间戳，由调用方在安全检查通过后调用 confirmSessionResume）
@@ -120,7 +126,7 @@ public class AuthSessionManager {
      * @return 持久会话 IP，无会话返回 null
      */
     public String getPersistentSessionIp(String username) {
-        SessionInfo info = persistentSessions.get(username);
+        SessionInfo info = persistentSessions.get(normName(username));
         return info != null ? info.ip() : null;
     }
 
@@ -131,7 +137,7 @@ public class AuthSessionManager {
      * @param ip       当前 IP
      */
     public void confirmSessionResume(String username, String ip) {
-        persistentSessions.put(username, new SessionInfo(username, System.currentTimeMillis(), ip));
+        persistentSessions.put(normName(username), new SessionInfo(username, System.currentTimeMillis(), ip));
     }
 
     /**
@@ -151,7 +157,7 @@ public class AuthSessionManager {
      * @param username 玩家用户名
      */
     public void removePersistentSession(String username) {
-        persistentSessions.remove(username);
+        persistentSessions.remove(normName(username));
     }
 
     /**

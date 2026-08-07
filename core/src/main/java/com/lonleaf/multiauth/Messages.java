@@ -200,6 +200,8 @@ public class Messages {
     public static volatile String SEC_INCREMENT_IP_ACCOUNT_FAILED;
     public static volatile String SEC_DECREMENT_IP_ACCOUNT_FAILED;
     public static volatile String SEC_GEO_CHECK_SKIPPED_LOG;
+    public static volatile String SEC_GEO_DB_FAILED_DENY_LOG;
+    public static volatile String AUTH_STATE_AUTHMANAGER_MISSING_LOG;
 
     // --- 日志参数：拒绝/放行原因与登录类型标签（可配置） ---
     public static volatile String DENY_REASON_DB_UNAVAILABLE;
@@ -234,6 +236,7 @@ public class Messages {
     public static volatile String AUTH_AUDIT_DOWNTIME_PREMIUM_HISTORY;
     public static volatile String AUTH_AUDIT_API_ONLY_AUTHLIST;
     public static volatile String AUTH_AUDIT_API_ONLY_PREMIUM;
+    public static volatile String AUTH_AUDIT_HASJOINED_RATE_LIMITED;
 
     // --- 配置相关 ---
     public static volatile String CONFIG_LOADED;
@@ -274,6 +277,7 @@ public class Messages {
     public static volatile String VERIFY_SPOOFED_FAILED;
     public static volatile String VERIFY_PACKET_HANDLER_MISSING;
     public static volatile String VERIFY_CONNECTION_FAILED;
+    public static volatile String VERIFY_HANDLER_ROLLBACK_DEBUG;
 
     // --- 命令相关 ---
     public static volatile String CMD_HELP;
@@ -755,6 +759,10 @@ public class Messages {
         AUTH_GEO_REQUIRE_LOGIN = messages.getOrDefault("auth_geo_require_login", "§e检测到异地登录，需重新输入密码验证。");
         SEC_QUERY_IP_STATS_FAILED = messages.getOrDefault("sec_query_ip_stats_failed", "[SEC] Failed to query ip stats for {0}: {1}");
         SEC_GEO_CHECK_SKIPPED_LOG = messages.getOrDefault("sec_geo_check_skipped_log", "[SEC] Geo/history query failed for {0}, geo security checks skipped (fail-open)");
+        SEC_GEO_DB_FAILED_DENY_LOG = messages.getOrDefault("sec_geo_db_failed_deny_log",
+                "[AUDIT] Login denied for {0} - geolocation security check data query failed (fail-closed), error {1}");
+        AUTH_STATE_AUTHMANAGER_MISSING_LOG = messages.getOrDefault("auth_state_authmanager_missing_log",
+                "[AUTH] AuthManager not initialized, cannot determine player type, {0} treated as offline player (fail-closed)");
         SEC_INCREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("sec_increment_ip_account_failed", "[SEC] Failed to increment ip account count for {0}: {1}");
         SEC_DECREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("sec_decrement_ip_account_failed", "[SEC] Failed to decrement ip account count for {0}: {1}");
         DENY_REASON_DB_UNAVAILABLE = messages.getOrDefault("deny_reason_db_unavailable", "database unavailable");
@@ -793,6 +801,8 @@ public class Messages {
                 "[AUDIT] Player {0} DENIED - auth-list forced verification cannot be satisfied in API-only mode");
         AUTH_AUDIT_API_ONLY_PREMIUM = messages.getOrDefault("auth_audit_api_only_premium",
                 "[AUDIT] Player {0} DENIED - premium username cannot complete encrypted verification in API-only mode");
+        AUTH_AUDIT_HASJOINED_RATE_LIMITED = messages.getOrDefault("auth_audit_hasjoined_rate_limited",
+                "[AUDIT] Player {0} DENIED - hasJoined verification rate-limited (local concurrency, not outage), premium verification cannot complete");
 
         CONFIG_LOADED = messages.getOrDefault("config_loaded", "Config loaded: proxy={0}, db-type={1}");
         CONFIG_RELOADED = messages.getOrDefault("config_reloaded", "Reloading config...");
@@ -832,6 +842,8 @@ public class Messages {
         VERIFY_SPOOFED_FAILED = messages.getOrDefault("verify_spoofed_failed", "[VERIFY] Setting spoofedUUID failed: {0}");
         VERIFY_PACKET_HANDLER_MISSING = messages.getOrDefault("verify_packet_handler_missing", "[VERIFY] packet_handler not found");
         VERIFY_CONNECTION_FAILED = messages.getOrDefault("verify_connection_failed", "[VERIFY] Failed to get Connection: {0}");
+        VERIFY_HANDLER_ROLLBACK_DEBUG = messages.getOrDefault("verify_handler_rollback_debug",
+                "[DEBUG] Failed to rollback {0} handler: {1}");
 
         CMD_HELP = messages.getOrDefault("cmd_help", "MultiAuth Commands:\n  /multiauth reload  - Reload config\n  /multiauth status  - Show plugin status\n  /multiauth backup  - Force database backup\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)");
         CMD_NO_PERMISSION = messages.getOrDefault("cmd_no_permission", "§cYou don't have permission to use this command.");

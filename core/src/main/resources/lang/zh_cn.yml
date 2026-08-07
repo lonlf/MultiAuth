@@ -143,6 +143,7 @@ auth_audit_downtime_no_record=[AUDIT] 拒绝玩家 {0}：第一层 API 全部不
 auth_audit_downtime_premium_history=[AUDIT] 拒绝玩家 {0}：第一层 API 全部不可达，账号有正版历史记录（UUID={1}），宕机期间禁止登录
 auth_audit_api_only_authlist=[AUDIT] 拒绝玩家 {0}：auth-list 强制验证在 API-only 模式下无法满足
 auth_audit_api_only_premium=[AUDIT] 拒绝玩家 {0}：API-only 降级模式下正版用户名无法完成加密验证
+auth_audit_hasjoined_rate_limited=[AUDIT] 拒绝玩家 {0}：第二层 hasJoined 验证限流（本地并发限制，非宕机），正版验证无法完成
 
 # 配置相关
 config_loaded=配置已加载：proxy={0}, 数据库类型={1}
@@ -179,6 +180,7 @@ verify_hasjoined_failed=[VERIFY][{0}] hasJoined 失败：{1}
 verify_inbound_anchor_missing=[VERIFY] 找不到入站锚点 handler（splitter/decompress/decoder），AES 加密启用失败
 verify_outbound_anchor_missing=[VERIFY] 找不到出站锚点 handler（prepender/compress/encoder），AES 加密启用失败
 verify_aes_enable_failed=[VERIFY] Netty AES 加密启用失败：{0}
+verify_handler_rollback_debug=[DEBUG] 回滚 {0} handler 失败：{1}
 verify_spoofed_connection_missing=[VERIFY] 无法设置 spoofedUUID：Connection 未找到
 verify_spoofed_failed=[VERIFY] 设置 spoofedUUID 失败：{0}
 verify_packet_handler_missing=[VERIFY] packet_handler 未找到
@@ -377,5 +379,7 @@ auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。
 # 安全增强（SEC）
 sec_query_ip_stats_failed=[SEC] 查询 IP {0} 的统计信息失败: {1}
 sec_geo_check_skipped_log=[SEC] 玩家 {0} 的地理/历史查询失败，异地登录安全检测已跳过
+sec_geo_db_failed_deny_log=[AUDIT] 拒绝登录 {0}：异地登录安全检测所需的历史数据查询失败（fail-closed），错误 {1}
+auth_state_authmanager_missing_log=[AUTH] AuthManager 未初始化，无法判断玩家类型，{0} 按离线玩家处理（fail-closed）
 sec_increment_ip_account_failed=[SEC] 递增 IP {0} 的账号计数失败: {1}
 sec_decrement_ip_account_failed=[SEC] 递减 IP {0} 的账号计数失败: {1}

@@ -225,8 +225,9 @@ public class VelocityAuthListener {
                     logger.warn(Messages.get(Messages.AUTH_PLAYER_DENIED, username, result.denyMessage()));
                     // 记录实际发送给玩家的踢出消息内容
                     // 语言文件已自带 § 颜色码，通过 LegacyComponentSerializer 解析渲染（#3）
+                    // denyMessage 为含 {0} 占位符的模板文本（如 AUTH_API_RATE_LIMITED），需按用户名替换后再发送
                     String kickMsg = result.denyMessage() != null
-                            ? result.denyMessage().replace("\\n", "\n")
+                            ? Messages.get(result.denyMessage(), username).replace("\\n", "\n")
                             : "";
                     logger.warn(Messages.get(Messages.KICK_MESSAGE_SENT, username, kickMsg.replace("\n", "\\n")));
                     event.setResult(PreLoginEvent.PreLoginComponentResult.denied(

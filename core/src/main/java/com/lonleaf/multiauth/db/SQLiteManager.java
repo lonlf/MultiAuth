@@ -239,7 +239,7 @@ public class SQLiteManager implements DatabaseManager {
             return null;
         }
         try (PreparedStatement ps = connection.prepareStatement(GET_PLAYER_SQL)) {
-            ps.setString(1, username);
+            ps.setString(1, normName(username));
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     String name = rs.getString("username");
@@ -274,7 +274,7 @@ public class SQLiteManager implements DatabaseManager {
             return;
         }
         try (PreparedStatement ps = connection.prepareStatement(SAVE_PLAYER_SQL)) {
-            ps.setString(1, username);
+            ps.setString(1, normName(username));
             ps.setInt(2, isPremium ? 1 : 0);
             ps.setString(3, uuid.toString());
             ps.setLong(4, System.currentTimeMillis());
@@ -290,7 +290,7 @@ public class SQLiteManager implements DatabaseManager {
             return;
         }
         try (PreparedStatement ps = connection.prepareStatement(SAVE_PLAYER_SAFE_SQL)) {
-            ps.setString(1, username);
+            ps.setString(1, normName(username));
             ps.setInt(2, isPremium ? 1 : 0);
             ps.setString(3, uuid.toString());
             ps.setLong(4, System.currentTimeMillis());
@@ -310,7 +310,7 @@ public class SQLiteManager implements DatabaseManager {
             ps.setDouble(4, z);
             ps.setFloat(5, yaw);
             ps.setFloat(6, pitch);
-            ps.setString(7, username);
+            ps.setString(7, normName(username));
             ps.executeUpdate();
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_LOCATION_FAILED, username), e);
@@ -323,7 +323,7 @@ public class SQLiteManager implements DatabaseManager {
             return false;
         }
         try (PreparedStatement ps = connection.prepareStatement(EXISTS_SQL)) {
-            ps.setString(1, username);
+            ps.setString(1, normName(username));
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
@@ -428,6 +428,11 @@ public class SQLiteManager implements DatabaseManager {
         return uuid != null && uuid.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
     }
 
+    /** 规范化用户名：统一小写（Minecraft 用户名不区分大小写，DAO 层统一存储与查询语义） */
+    private static String normName(String username) {
+        return username == null ? null : username.toLowerCase(java.util.Locale.ROOT);
+    }
+
     @Override
     public synchronized void createAuthTable() {
         if (!isConnected()) {
@@ -447,7 +452,7 @@ public class SQLiteManager implements DatabaseManager {
             return null;
         }
         try (PreparedStatement ps = connection.prepareStatement(GET_AUTH_ACCOUNT_SQL)) {
-            ps.setString(1, username);
+            ps.setString(1, normName(username));
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     String name = rs.getString("username");
@@ -470,7 +475,7 @@ public class SQLiteManager implements DatabaseManager {
             return;
         }
         try (PreparedStatement ps = connection.prepareStatement(SAVE_AUTH_ACCOUNT_SQL)) {
-            ps.setString(1, account.username());
+            ps.setString(1, normName(account.username()));
             ps.setString(2, account.passwordHash());
             ps.setLong(3, account.registerTime());
             ps.setLong(4, account.lastLoginTime());
@@ -488,7 +493,7 @@ public class SQLiteManager implements DatabaseManager {
         }
         try (PreparedStatement ps = connection.prepareStatement(UPDATE_AUTH_PASSWORD_SQL)) {
             ps.setString(1, passwordHash);
-            ps.setString(2, username);
+            ps.setString(2, normName(username));
             ps.executeUpdate();
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_AUTH_PASSWORD_FAILED, username), e);
@@ -503,7 +508,7 @@ public class SQLiteManager implements DatabaseManager {
         try (PreparedStatement ps = connection.prepareStatement(UPDATE_AUTH_LOGIN_SQL)) {
             ps.setLong(1, loginTime);
             ps.setString(2, ip);
-            ps.setString(3, username);
+            ps.setString(3, normName(username));
             ps.executeUpdate();
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_AUTH_LOGIN_FAILED, username), e);
@@ -516,7 +521,7 @@ public class SQLiteManager implements DatabaseManager {
             return false;
         }
         try (PreparedStatement ps = connection.prepareStatement(DELETE_AUTH_ACCOUNT_SQL)) {
-            ps.setString(1, username);
+            ps.setString(1, normName(username));
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_DELETE_AUTH_ACCOUNT_FAILED, username), e);
@@ -530,7 +535,7 @@ public class SQLiteManager implements DatabaseManager {
             return false;
         }
         try (PreparedStatement ps = connection.prepareStatement(AUTH_ACCOUNT_EXISTS_SQL)) {
-            ps.setString(1, username);
+            ps.setString(1, normName(username));
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
@@ -560,7 +565,7 @@ public class SQLiteManager implements DatabaseManager {
             return;
         }
         try (PreparedStatement ps = connection.prepareStatement(RECORD_LOGIN_HISTORY_SQL)) {
-            ps.setString(1, username);
+            ps.setString(1, normName(username));
             ps.setString(2, ip);
             ps.setLong(3, loginTime);
             ps.setInt(4, success ? 1 : 0);
@@ -579,7 +584,7 @@ public class SQLiteManager implements DatabaseManager {
         }
         List<LoginHistoryRecord> result = new ArrayList<>();
         try (PreparedStatement ps = connection.prepareStatement(GET_RECENT_LOGIN_HISTORY_SQL)) {
-            ps.setString(1, username);
+            ps.setString(1, normName(username));
             ps.setInt(2, limit);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -604,8 +609,8 @@ public class SQLiteManager implements DatabaseManager {
             return;
         }
         try (PreparedStatement ps = connection.prepareStatement(TRIM_LOGIN_HISTORY_SQL)) {
-            ps.setString(1, username);
-            ps.setString(2, username);
+            ps.setString(1, normName(username));
+            ps.setString(2, normName(username));
             ps.setInt(3, maxRecords);
             ps.executeUpdate();
         } catch (SQLException e) {

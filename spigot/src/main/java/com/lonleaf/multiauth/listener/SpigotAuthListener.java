@@ -202,7 +202,8 @@ public class SpigotAuthListener implements Listener {
                     channel.close();
                     return;
                 }
-                String denyMessage = formatKickMessage(result.denyMessage());
+                // denyMessage 为含 {0} 占位符的模板文本（如 AUTH_API_RATE_LIMITED），需按用户名替换后再发送
+                String denyMessage = formatKickMessage(Messages.get(result.denyMessage(), username));
                 if (!channel.isActive()) {
                     logger.warning(Messages.get(Messages.AUTH_DENY_CLIENT_DISCONNECTED, username));
                 } else {
@@ -276,7 +277,7 @@ public class SpigotAuthListener implements Listener {
             event.allow();
         } else {
             logger.warning(Messages.get(Messages.AUTH_VERIFY_FAILED_DENY, username));
-            String kickMsg = formatKickMessage(result.denyMessage());
+            String kickMsg = formatKickMessage(Messages.get(result.denyMessage(), username));
             logger.warning(Messages.get(Messages.KICK_MESSAGE_SENT, username, kickMsg.replace("\n", "\\n")));
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, kickMsg);
         }

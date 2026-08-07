@@ -15,6 +15,7 @@ public interface DatabaseManager {
 
     boolean ping();
 
+    /** 获取玩家记录；username 统一按小写匹配（Minecraft 用户名不区分大小写） */
     PlayerRecord getPlayer(String username);
 
     void savePlayer(String username, boolean isPremium, UUID uuid);
@@ -49,6 +50,8 @@ public interface DatabaseManager {
     void backup(Path target) throws SQLException, IOException;
 
     // ==================== 离线玩家注册账号 ====================
+    // 注意：本组方法及登录历史组的 username 参数统一按小写存储/查询，
+    // 与 players 表语义一致（Minecraft 用户名不区分大小写），调用方无需自行规范化。
 
     /** 创建 auth 账号表（如不存在） */
     void createAuthTable();

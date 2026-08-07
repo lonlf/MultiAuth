@@ -46,13 +46,13 @@ public class MojangSessionService {
 
     public HasJoinedResult hasJoinedDetailed(String username, String serverId, String ip) {
         try {
-            // tryAcquire 带超时：并发槽位长时间无法获取时按宕机处理，避免无限阻塞验证线程（#6）
+            // tryAcquire 带超时：并发槽位长时间无法获取时按限流处理（与 checkPremium 一致，区分于宕机），避免无限阻塞验证线程（#6）
             if (!HAS_JOINED_SEMAPHORE.tryAcquire(5, java.util.concurrent.TimeUnit.SECONDS)) {
-                return new HasJoinedResult(HasJoinedResult.Status.MOJANG_UNREACHABLE, null);
+                return new HasJoinedResult(HasJoinedResult.Status.RATE_LIMITED, null);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return new HasJoinedResult(HasJoinedResult.Status.MOJANG_UNREACHABLE, null);
+            return new HasJoinedResult(HasJoinedResult.Status.RATE_LIMITED, null);
         }
         try {
             return doHasJoined(username, serverId, ip);
@@ -144,6 +144,6 @@ public class MojangSessionService {
     }
 
     public record HasJoinedResult(Status status, MojangProfile profile) {
-        public enum Status { SUCCESS, NOT_PREMIUM, MOJANG_UNREACHABLE }
+        public enum Status { SUCCESS, NOT_PREMIUM, MOJANG_UNREACHABLE, RATE_LIMITED }
     }
 }

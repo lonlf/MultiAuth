@@ -160,6 +160,12 @@ public class AuthFlow {
                 logger.warning(Messages.get(Messages.AUTH_AUDIT_HASJOINED_UNREACHABLE, username));
                 yield Result.deny(Messages.AUTH_DOWNTIME_DENY);
             }
+            case RATE_LIMITED -> {
+                // 第二层 hasJoined 本地限流（并发洪峰触发 Semaphore 超时，非宕机）：
+                // fail-closed 拒绝，审计语义与宕机区分，禁止落入宕机降级路径
+                logger.warning(Messages.get(Messages.AUTH_AUDIT_HASJOINED_RATE_LIMITED, username));
+                yield Result.deny(Messages.AUTH_API_RATE_LIMITED);
+            }
         };
     }
 

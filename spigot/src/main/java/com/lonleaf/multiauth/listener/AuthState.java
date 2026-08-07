@@ -135,7 +135,11 @@ public class AuthState {
         if (cached != null) {
             return cached;
         }
-        if (core.getAuthManager() == null) return true;
+        if (core.getAuthManager() == null) {
+            // Core 初始化失败（AuthManager 缺失）：无法判断玩家类型，fail-closed 视为离线玩家需认证（禁止放行）
+            plugin.getLogger().warning(Messages.get(Messages.AUTH_STATE_AUTHMANAGER_MISSING_LOG, username));
+            return true;
+        }
         PlayerRecord record = core.getAuthManager().getPlayerRecord(username);
         boolean offline = record == null || !record.isPremium();
         premiumCache.put(uuid, offline);

@@ -5,6 +5,7 @@ import com.lonleaf.multiauth.config.AuthConfig;
 import com.lonleaf.multiauth.db.DatabaseManager;
 import com.lonleaf.multiauth.db.IpStatsRecord;
 
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,6 +39,11 @@ public class LoginSecurityManager {
         this.config = newConfig;
     }
 
+    /** 规范化用户名：统一小写（与 DAO 层一致，避免大小写变体绕过账户失败计数/在线限制） */
+    private static String normName(String username) {
+        return username == null ? null : username.toLowerCase(Locale.ROOT);
+    }
+
     /** 冷却检查结果 */
     public record CheckResult(boolean canProceed, long remainingSeconds) {}
 
@@ -49,7 +55,7 @@ public class LoginSecurityManager {
 
     /** 检查账户是否处于冷却期 */
     public CheckResult checkAccountCooldown(String username) {
-        AttemptTracker tracker = accountAttempts.get(username);
+        AttemptTracker tracker = accountAttempts.get(normName(username));
         if (tracker == null || !tracker.isInCooldown()) {
             return new CheckResult(true, 0);
         }
@@ -85,7 +91,7 @@ public class LoginSecurityManager {
         AtomicInteger accountCount = new AtomicInteger(0);
 
         if (username != null) {
-            accountAttempts.compute(username, (k, prev) -> {
+            accountAttempts.compute(normName(username), (k, prev) -> {
                 AttemptTracker cur = (prev == null) ? AttemptTracker.reset() : prev;
                 cur = cur.increment(accountCooldown);
                 if (cur.reachedThreshold(accountMax)) {
@@ -119,7 +125,7 @@ public class LoginSecurityManager {
     /** 登录成功后按配置重置账户与 IP 计数器 */
     public void recordSuccessfulLogin(String username, String ip) {
         if (config.isSecAccountResetOnSuccess() && username != null) {
-            accountAttempts.remove(username);
+            accountAttempts.remove(normName(username));
         }
         if (config.isSecIpResetOnSuccess() && ip != null) {
             ipAttempts.remove(ip);
@@ -217,7 +223,7 @@ public class LoginSecurityManager {
                 allowed.set(false);
                 return cur;
             }
-            cur.add(username);
+            cur.add(normName(username));
             return cur;
         });
         return allowed.get();
@@ -229,7 +235,7 @@ public class LoginSecurityManager {
             return;
         }
         ipOnlineAccounts.computeIfPresent(ip, (k, set) -> {
-            set.remove(username);
+            set.remove(normName(username));
             return set.isEmpty() ? null : set;
         });
     }

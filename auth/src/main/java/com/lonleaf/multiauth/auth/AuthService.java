@@ -11,6 +11,7 @@ import com.lonleaf.multiauth.db.LoginHistoryRecord;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +38,11 @@ public class AuthService {
 
     // 正在注册中的用户名集合（防止注册竞态条件：两个线程同时通过存在性检查）
     private final Set<String> registeringUsernames = ConcurrentHashMap.newKeySet();
+
+    /** 规范化用户名：统一小写（与 DAO 层一致，避免大小写变体绕过注册/并发限制） */
+    private static String normName(String username) {
+        return username == null ? null : username.toLowerCase(Locale.ROOT);
+    }
 
     public AuthService(DatabaseManager database, AuthConfig config, Logger logger) {
         this.database = database;
@@ -99,7 +105,7 @@ public class AuthService {
     }
 
     /** 登录时异步查询的地理/历史上下文（供 thenCombine 合并密码验证结果使用） */
-    private record GeoContext(String prevIp, GeoInfo prevGeo, GeoInfo currGeo) {}
+    private record GeoContext(String prevIp, GeoInfo prevGeo, GeoInfo currGeo, boolean dbFailed) {}
 
     /** 登录预检结果：异步查询账号 + 冷却检查后的中间结果 */
     private record LoginPreflightResult(AuthAccount account, String message, boolean canProceed) {}
@@ -163,7 +169,7 @@ public class AuthService {
             }
 
             // 防止注册竞态：占用用户名，避免两个线程同时通过存在性检查后重复写入
-            if (!registeringUsernames.add(username)) {
+            if (!registeringUsernames.add(normName(username))) {
                 if (ipLockAcquired) securityManager.releaseIpRegistration(finalIp);
                 return new RegisterPreflight(false, Messages.AUTH_LOGIN_PROCESSING, false);
             }
@@ -180,7 +186,7 @@ public class AuthService {
                 hashFuture = passwordHasher.hash(password);
             } catch (Exception syncEx) {
                 // 同步异常（如 executor 已关闭）：直接释放锁，避免泄漏
-                registeringUsernames.remove(username);
+                registeringUsernames.remove(normName(username));
                 if (ipLockAcquired) securityManager.releaseIpRegistration(finalIp);
                 logger.log(Level.WARNING, Messages.get(Messages.AUTH_HASH_SUBMISSION_FAILED_LOG,
                         username, syncEx.getMessage()), syncEx);
@@ -201,12 +207,12 @@ public class AuthService {
                             username, e.getMessage()), e);
                     return new AuthResult(false, Messages.AUTH_REGISTER_FAILED);
                 } finally {
-                    registeringUsernames.remove(username);
+                    registeringUsernames.remove(normName(username));
                     if (ipLockAcquired) securityManager.releaseIpRegistration(finalIp);
                 }
             }).exceptionally(e -> {
                 // 哈希失败：释放锁
-                registeringUsernames.remove(username);
+                registeringUsernames.remove(normName(username));
                 if (ipLockAcquired) securityManager.releaseIpRegistration(finalIp);
                 logger.log(Level.WARNING, Messages.get(Messages.AUTH_HASH_FAILED_LOG,
                         username, e.getMessage()), e);
@@ -215,7 +221,7 @@ public class AuthService {
         }).exceptionally(e -> {
             // 最外层兜底：内层 exceptionally/finally 已覆盖常规异常，此处防御 Error 等极端场景
             // （remove 幂等安全；IP 注册锁已在 thenCompose 内 finally 覆盖）
-            registeringUsernames.remove(username);
+            registeringUsernames.remove(normName(username));
             logger.log(Level.WARNING, Messages.get(Messages.AUTH_REGISTER_FAILED_LOG,
                     username, e.getMessage()), e);
             return new AuthResult(false, Messages.AUTH_REGISTER_FAILED);
@@ -291,20 +297,30 @@ public class AuthService {
 
             // 异步执行 geo 与历史查询（避免阻塞主线程）：与密码验证并行执行
             final CompletableFuture<GeoContext> geoFuture = CompletableFuture.supplyAsync(() -> {
+                // 1. 历史数据查询（DB 操作）：异常时 fail-closed 拒绝登录（与 checkSessionResumeSecurity 一致）
+                LoginHistoryRecord lastLogin;
                 try {
-                    LoginHistoryRecord lastLogin = historyManager != null
+                    lastLogin = historyManager != null
                             ? historyManager.getLastSuccessfulLogin(username) : null;
-                    String pi = (lastLogin != null) ? lastLogin.ip() : null;
-                    GeoInfo pg = geoService != null && pi != null ? geoService.search(pi) : null;
-                    GeoInfo cg = geoService != null ? geoService.search(finalIp) : null;
-                    return new GeoContext(pi, pg, cg);
                 } catch (Exception ex) {
                     logger.log(Level.WARNING, Messages.get(Messages.AUTH_GEO_HISTORY_QUERY_FAILED_LOG,
                             username, ex.getMessage()), ex);
-                    // 地理/历史上下文不可用：异地登录安全检测将被跳过（fail-open + 显式留痕）
-                    logger.warning(Messages.get(Messages.SEC_GEO_CHECK_SKIPPED_LOG, username));
-                    return new GeoContext(null, null, null);
+                    logger.warning(Messages.get(Messages.SEC_GEO_DB_FAILED_DENY_LOG, username, String.valueOf(ex.getMessage())));
+                    return new GeoContext(null, null, null, true);
                 }
+                String pi = (lastLogin != null) ? lastLogin.ip() : null;
+                // 2. 地理位置查询（外部服务）：异常/不可用仅降级跳过 geo 检测（IP 变更检测仍基于 prevIp 生效）
+                GeoInfo pg = null;
+                GeoInfo cg = null;
+                try {
+                    pg = geoService != null && pi != null ? geoService.search(pi) : null;
+                    cg = geoService != null ? geoService.search(finalIp) : null;
+                } catch (Exception ex) {
+                    logger.log(Level.WARNING, Messages.get(Messages.AUTH_GEO_HISTORY_QUERY_FAILED_LOG,
+                            username, ex.getMessage()), ex);
+                    logger.warning(Messages.get(Messages.SEC_GEO_CHECK_SKIPPED_LOG, username));
+                }
+                return new GeoContext(pi, pg, cg, false);
             });
 
             return passwordHasher.verify(password, account.passwordHash())
@@ -313,6 +329,12 @@ public class AuthService {
                     GeoInfo prevGeo = ctx.prevGeo();
                     GeoInfo currGeo = ctx.currGeo();
                     try {
+                        if (ctx.dbFailed()) {
+                            // 异地登录安全检测所需的历史数据查询失败（fail-closed）：拒绝登录，不更新登录状态
+                            logger.warning(Messages.get(Messages.SEC_GEO_DB_FAILED_DENY_LOG,
+                                    username, "history data unavailable"));
+                            return new AuthResult(false, Messages.AUTH_LOGIN_FAILED);
+                        }
                         if (match) {
                             long now = System.currentTimeMillis();
                             String country = currGeo != null ? currGeo.country() : null;

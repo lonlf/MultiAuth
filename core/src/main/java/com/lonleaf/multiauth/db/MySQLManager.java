@@ -331,7 +331,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return null;
             try (PreparedStatement ps = conn.prepareStatement(getPlayerSql())) {
-                ps.setString(1, username);
+                ps.setString(1, normName(username));
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         String name = rs.getString("username");
@@ -366,7 +366,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return;
             try (PreparedStatement ps = conn.prepareStatement(savePlayerSql())) {
-                ps.setString(1, username);
+                ps.setString(1, normName(username));
                 ps.setInt(2, isPremium ? 1 : 0);
                 ps.setString(3, uuid.toString());
                 ps.setLong(4, System.currentTimeMillis());
@@ -382,7 +382,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return;
             try (PreparedStatement ps = conn.prepareStatement(savePlayerSafeSql())) {
-                ps.setString(1, username);
+                ps.setString(1, normName(username));
                 ps.setInt(2, isPremium ? 1 : 0);
                 ps.setString(3, uuid.toString());
                 ps.setLong(4, System.currentTimeMillis());
@@ -404,7 +404,7 @@ public class MySQLManager implements DatabaseManager {
                 ps.setDouble(4, z);
                 ps.setFloat(5, yaw);
                 ps.setFloat(6, pitch);
-                ps.setString(7, username);
+                ps.setString(7, normName(username));
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
@@ -429,7 +429,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return false;
             try (PreparedStatement ps = conn.prepareStatement(existsSql())) {
-                ps.setString(1, username);
+                ps.setString(1, normName(username));
                 try (ResultSet rs = ps.executeQuery()) {
                     return rs.next();
                 }
@@ -438,6 +438,11 @@ public class MySQLManager implements DatabaseManager {
             logger.log(Level.WARNING, Messages.get(Messages.DB_EXISTS_FAILED, username), e);
             return false;
         }
+    }
+
+    /** 规范化用户名：统一小写（Minecraft 用户名不区分大小写，DAO 层统一存储与查询语义） */
+    private static String normName(String username) {
+        return username == null ? null : username.toLowerCase(java.util.Locale.ROOT);
     }
 
     @Override
@@ -592,7 +597,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return null;
             try (PreparedStatement ps = conn.prepareStatement(getAuthAccountSql())) {
-                ps.setString(1, username);
+                ps.setString(1, normName(username));
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         String name = rs.getString("username");
@@ -615,7 +620,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return;
             try (PreparedStatement ps = conn.prepareStatement(saveAuthAccountSql())) {
-                ps.setString(1, account.username());
+                ps.setString(1, normName(account.username()));
                 ps.setString(2, account.passwordHash());
                 ps.setLong(3, account.registerTime());
                 ps.setLong(4, account.lastLoginTime());
@@ -633,7 +638,7 @@ public class MySQLManager implements DatabaseManager {
             if (conn == null) return;
             try (PreparedStatement ps = conn.prepareStatement(updateAuthPasswordSql())) {
                 ps.setString(1, passwordHash);
-                ps.setString(2, username);
+                ps.setString(2, normName(username));
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
@@ -648,7 +653,7 @@ public class MySQLManager implements DatabaseManager {
             try (PreparedStatement ps = conn.prepareStatement(updateAuthLoginSql())) {
                 ps.setLong(1, loginTime);
                 ps.setString(2, ip);
-                ps.setString(3, username);
+                ps.setString(3, normName(username));
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
@@ -661,7 +666,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return false;
             try (PreparedStatement ps = conn.prepareStatement(deleteAuthAccountSql())) {
-                ps.setString(1, username);
+                ps.setString(1, normName(username));
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
@@ -675,7 +680,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return false;
             try (PreparedStatement ps = conn.prepareStatement(authAccountExistsSql())) {
-                ps.setString(1, username);
+                ps.setString(1, normName(username));
                 try (ResultSet rs = ps.executeQuery()) {
                     return rs.next();
                 }
@@ -713,7 +718,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return;
             try (PreparedStatement ps = conn.prepareStatement(recordLoginHistorySql())) {
-                ps.setString(1, username);
+                ps.setString(1, normName(username));
                 ps.setString(2, ip);
                 ps.setLong(3, loginTime);
                 ps.setInt(4, success ? 1 : 0);
@@ -732,7 +737,7 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return result;
             try (PreparedStatement ps = conn.prepareStatement(getRecentLoginHistorySql())) {
-                ps.setString(1, username);
+                ps.setString(1, normName(username));
                 ps.setInt(2, limit);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
@@ -757,8 +762,8 @@ public class MySQLManager implements DatabaseManager {
         try (Connection conn = borrowConnection()) {
             if (conn == null) return;
             try (PreparedStatement ps = conn.prepareStatement(trimLoginHistorySql())) {
-                ps.setString(1, username);
-                ps.setString(2, username);
+                ps.setString(1, normName(username));
+                ps.setString(2, normName(username));
                 ps.setInt(3, maxRecords);
                 ps.executeUpdate();
             }

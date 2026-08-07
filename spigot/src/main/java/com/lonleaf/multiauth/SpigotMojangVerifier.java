@@ -224,7 +224,8 @@ public class SpigotMojangVerifier {
                 // 回滚已添加的 decrypt handler，避免半启用状态
                 try {
                     channel.pipeline().remove("multiauth-decrypt");
-                } catch (Exception ignored) {
+                } catch (Exception re) {
+                    logger.fine(Messages.get(Messages.VERIFY_HANDLER_ROLLBACK_DEBUG, "multiauth-decrypt", re.getMessage()));
                 }
                 return false;
             }
@@ -235,8 +236,16 @@ public class SpigotMojangVerifier {
             return true;
         } catch (Exception e) {
             // 回滚已添加的 decrypt/encrypt handler，避免半启用状态
-            try { channel.pipeline().remove("multiauth-decrypt"); } catch (Exception ignored) {}
-            try { channel.pipeline().remove("multiauth-encrypt"); } catch (Exception ignored) {}
+            try {
+                channel.pipeline().remove("multiauth-decrypt");
+            } catch (Exception re) {
+                logger.fine(Messages.get(Messages.VERIFY_HANDLER_ROLLBACK_DEBUG, "multiauth-decrypt", re.getMessage()));
+            }
+            try {
+                channel.pipeline().remove("multiauth-encrypt");
+            } catch (Exception re) {
+                logger.fine(Messages.get(Messages.VERIFY_HANDLER_ROLLBACK_DEBUG, "multiauth-encrypt", re.getMessage()));
+            }
             logger.warning(Messages.get(Messages.VERIFY_AES_ENABLE_FAILED, e.getMessage()));
             return false;
         }
@@ -306,7 +315,8 @@ public class SpigotMojangVerifier {
             byte[] encrypted = new byte[msg.readableBytes()];
             msg.readBytes(encrypted);
             byte[] decrypted = cipher.update(encrypted);
-            out.add(Unpooled.wrappedBuffer(decrypted));
+            // cipher.update 对空输入返回 null，wrappedBuffer(null) 会抛 NPE（连接断开瞬间可能触发）
+            out.add(decrypted != null ? Unpooled.wrappedBuffer(decrypted) : Unpooled.EMPTY_BUFFER);
         }
     }
 
@@ -323,7 +333,8 @@ public class SpigotMojangVerifier {
             byte[] plain = new byte[msg.readableBytes()];
             msg.readBytes(plain);
             byte[] encrypted = cipher.update(plain);
-            out.add(Unpooled.wrappedBuffer(encrypted));
+            // cipher.update 对空输入返回 null，wrappedBuffer(null) 会抛 NPE（连接断开瞬间可能触发）
+            out.add(encrypted != null ? Unpooled.wrappedBuffer(encrypted) : Unpooled.EMPTY_BUFFER);
         }
     }
 }

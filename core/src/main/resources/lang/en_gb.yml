@@ -143,6 +143,7 @@ auth_audit_downtime_no_record=[AUDIT] Player {0} DENIED - all LAYER-1 APIs unrea
 auth_audit_downtime_premium_history=[AUDIT] Player {0} DENIED - all LAYER-1 APIs unreachable and account has premium history (UUID={1}), login paused during downtime
 auth_audit_api_only_authlist=[AUDIT] Player {0} DENIED - auth-list forced verification cannot be satisfied in API-only mode
 auth_audit_api_only_premium=[AUDIT] Player {0} DENIED - premium username cannot complete encrypted verification in API-only mode
+auth_audit_hasjoined_rate_limited=[AUDIT] Player {0} DENIED - hasJoined verification rate-limited (local concurrency, not outage), premium verification cannot complete
 
 # Config
 config_loaded=Config loaded: proxy={0}, db-type={1}
@@ -179,6 +180,7 @@ verify_hasjoined_failed=[VERIFY][{0}] hasJoined failed: {1}
 verify_inbound_anchor_missing=[VERIFY] Inbound anchor handler not found (splitter/decompress/decoder), AES encryption enable failed
 verify_outbound_anchor_missing=[VERIFY] Outbound anchor handler not found (prepender/compress/encoder), AES encryption enable failed
 verify_aes_enable_failed=[VERIFY] Netty AES encryption enable failed: {0}
+verify_handler_rollback_debug=[DEBUG] Failed to rollback {0} handler: {1}
 verify_spoofed_connection_missing=[VERIFY] Cannot set spoofedUUID: Connection not found
 verify_spoofed_failed=[VERIFY] Setting spoofedUUID failed: {0}
 verify_packet_handler_missing=[VERIFY] packet_handler not found
@@ -377,5 +379,7 @@ auth_unregister_kick=§cYour account has been deleted by an admin. Please re-reg
 # Security (SEC)
 sec_query_ip_stats_failed=[SEC] Failed to query ip stats for {0}: {1}
 sec_geo_check_skipped_log=[SEC] Geo/history query failed for {0}, geo security checks skipped (fail-open)
+sec_geo_db_failed_deny_log=[AUDIT] Login denied for {0} - geolocation security check data query failed (fail-closed), error {1}
+auth_state_authmanager_missing_log=[AUTH] AuthManager not initialized, cannot determine player type, {0} treated as offline player (fail-closed)
 sec_increment_ip_account_failed=[SEC] Failed to increment ip account count for {0}: {1}
 sec_decrement_ip_account_failed=[SEC] Failed to decrement ip account count for {0}: {1}
