@@ -7,8 +7,6 @@
 language: zh_cn
 
 # 调试模式
-# false = 仅输出生产环境必要日志（启动/停止/验证结果/错误/审计）
-# true  = 输出详细调试日志（包拦截/握手步骤/决策细节等，便于排查问题）
 debug: false
 
 # 玩家进服后是否在消息栏显示登录状态（正版/离线 + UUID）
@@ -24,17 +22,15 @@ notify-player-status: true
 #           如数据库未共享，Spigot 会自动同步记录，但无法检测跨端的正版记录冲突
 # false = Spigot 端自行执行完整 Mojang 验证流程（Velocity 端无需安装任何插件）
 #         此模式要求 server.properties 中 online-mode=false
-#         验证流程与 Velocity 端完全相同（用户名检查 + 加密握手 + hasJoined + 宕机处理）
 proxy: false
 
-# 是否使用 Mojang 正版 UUID（proxy=false 时生效）
+# 是否使用 Mojang 正版 UUID（proxy=false 时生效,代理模式下由 Velocity 传入UUID）
 # true  = 验证通过后使用正版 UUID
 # false = 始终使用离线 UUID（基于玩家名生成）
 use-mojang-uuid: true
 
 # 跨服会话同步签名密钥（proxy=true 时生效，强烈建议配置）
-# Velocity 与 Spigot 端必须配置相同的密钥字符串，用于对 multiauth:session
-# 跨服会话同步消息做 HMAC-SHA256 验签，防止后端被直连时客户端伪造登录状态
+# Velocity 与 Spigot 端必须配置相同的密钥字符串
 # 留空 = 不验签（仅拦截经代理转发的伪造消息，后端直连场景不安全）
 session-sync-secret: "change this to you own secret string."
 
@@ -44,21 +40,18 @@ auth-list: []
 
 # Mojang API 配置（proxy=false 时生效）
 mojang-api:
+  # 注意！该API仅用于检测玩家游戏名情况，不用于正版验证；仅防止离线玩家无法进入服务器.
   # 备用 API 地址列表（官方 API 宕机时依次尝试，留空则不启用备用）
   # 占位符 {username} 会被替换为玩家名
   # 当所有 API 均不可用时，会拒绝所有玩家登录（日志中会有详细提示）
   # 官方 Mojang API: https://api.mojang.com/users/profiles/minecraft/{username}
   # 常见备用 API:
   #   - "https://api.minetools.eu/uuid/{username}"
-  #   - "https://mojang-api.arktech.ca/uuid/{username}"
-  #   - "https://api.minecraft-services.net/api/v1/uuid/{username}"
   fallback-urls:
     # - "https://api.minetools.eu/uuid/{username}"
-    # - "https://mojang-api.arktech.ca/uuid/{username}"
-    # - "https://api.minecraft-services.net/api/v1/uuid/{username}"
 
   # 每个用户名每秒最多向 Mojang API 发起的请求数（0=不限制）
-  # 防止同一用户名反复重连/脚本循环触发 Mojang 429，与并发限制（10）互补
+  # 防止同一用户名反复重连/脚本循环触发 Mojang 429.
   request-limit: 2
 
 # 数据库配置（proxy=true / false 均需配置，与 Velocity 端共享同一数据库）
@@ -127,7 +120,7 @@ auth:
   # 未登录玩家进服时是否传送到出生点
   # enable: 是否启用出生点传送
   # world: 留空则使用玩家当前世界出生点；填写世界名（支持 Multiverse 世界）则传送到指定坐标
-  #        若配置的世界不存在（且 Multiverse 无法加载），则回退到当前世界出生点并输出警告日志
+  #        若配置的世界不存在（且 Multiverse 无法加载），则回退到当前世界出生点
   login-spawn-point:
     enable: false
     world: ""
@@ -168,8 +161,8 @@ auth:
     # IP 变更警告
     ip-change:
       enabled: true
-      warn-player: true             # 向玩家发送 IP 变更警告
-      notify-admin: false           # 通知在线管理员（有 multiauth.admin 权限）
+      warn-player: false            # 向玩家发送 IP 变更警告
+      notify-admin: true            # 通知在线管理员（有 multiauth.admin 权限）
 
     # IP 地理位置检测（ip2region 离线查询）
     geo-detection:
