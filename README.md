@@ -1,94 +1,200 @@
+English | [简体中文](README.md)
+
 # MultiAuth
 
-> Minecraft 玩家认证插件 · 支持正版/离线混合验证 · Spigot & Velocity 双平台
+MultiAuth is a Minecraft authentication plugin supporting mixed verification of premium (online-mode) and offline players; supports both Spigot and Velocity.
 
-MultiAuth 是一个支持正版与离线玩家混合验证的 Minecraft 认证插件。核心能力包括 Mojang 两层验证、宕机降级、离线玩家注册登录、安全增强（失败计数/IP 限制/异地登录检测）、数据库迁移与备份、完整国际化。
+## Core Features
 
-## 核心特性
+- **Two-layer Mojang verification**: username check + encrypted handshake hasJoined verification
+- **Downtime degradation**: automatically allows offline players with recorded history when the Mojang API is unreachable
+- **Offline register/login**: Argon2id password hashing, session resume, unauthenticated restrictions (movement/chat/interaction/commands)
+- **Cross-server session sync**: Velocity acts as the session center; login/logout states are synced to backend servers via an HMAC-SHA256 signed channel (`multiauth:session`), so players do not need to re-login when transferring between servers
+- **Security enhancements**: failure counting and cooldowns, per-IP account limits, IP change warnings, geo login detection (ip2region offline lookup)
+- **Dual platform support**: Spigot/Paper standalone mode + Velocity proxy mode
+- **Database support**: SQLite (default) + MySQL (HikariCP connection pool, optional SSL)
+- **Database backups**: scheduled backups + automatic cleanup of old backups + SQLite↔MySQL bidirectional migration
+- **Internationalization**: zh_cn / en_gb bilingual (more in the future), 140+ message keys, hot reload
 
-- **两层 Mojang 验证**：用户名检查 + 加密握手 hasJoined 验证
-- **宕机降级**：Mojang API 不可达时自动放行有历史记录的离线玩家
-- **离线注册登录**：Argon2id 密码哈希、会话恢复、未登录限制（移动/聊天/交互/命令）
-- **跨服会话同步**：Velocity 作为会话中心，登录/登出状态经 HMAC-SHA256 签名通道（`multiauth:session`）同步到各子服，玩家跨服转移免重复登录
-- **安全增强**：失败计数与冷却、单 IP 账号限制、IP 变更警告、异地登录检测（ip2region 离线查询）
-- **双平台支持**：Spigot/Paper 独立模式 + Velocity 代理模式
-- **数据库支持**：SQLite（默认）+ MySQL（HikariCP 连接池，可选 SSL）
-- **数据库备份**：定时备份 + 旧备份自动清理 + SQLite↔MySQL 双向迁移
-- **国际化**：zh_cn / en_gb 双语(未来更多)，140+ 消息键，热重载
+## Quick Start
 
-## 快速开始
+### Installation
 
-### 安装
+**Standalone Mode (Spigot)**
 
-##### 独立模式
-1. 下载 `multiauth-spigot-<version>.jar` 放入 `plugins/` 目录
-2. （独立模式需）安装 [PacketEvents](https://github.com/retrooper/packetevents) 插件
-3. 启动服务器，编辑 `plugins/MultiAuth/config.yml`
-4. 执行 `/multiauth reload` 或重启服务端
-##### 代理模式
-1. 下载`multiauth-spigot-<version>.jar`以及 `multiauth-velocity-<version>.jar` 分别放入各自 `plugins/` 目录
-2. 启动服务端以及代理端，生成配置后关闭
-3. 修改Spigot服务端目录下`plugins/MultiAuth/config.yml`配置文件,设置`proxy: true`;
-4. 设置Velocity配置`online-mode = true`在`velocity.toml`中
-5. 在Spigot与Velocity插件配置文件中配置相同MySQL数据库（推荐配置）
-6. 配置 Velocity 的 `velocity.toml` 的 `player-info-forwarding-mode = "modern"`（或 `"bungeeguard"`），后端 `server.properties` 设 `online-mode=false`（Paper 需开启 `velocity-support`），否则后端拿不到 Velocity 转发的真实 UUID
-7. 如需**跨服免登录**（子服间转移不重复登录），在两端配置相同密钥：
-   - Spigot `config.yml`：`session-sync-secret: "随机密钥"`
-   - Velocity `config.toml`：`session-sync-secret = "随机密钥"`（与 Spigot 完全一致）
-   - 密钥留空 = 关闭跨服会话同步，玩家换服后需重新登录
-8. （可选）`cross-server-use-mojang-uuid`（Velocity `config.toml`，默认 `true`）决定正版玩家使用正版 UUID 还是离线 UUID，需与 Spigot 端 `use-mojang-uuid` 保持一致
+1. Download `multiauth-spigot-<version>.jar` into the `plugins/` directory
+2. Also install [PacketEvents](https://modrinth.com/plugin/packetevents)
+3. Start the server to generate the config file, edit `plugins/MultiAuth/config.yml`, and restart the server
 
-### 命令速查
+**Proxy Mode (Spigot backend servers + Velocity)**
 
-| 命令                               | 用法                            | 说明            |
-|----------------------------------|-------------------------------|---------------|
-| `/register` `/reg`               | `/register <密码> <确认密码>`       | 注册账号（离线玩家）    |
-| `/login` `/l`                    | `/login <密码>`                 | 登录（已注册离线玩家）   |
-| `/changepassword`                | `/changepassword <旧密码> <新密码>` | 修改密码          |
-| `/multiauth reload`              | —                             | 重载配置（管理员）     |
-| `/multiauth status [player]`     | —                             | 查看状态          |
-| `/multiauth backup`              | —                             | 手动备份（管理员）     |
-| `/multiauth info <player>`       | —                             | 查看账号信息（管理员）   |
-| `/multiauth unregister <player>` | —                             | 注销账号（管理员）     |
-| `/vmultiauth *`                  | _                             | Velocity控制台命令 |
+1. Download `multiauth-spigot-<version>.jar` (PacketEvents required) and `multiauth-velocity-<version>.jar` into each Spigot backend server's and Velocity's `plugins/` directory respectively
+2. Start the backend servers and proxy to generate configs, then shut them down
+3. Set up both ends following the "Configuration" section below (`proxy`, `velocity.toml`, shared database, session sync secret, etc.)
+4. Restart the backend servers and proxy
 
-### 最小配置
+### Configuration
+
+**Velocity (velocity.toml)**
+
+```toml
+online-mode = true
+player-info-forwarding-mode = "modern"
+forwarding.secret = "forwarding secret shared with all backend servers"
+```
+
+**Spigot Backend (server.properties)**
+
+```properties
+online-mode=false
+# Paper servers additionally need to enable Velocity forwarding in paper-global.yml
+```
 
 ```yaml
-# config.yml
-proxy: false                     # true=Velocity 代理模式 / false=Spigot 独立模式
-session-sync-secret: ""          # proxy=true 时配置随机密钥，两端一致 = 启用跨服会话同步
+# paper-global.yml (Paper servers only)
+proxies:
+  velocity:
+    enabled: true
+    online-mode: true
+    secret: "must match forwarding.secret in velocity.toml"
+```
+
+**Cross-server Session Sync Secret (optional — enables transfer between servers without re-login)**
+
+```yaml
+# Spigot plugins/MultiAuth/config.yml
+proxy: true
+session-sync-secret: "a long random secret shared with Velocity"
+```
+
+```toml
+# Velocity plugins/MultiAuth/config.toml
+session-sync-secret = "the same secret as on the Spigot side"
+```
+
+> The secret must be identical on both ends; leave it empty to disable cross-server session sync (players must re-login after switching servers).
+
+**Shared Database (cross-server mode must use the same MySQL)**
+
+```yaml
+# Spigot plugins/MultiAuth/config.yml
+database:
+  type: mysql
+  mysql-host: localhost
+  mysql-port: 3306
+  mysql-database: multiauth
+  mysql-username: root
+  mysql-password: ""
+  mysql-table-prefix: multiauth_
+```
+
+```toml
+# Velocity plugins/MultiAuth/config.toml
+[database]
+type = "mysql"
+mysql-host = "localhost"
+mysql-port = 3306
+mysql-database = "multiauth"
+mysql-username = "root"
+mysql-password = ""
+mysql-table-prefix = "multiauth_"
+```
+
+> Both ends must point to the **same database with the same table-prefix**, otherwise data such as offline accounts, login history, and IP limits will be split across servers.
+
+**Premium UUID Policy (optional — must be consistent on both ends)**
+
+```yaml
+# Spigot config.yml
+use-mojang-uuid: true
+```
+
+```toml
+# Velocity config.toml
+cross-server-use-mojang-uuid = true
+```
+
+### Command Reference
+
+| Command | Usage | Description |
+|---|---|---|
+| `/register` `/reg` | `/register <password> <confirm>` | Register an account (offline player) |
+| `/login` `/l` | `/login <password>` | Login (registered offline player) |
+| `/changepassword` | `/changepassword <old> <new>` | Change password |
+| `/multiauth reload` | — | Reload configuration (admin) |
+| `/multiauth status [player]` | — | View status |
+| `/multiauth backup` | — | Manual backup (admin) |
+| `/multiauth info <player>` | — | View account info (admin) |
+| `/multiauth unregister <player>` | — | Unregister account (admin) |
+| `/vmultiauth *` | — | Velocity console command |
+
+### Minimal Configuration
+
+**Standalone Mode (single server, proxy: false)**
+
+```yaml
+# plugins/MultiAuth/config.yml
+proxy: false                     # Spigot standalone mode, performs Mojang verification itself (PacketEvents required)
 
 database:
-  type: sqlite                   # sqlite / mysql（跨服推荐 mysql）
+  type: sqlite                   # Default SQLite is fine for a single server
 
 auth:
   enabled: true
-  login-timeout: 600             # 登录超时（秒）
-  register-timeout: 180          # 注册超时（秒）
+  login-timeout: 600             # Login timeout (seconds)
+  register-timeout: 180          # Register timeout (seconds)
 
 session:
-  timeout: 0                    # 会话超时（分钟），0=禁用
+  timeout: 0                     # Session timeout (minutes), 0 = disabled
 ```
 
-> 代理模式跨服完整配置请参考上方「代理模式」安装步骤。
+**Proxy Mode (Velocity + Spigot backend servers, proxy: true)**
 
-## 部署模式
+```yaml
+# Each Spigot backend server's plugins/MultiAuth/config.yml
+proxy: true                      # Trust Velocity's verification result
+session-sync-secret: "kF8#vM2!qR7@sL9"   # Must match the Velocity side; enables cross-server session sync
 
-| 模式 | 配置 | 说明 |
-|---|---|---|
-| **独立模式**（默认） | `proxy: false` | Spigot 自行执行 Mojang 验证，需安装 PacketEvents |
-| **代理模式** | `proxy: true` | Velocity 端 `online-mode=true`，Spigot 仅校验转发的 UUID；配置 `session-sync-secret` 后可跨服免登录 |
+database:
+  type: mysql                    # Cross-server mode must share the same MySQL
+  mysql-host: localhost
+  mysql-port: 3306
+  mysql-database: multiauth
+  mysql-username: root
+  mysql-password: ""
+  mysql-table-prefix: multiauth_
 
-## 环境要求
+auth:
+  enabled: true
+  login-timeout: 600             # Login timeout (seconds)
+  register-timeout: 180          # Register timeout (seconds)
+```
+
+```toml
+# Velocity plugins/MultiAuth/config.toml
+session-sync-secret = "kF8#vM2!qR7@sL9"   # Must match all Spigot backend servers
+
+[database]
+type = "mysql"                   # Point to the same database as the Spigot backend servers
+mysql-host = "localhost"
+mysql-port = 3306
+mysql-database = "multiauth"
+mysql-username = "root"
+mysql-password = ""
+mysql-table-prefix = "multiauth_"
+```
+
+> In proxy mode, also set `online-mode = true` and `player-info-forwarding-mode = "modern"` in `velocity.toml`, and `online-mode=false` in each backend's `server.properties` (see the "Configuration" section above).
+
+## Requirements
 
 - JDK 21+
-- Spigot/Paper 1.18.2+ 或 Velocity 3.4.0+
+- Spigot/Paper 1.18.2+ or Velocity 3.4.0+
 - [packetevents](https://modrinth.com/plugin/packetevents) (Spigot)
 
-## 致谢
+## Credits
 
-- [PacketEvents](https://github.com/retrooper/packetevents) — 数据包拦截
-- [ip2region](https://github.com/lionsoul2014/ip2region) — 离线 IP 地理位置查询
-- [FastLogin](https://github.com/games647/FastLogin) — 方案参考
-- [MC_Protocol_Data](https://github.com/Nickid2018/MC_Protocol_Data) - 协议包参考
+- [PacketEvents](https://github.com/retrooper/packetevents) — Packet interception
+- [ip2region](https://github.com/lionsoul2014/ip2region) — Offline IP geolocation lookup
+- [FastLogin](https://github.com/games647/FastLogin) — Reference implementation
+- [MC_Protocol_Data](https://github.com/Nickid2018/MC_Protocol_Data) - Protocol reference
