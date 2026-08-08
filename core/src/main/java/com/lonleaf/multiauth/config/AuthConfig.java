@@ -35,6 +35,9 @@ public class AuthConfig {
     /** 备用 API 地址列表（含 {username} 占位符），官方 API 宕机时依次尝试 */
     private List<String> fallbackApiUrls = new ArrayList<>();
 
+    /** 每个用户名每秒最多向 Mojang API 发起的请求数（0=不限制），防止重复请求触发 Mojang 429 */
+    private int mojangRequestLimit = 2;
+
     // ==================== 数据库 ====================
 
     /** 数据库类型：sqlite 或 mysql */
@@ -249,6 +252,9 @@ public class AuthConfig {
     public String getFallbackApiUrl() {
         return fallbackApiUrls.isEmpty() ? "" : fallbackApiUrls.get(0);
     }
+
+    public int getMojangRequestLimit() { return mojangRequestLimit; }
+    public void setMojangRequestLimit(int mojangRequestLimit) { this.mojangRequestLimit = Math.max(0, mojangRequestLimit); }
 
     /** @deprecated 使用 {@link #setFallbackApiUrls(List)} 替代，保持向后兼容 */
     @Deprecated

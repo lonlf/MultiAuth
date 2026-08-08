@@ -58,6 +58,8 @@ public class MojangApiService {
     private final List<String> fallbackApiUrls;
     private final Cache<String, Optional<UUID>> premiumCache;
     private final Semaphore apiRateLimiter;
+    /** 每用户名 RPS 限流（管单位时间总速率，与并发信号量互补） */
+    private final MojangRpsLimiter rpsLimiter;
 
     /** 正版结果缓存时间（分钟） */
     private static final long PREMIUM_CACHE_MINUTES = 10;
@@ -90,7 +92,7 @@ public class MojangApiService {
     /** 下次允许执行恢复探测的时间戳（仅 allApisDown=true 时有效）；恢复成功后重置为 0 */
     private final java.util.concurrent.atomic.AtomicLong nextRecoveryProbeTime = new java.util.concurrent.atomic.AtomicLong(0);
 
-    public MojangApiService(List<String> fallbackApiUrls, Logger logger) {
+    public MojangApiService(List<String> fallbackApiUrls, Logger logger, int rpsLimit) {
         this.logger = logger;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
@@ -121,6 +123,7 @@ public class MojangApiService {
                 .maximumSize(1000)
                 .build();
         this.apiRateLimiter = new Semaphore(MAX_CONCURRENT_API_REQUESTS, true);
+        this.rpsLimiter = new MojangRpsLimiter(rpsLimit);
     }
 
     /** 关闭底层 HttpClient，释放资源 */
@@ -160,6 +163,13 @@ public class MojangApiService {
                 throw new IOException("All Mojang APIs are unavailable (recovery probe in progress)");
             }
             logger.info(Messages.get(Messages.API_PROBE_START, String.valueOf(RECOVERY_PROBE_INTERVAL_MS / 1000)));
+        }
+
+        // RPS 限流（管单位时间总速率）：缓存命中/宕机快速失败均未实际打 API，不消耗配额；
+        // 超限 fail-closed 抛 RateLimitException，由 AuthManager 映射为 RATE_LIMITED 拒绝（防限流混淆放行）
+        if (!rpsLimiter.tryAcquire(username)) {
+            logger.warning(Messages.API_RATE_LIMIT_REACHED);
+            throw new RateLimitException("Mojang API rate limit reached for " + username);
         }
 
         try {

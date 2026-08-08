@@ -56,16 +56,16 @@ public class Core {
         }
 
         // 初始化 Mojang 服务（仅创建对象，不发起任何 HTTP 请求）
-        this.mojangService = new MojangSessionService();
+        this.mojangService = new MojangSessionService(config.getMojangRequestLimit());
 
         boolean proxyMode = Boolean.TRUE.equals(config.isProxy());
         if (proxyMode) {
             // proxy=true：Mojang 验证完全由 Velocity 端执行，Spigot 端不做任何 API 调用
             logger.fine(Messages.get(Messages.CORE_PROXY_MODE_DEBUG));
-            this.mojangApiService = new MojangApiService(java.util.Collections.emptyList(), logger);
+            this.mojangApiService = new MojangApiService(java.util.Collections.emptyList(), logger, config.getMojangRequestLimit());
         } else {
             // proxy=false / Velocity 端：启用 Mojang API（仅在玩家连接时调用）
-            this.mojangApiService = new MojangApiService(config.getFallbackApiUrls(), logger);
+            this.mojangApiService = new MojangApiService(config.getFallbackApiUrls(), logger, config.getMojangRequestLimit());
             logger.fine(Messages.get(Messages.CORE_API_INIT_DEBUG));
         }
 
@@ -305,30 +305,22 @@ public class Core {
         boolean proxyMode = Boolean.TRUE.equals(newConfig.isProxy());
 
         // 1. 先创建新服务（新 HttpClient）
-        // mojangService：仅数据库变更时重建，否则复用旧实例
-        MojangSessionService newMojangService;
-        if (dbRebuilt) {
-            newMojangService = new MojangSessionService();
-        } else {
-            newMojangService = oldMojangService;
-            oldMojangService = null; // 复用旧实例，无需关闭
-        }
+        // mojangService：每次 reload 都重建（mojang-request-limit 配置变更后立即生效）
+        MojangSessionService newMojangService = new MojangSessionService(newConfig.getMojangRequestLimit());
 
         // mojangApiService：每次 reload 都重建
         MojangApiService newMojangApiService;
         if (proxyMode) {
-            newMojangApiService = new MojangApiService(java.util.Collections.emptyList(), logger);
+            newMojangApiService = new MojangApiService(java.util.Collections.emptyList(), logger, newConfig.getMojangRequestLimit());
         } else {
-            newMojangApiService = new MojangApiService(newConfig.getFallbackApiUrls(), logger);
+            newMojangApiService = new MojangApiService(newConfig.getFallbackApiUrls(), logger, newConfig.getMojangRequestLimit());
         }
 
         // 2. 创建新 authManager（引用新服务）
         AuthManager newAuthManager = new AuthManager(database, newMojangService, newMojangApiService);
 
         // 3. 切换引用（volatile 写）：auth 线程此后看到新服务
-        if (dbRebuilt) {
-            this.mojangService = newMojangService;
-        }
+        this.mojangService = newMojangService;
         this.mojangApiService = newMojangApiService;
         this.authManager = newAuthManager;
 

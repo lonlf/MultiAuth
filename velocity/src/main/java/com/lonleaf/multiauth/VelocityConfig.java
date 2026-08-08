@@ -111,6 +111,8 @@ public class VelocityConfig {
             }
         }
         config.setFallbackApiUrls(fallbackUrls);
+        // 每用户名每秒 Mojang API 请求上限（0=不限制），防止重复请求触发 Mojang 429
+        config.setMojangRequestLimit(source.getIntOrElse("mojang-api.request-limit", 2));
 
         // 数据库
         config.setDatabaseType(source.getOrElse("database.type", "sqlite"));

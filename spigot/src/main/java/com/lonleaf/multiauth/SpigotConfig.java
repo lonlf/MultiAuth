@@ -81,6 +81,8 @@ public class SpigotConfig {
             }
         }
         newConfig.setFallbackApiUrls(fallbackUrls);
+        // 每用户名每秒 Mojang API 请求上限（0=不限制），防止重复请求触发 Mojang 429
+        newConfig.setMojangRequestLimit(f.getInt("mojang-api.request-limit", 2));
 
         // 数据库
         newConfig.setDatabaseType(f.getString("database.type", "sqlite"));

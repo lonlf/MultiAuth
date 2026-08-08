@@ -31,10 +31,14 @@ public class MojangSessionService {
 
     private final HttpClient httpClient;
 
-    public MojangSessionService() {
+    /** 每用户名 RPS 限流（管单位时间总速率，与并发信号量互补） */
+    private final MojangRpsLimiter rpsLimiter;
+
+    public MojangSessionService(int rpsLimit) {
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
+        this.rpsLimiter = new MojangRpsLimiter(rpsLimit);
     }
 
     /** 关闭底层 HttpClient，释放资源 */
@@ -45,6 +49,10 @@ public class MojangSessionService {
     }
 
     public HasJoinedResult hasJoinedDetailed(String username, String serverId, String ip) {
+        // RPS 限流（管单位时间总速率）：超限 fail-closed 返回 RATE_LIMITED，与并发信号量超时语义一致（区分于宕机）
+        if (!rpsLimiter.tryAcquire(username)) {
+            return new HasJoinedResult(HasJoinedResult.Status.RATE_LIMITED, null);
+        }
         try {
             // tryAcquire 带超时：并发槽位长时间无法获取时按限流处理（与 checkPremium 一致，区分于宕机），避免无限阻塞验证线程（#6）
             if (!HAS_JOINED_SEMAPHORE.tryAcquire(5, java.util.concurrent.TimeUnit.SECONDS)) {

@@ -49,6 +49,10 @@ fallback-urls = [
     # "https://api.minecraft-services.net/api/v1/uuid/{username}",
 ]
 
+# 每个用户名每秒最多向 Mojang API 发起的请求数（0=不限制）
+# 防止同一用户名反复重连/脚本循环触发 Mojang 429，与并发限制（10）互补
+request-limit = 2
+
 # 数据库配置
 [database]
 # 数据库类型: sqlite 或 mysql
