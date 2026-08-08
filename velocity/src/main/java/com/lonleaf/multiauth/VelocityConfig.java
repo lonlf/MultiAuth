@@ -93,7 +93,7 @@ public class VelocityConfig {
         config.setDebug(source.getOrElse("debug", false));
 
         // 基本配置
-        config.setUseMojangUuid(source.getOrElse("use-mojang-uuid", true));
+        config.setUseMojangUuid(source.getOrElse("cross-server-use-mojang-uuid", true));
         // 跨服会话同步签名密钥（必须与 Spigot 端配置一致，空则关闭验签）
         config.setSessionSyncSecret(source.getOrElse("session-sync-secret", ""));
 

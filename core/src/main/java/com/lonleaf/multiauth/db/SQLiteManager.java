@@ -470,9 +470,9 @@ public class SQLiteManager implements DatabaseManager {
     }
 
     @Override
-    public synchronized void saveAuthAccount(AuthAccount account) {
+    public synchronized boolean saveAuthAccount(AuthAccount account) {
         if (!isConnected()) {
-            return;
+            return false;
         }
         try (PreparedStatement ps = connection.prepareStatement(SAVE_AUTH_ACCOUNT_SQL)) {
             ps.setString(1, normName(account.username()));
@@ -481,22 +481,26 @@ public class SQLiteManager implements DatabaseManager {
             ps.setLong(4, account.lastLoginTime());
             ps.setString(5, account.lastIp());
             ps.executeUpdate();
+            return true;
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_SAVE_AUTH_ACCOUNT_FAILED, account.username()), e);
+            return false;
         }
     }
 
     @Override
-    public synchronized void updateAuthPassword(String username, String passwordHash) {
+    public synchronized boolean updateAuthPassword(String username, String passwordHash) {
         if (!isConnected()) {
-            return;
+            return false;
         }
         try (PreparedStatement ps = connection.prepareStatement(UPDATE_AUTH_PASSWORD_SQL)) {
             ps.setString(1, passwordHash);
             ps.setString(2, normName(username));
             ps.executeUpdate();
+            return true;
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_AUTH_PASSWORD_FAILED, username), e);
+            return false;
         }
     }
 
@@ -599,6 +603,30 @@ public class SQLiteManager implements DatabaseManager {
             }
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_GET_LOGIN_HISTORY_FAILED, username), e);
+        }
+        return result;
+    }
+
+    @Override
+    public synchronized List<LoginHistoryRecord> getLoginHistoryChecked(String username, int limit) throws SQLException {
+        if (!isConnected()) {
+            throw new SQLException("database not connected");
+        }
+        List<LoginHistoryRecord> result = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(GET_RECENT_LOGIN_HISTORY_SQL)) {
+            ps.setString(1, normName(username));
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String name = rs.getString("username");
+                    String ip = rs.getString("ip");
+                    long loginTime = rs.getLong("login_time");
+                    boolean success = rs.getInt("success") != 0;
+                    String country = rs.getString("country");
+                    String city = rs.getString("city");
+                    result.add(new LoginHistoryRecord(name, ip, loginTime, success, country, city));
+                }
+            }
         }
         return result;
     }

@@ -37,7 +37,7 @@ public class CommandManager {
     public CommandManager(JavaPlugin plugin, Core core, SpigotConfig config, AuthService authService) {
         this.plugin = plugin;
         this.reloadCommand = new ReloadCommand((MultiAuth) plugin, config, core);
-        this.migrateCommand = new MigrateCommand(core);
+        this.migrateCommand = new MigrateCommand(plugin, core);
         this.backupCommand = new BackupCommand(core);
         this.statusCommand = new StatusCommand(core, config);
         this.infoCommand = new InfoCommand(core, authService);

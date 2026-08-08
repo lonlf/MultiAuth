@@ -51,6 +51,16 @@ public class SpigotAuthListener implements Listener {
     private final AtomicInteger verifyThreadCounter = new AtomicInteger();
 
     /**
+     * 并发登录验证槽位：与 Velocity 端 loginFlowSlots 语义一致。
+     * 每个验证任务会阻塞在 handshake.future.get(5s) 等待加密响应，
+     * 恶意客户端批量"连上即发 LOGIN_START 后不发加密响应"可占满验证线程池与队列（#6）。
+     * 槽位满时在进入线程池前直接快速断开（fail-closed），避免洪峰拖垮服务器。
+     */
+    private static final int MAX_CONCURRENT_LOGIN_FLOWS = 16;
+    private final java.util.concurrent.Semaphore loginFlowSlots =
+            new java.util.concurrent.Semaphore(MAX_CONCURRENT_LOGIN_FLOWS, true);
+
+    /**
      * 加密握手验证专用线程池（daemon 线程，有界）。
      */
     private final ExecutorService verificationExecutor = new ThreadPoolExecutor(
@@ -69,8 +79,8 @@ public class SpigotAuthListener implements Listener {
      */
     private final ConcurrentMap<String, LoginSummary> loginSummaries = new ConcurrentHashMap<>();
 
-    /** 预登录阶段缓存的登录摘要：玩家实际 UUID、是否正版、数据库记录快照 */
-    private record LoginSummary(UUID uuid, boolean isPremium, PlayerRecord record) {}
+    /** 预登录阶段缓存的登录摘要：玩家实际 UUID、是否正版、数据库记录快照、缓存时间戳 */
+    private record LoginSummary(UUID uuid, boolean isPremium, PlayerRecord record, long createdAt) {}
 
     public SpigotAuthListener(Core core, SpigotConfig config, JavaPlugin plugin,
                               SpigotPacketListener packetListener) {
@@ -111,6 +121,19 @@ public class SpigotAuthListener implements Listener {
      * 异步处理 LOGIN_START（由 PacketEvents 触发）。
      */
     private void handleLoginStartAsync(String username, Channel channel, InetAddress address) {
+        // 登录流程槽位限制：验证任务阻塞在 handshake.future.get(5s) 上等待加密响应，
+        // 槽位满说明洪峰已超限，直接快速断开（fail-closed），防止验证线程池与队列被占满（#6）
+        if (!loginFlowSlots.tryAcquire()) {
+            logger.warning(Messages.get(Messages.AUTH_EXECUTOR_FULL, username));
+            SpigotPacketListener listener = packetListener;
+            if (listener != null) {
+                if (channel.isActive()) {
+                    listener.sendDisconnect(channel, formatKickMessage(Messages.AUTH_INVALID_SESSION));
+                }
+                listener.markDenied(channel);
+            }
+            return;
+        }
         try {
             verificationExecutor.execute(() -> {
                 try {
@@ -123,19 +146,26 @@ public class SpigotAuthListener implements Listener {
                         if (channel.isActive()) {
                             packetListener.sendDisconnect(channel, formatKickMessage(Messages.AUTH_INVALID_SESSION));
                         }
+                        packetListener.markDenied(channel);
                         packetListener.putVerificationResult(username, channel,
                                 new SpigotPacketListener.VerificationResult(false, null,
                                         Messages.AUTH_INVALID_SESSION, channel));
                     }
+                } finally {
+                    loginFlowSlots.release();
                 }
             });
         } catch (RejectedExecutionException e) {
             // 线程池满载（服务器过载）：新验证任务被拒绝，无法完成加密握手，
             // 直接断开玩家（Disconnect 包可正常送达，LOGIN_START 已被取消不会卡死）
+            loginFlowSlots.release();
             logger.warning(Messages.get(Messages.AUTH_EXECUTOR_FULL, username));
             SpigotPacketListener listener = packetListener;
-            if (listener != null && channel.isActive()) {
-                listener.sendDisconnect(channel, formatKickMessage(Messages.AUTH_INVALID_SESSION));
+            if (listener != null) {
+                if (channel.isActive()) {
+                    listener.sendDisconnect(channel, formatKickMessage(Messages.AUTH_INVALID_SESSION));
+                }
+                listener.markDenied(channel);
             }
         }
     }
@@ -212,6 +242,8 @@ public class SpigotAuthListener implements Listener {
                 }
                 // 拒绝留痕：无论客户端是否仍在线，都记录预期踢出消息（未送达时便于排查拒绝原因）
                 logger.warning(Messages.get(Messages.KICK_REJECTED_MESSAGE, username, denyMessage.replace("\n", "\\n")));
+                // 标记拒绝：拦截验证失败后迟到的 ENCRYPTION_RESPONSE，避免透传给服务器（#17）
+                packetListener.markDenied(channel);
                 packetListener.putVerificationResult(username, channel,
                         new SpigotPacketListener.VerificationResult(false, null, result.denyMessage(), channel));
             }
@@ -370,7 +402,19 @@ public class SpigotAuthListener implements Listener {
             }
             isPremium = record != null && record.isPremium();
         }
-        loginSummaries.put(username, new LoginSummary(uuid, isPremium, record));
+        loginSummaries.put(username, new LoginSummary(uuid, isPremium, record, System.currentTimeMillis()));
+    }
+
+    /**
+     * 清理过期的预登录摘要（防御性清理）。
+     * 客户端"预登录通过后未 join 就断开"时不会触发 PlayerQuitEvent，摘要会永久残留；
+     * 攻击者批量连上即断可让该 map 无界增长，需由定时任务定期清理。
+     *
+     * @param maxAgeSeconds 缓存超过该秒数即移除
+     */
+    public void cleanupExpiredLoginSummaries(int maxAgeSeconds) {
+        long cutoff = System.currentTimeMillis() - maxAgeSeconds * 1000L;
+        loginSummaries.entrySet().removeIf(e -> e.getValue().createdAt() < cutoff);
     }
 
     /**
@@ -518,6 +562,17 @@ public class SpigotAuthListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
+        try {
+            handlePlayerJoin(event);
+        } catch (Throwable t) {
+            // 防护兜底：onPlayerJoin 任何环节抛出未预期异常（缓存快照损坏/插件重载竞态等），
+            // 不向事件系统传播导致后续监听器与登录流程中断，仅记录日志（#14）
+            logger.log(Level.SEVERE, Messages.get(Messages.AUTH_PLAYER_JOIN_ERROR,
+                    event.getPlayer().getName(), t.getMessage() != null ? t.getMessage() : "unknown"), t);
+        }
+    }
+
+    private void handlePlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String username = player.getName();
         UUID playerUuid = player.getUniqueId();

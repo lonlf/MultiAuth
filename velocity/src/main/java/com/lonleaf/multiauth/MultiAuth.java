@@ -94,6 +94,11 @@ public class MultiAuth {
                 if (core != null) {
                     core.reload(config.getConfig());
                 }
+                // 会话同步开关随密钥配置实时生效
+                if (sessionSyncManager != null) {
+                    String sessionSecret = config.getConfig().getSessionSyncSecret();
+                    sessionSyncManager.setEnabled(sessionSecret != null && !sessionSecret.isBlank());
+                }
                 logger.info(Messages.get(Messages.CONFIG_RELOADED));
             }
         }

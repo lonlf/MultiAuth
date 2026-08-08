@@ -44,11 +44,12 @@ public class ReloadCommand implements Command {
         plugin.reloadProxyMode();
         // 刷新离线玩家限制监听器的配置（如允许命令列表）
         plugin.refreshAuthListener();
-        // 重建安全增强服务（按新配置重启 IpGeoService，清空失败计数/IP在线计数）
-        plugin.reloadSecurityServices();
+        // 先 reload core（可能切换数据库连接/重建服务），再重建安全增强服务，
+        // 确保 AuthService/安全管理器注入的是新数据库引用而非已断开的旧实例
         if (core != null) {
             core.reload(config.getConfig());
         }
+        plugin.reloadSecurityServices();
         // proxy 模式切换仅靠 reload 无法完全生效（PacketEvents 依赖、server.properties/spigot.yml 等
         // 外部转发配置无法热加载），提醒执行者重启服务端，避免新旧模式混用导致连接异常
         boolean newProxy = config.isProxy();

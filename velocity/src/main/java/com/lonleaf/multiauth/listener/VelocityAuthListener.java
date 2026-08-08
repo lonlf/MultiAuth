@@ -19,6 +19,7 @@ import com.lonleaf.multiauth.auth.SessionSyncManager;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.slf4j.Logger;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -142,6 +143,9 @@ public class VelocityAuthListener {
         }
 
         String username = event.getUsername();
+        // 握手状态表 key 统一小写：PreLoginEvent.getUsername()（原始输入）、
+        // LoginEvent/DisconnectEvent 的 player.getUsername()（profile 名）大小写可能不一致（P1-12）
+        String usernameKey = username.toLowerCase(Locale.ROOT);
         debug(Messages.get(Messages.SESSION_START, username, "authentication"));
 
         // 并发槽位限制：防止登录洪峰占满验证线程池（evaluateForProxy 同步 HTTP）
@@ -201,25 +205,27 @@ public class VelocityAuthListener {
 
             switch (result.decision()) {
                 case ALLOW_PREMIUM -> {
-                    // 正版用户名：让 Velocity 自己执行加密握手 + hasJoined
-                    handshakeStates.put(username, new HandshakeState(true, false, connection));
+                    // 正版用户名：让 Velocity 自己执行加密握手 + hasJoined。
+                    // 先 setResult 确保决策生效（后续状态写入/日志异常时不会被默认放行），
+                    // 再写握手状态（P1-12 setResult 提前）
+                    event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
+                    putHandshakeState(usernameKey, new HandshakeState(true, false, connection));
                     // 过程细节：hasJoined 尚未通过，聚合登录日志在 onGameProfileRequest 输出
                     debug(Messages.get(Messages.LOGIN_PREMIUM_DECISION, username, getRemoteIp(connection)));
                     // 状态清理兜底：防止极端情况下 handshakeStates 残留（不执行任何抢先踢出）
-                    scheduleStateCleanup(username, connection);
+                    scheduleStateCleanup(usernameKey, connection);
                     // forceOnlineMode()：强制该连接执行加密握手 + hasJoined，
                     // 与 velocity.toml 全局 online-mode 解耦，防止全局设为 false 时正版玩家被静默放行
-                    event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
                 }
                 case ALLOW_OFFLINE -> {
                     // 非正版：强制离线模式，Velocity 跳过加密
-                    handshakeStates.put(username, new HandshakeState(false, false, connection));
+                    event.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
+                    putHandshakeState(usernameKey, new HandshakeState(false, false, connection));
                     // 状态清理兜底：与正版分支一致，防止离线玩家在 PreLogin 与
                     // GameProfileRequest 之间断开（onDisconnect 早退不清理）导致状态永久残留
-                    scheduleStateCleanup(username, connection);
+                    scheduleStateCleanup(usernameKey, connection);
                     // 过程细节：聚合登录日志在 onGameProfileRequest 输出
                     debug(Messages.get(Messages.LOGIN_OFFLINE_DECISION, username, getRemoteIp(connection)));
-                    event.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
                 }
                 case DENY -> {
                     logger.warn(Messages.get(Messages.AUTH_PLAYER_DENIED, username, result.denyMessage()));
@@ -240,17 +246,27 @@ public class VelocityAuthListener {
     }
 
     /**
+     * 写入握手状态：若已存在同 key 状态且属于不同连接（同名玩家并发，旧连接 hasJoined 响应慢），
+     * 保留旧状态避免覆盖，使旧连接仍能按原决策完成 GameProfileRequest（P1-13）。
+     * 新连接的状态缺失时走 onGameProfileRequest 兜底路径（fail-closed，不做写库推断）。
+     */
+    private void putHandshakeState(String usernameKey, HandshakeState newState) {
+        handshakeStates.compute(usernameKey, (k, old) ->
+                old != null && old.connection() != newState.connection() ? old : newState);
+    }
+
+    /**
      * 状态清理兜底：3 秒后若该玩家的握手状态仍存在（LoginEvent/DisconnectEvent
      * 均未触发的极端情况）则清理，避免 handshakeStates 内存泄漏。
      */
-    private void scheduleStateCleanup(String username, InboundConnection conn) {
+    private void scheduleStateCleanup(String usernameKey, InboundConnection conn) {
         server.getScheduler().buildTask(plugin, () -> {
-            HandshakeState state = handshakeStates.get(username);
+            HandshakeState state = handshakeStates.get(usernameKey);
             // 仅当状态归属本连接、未通过 hasJoined 且连接已断开时清理
             if (state != null && state.connection() == conn
                     && !state.hasJoinedPassed() && !conn.isActive()) {
-                debug(Messages.get(Messages.STATE_CLEANUP_REMOVED, username));
-                handshakeStates.remove(username, state);
+                debug(Messages.get(Messages.STATE_CLEANUP_REMOVED, usernameKey));
+                handshakeStates.remove(usernameKey, state);
             }
             // 连接仍活跃（hasJoined 响应慢）或已被同名新连接覆盖 → 保留状态
         }).delay(3, TimeUnit.SECONDS).schedule();
@@ -282,7 +298,8 @@ public class VelocityAuthListener {
     @Subscribe(order = PostOrder.LAST)
     public void onGameProfileRequest(GameProfileRequestEvent event) {
         String username = event.getUsername();
-        HandshakeState state = handshakeStates.get(username);
+        String usernameKey = username.toLowerCase(Locale.ROOT);
+        HandshakeState state = handshakeStates.get(usernameKey);
         // 同名玩家竞态保护：PreLogin 与 GameProfileRequest 之间同名玩家可能覆盖状态，
         // 校验连接一致性，不匹配则走兜底路径，避免误用他连接的状态改写 UUID / 写库
         if (state != null && state.connection() != event.getConnection()) {
@@ -293,30 +310,11 @@ public class VelocityAuthListener {
         UUID uuid = profile.getId();
 
         if (state == null) {
-            // 状态缺失（罕见：插件整体重载竞态等）：Velocity 已自行完成认证（正版 hasJoined 通过 /
-            // 离线 profile 生成），此处按 profile UUID 推断身份并补写数据库记录，
-            // 避免该次登录的记录缺失影响后续宕机决策 / 会话完整性校验。
-            boolean inferredPremium;
-            if (uuid == null) {
-                // profile UUID 缺失（异常情况）：按离线处理，生成离线 UUID 写库，
-                // 避免 generateOfflineUuid(username).equals(null) 误判为正版
-                uuid = AuthManager.generateOfflineUuid(username);
-                inferredPremium = false;
-            } else {
-                inferredPremium = !AuthManager.generateOfflineUuid(username).equals(uuid);
-            }
-            logger.warn(Messages.get(Messages.STATE_MISS, username,
-                    inferredPremium ? Messages.LOGIN_TYPE_PREMIUM : Messages.LOGIN_TYPE_OFFLINE));
-            if (inferredPremium && !config.isUseMojangUuid()) {
-                UUID offlineUuid = AuthManager.generateOfflineUuid(username);
-                if (!offlineUuid.equals(uuid)) {
-                    uuid = offlineUuid;
-                    profile = new GameProfile(offlineUuid, profile.getName(), profile.getProperties());
-                    event.setGameProfile(profile);
-                    debug(Messages.get(Messages.REWRITE_PREMIUM_UUID_OFFLINE, String.valueOf(offlineUuid)));
-                }
-            }
-            savePlayerRecordAsync(username, inferredPremium, uuid);
+            // 状态缺失（罕见：插件整体重载竞态/同名并发连接的后到者）：Velocity 已自行完成认证
+            // （正版 hasJoined 通过 / 离线 profile 生成）。fail-closed：不推断身份、不重写 UUID、
+            // 不补写数据库记录——状态缺失时无法可靠区分正版/离线，猜测写库可能写入错误记录，
+            // 且该次登录的身份决策已由 Velocity 决定，保持其默认行为（P1-8）
+            logger.warn(Messages.get(Messages.STATE_MISS, username, Messages.LOGIN_TYPE_OFFLINE));
             return;
         }
 
@@ -331,7 +329,7 @@ public class VelocityAuthListener {
                     debug(Messages.get(Messages.REWRITE_PREMIUM_UUID_OFFLINE, String.valueOf(offlineUuid)));
                 }
             }
-            handshakeStates.put(username, new HandshakeState(true, true, event.getConnection()));
+            putHandshakeState(usernameKey, new HandshakeState(true, true, event.getConnection()));
             savePlayerRecordAsync(username, true, uuid);
             // 聚合日志（生产必要）：hasJoined 验证通过后才输出登录成功，避免 onPreLogin 过早打印误导
             logger.info(Messages.get(Messages.LOGIN_SUCCESS_PREMIUM, username,
@@ -340,7 +338,7 @@ public class VelocityAuthListener {
             debug(Messages.get(Messages.AUTH_MOJANG_VERIFY_PASSED, username, uuid.toString()));
             debug(Messages.get(Messages.SESSION_JOIN_NOTIFY, username, uuid.toString(), "true"));
         } else {
-            handshakeStates.put(username, new HandshakeState(false, true, event.getConnection()));
+            putHandshakeState(usernameKey, new HandshakeState(false, true, event.getConnection()));
             savePlayerRecordAsync(username, false, uuid);
             // 聚合日志（生产必要）：离线玩家 profile 生成后输出登录成功
             logger.info(Messages.get(Messages.LOGIN_SUCCESS_OFFLINE, username,
@@ -354,13 +352,14 @@ public class VelocityAuthListener {
     @Subscribe
     public void onLogin(LoginEvent event) {
         String username = event.getPlayer().getUsername();
+        String usernameKey = username.toLowerCase(Locale.ROOT);
         // 先读取握手状态再清理，避免 cleanupHandshakeState 移除后读取恒为 null
         if (sessionSyncManager != null) {
-            HandshakeState state = handshakeStates.get(username);
+            HandshakeState state = handshakeStates.get(usernameKey);
             boolean isPremium = state != null && state.premiumDecision;
             sessionSyncManager.markLoggedIn(event.getPlayer(), isPremium);
         }
-        cleanupHandshakeState(username);
+        cleanupHandshakeState(usernameKey);
         debug(Messages.get(Messages.SESSION_COMPLETE, username, "login completed"));
     }
 
@@ -370,7 +369,7 @@ public class VelocityAuthListener {
     public void onServerConnected(ServerConnectedEvent event) {
         // 首次连接和跨服转移都同步会话到目标服务器
         if (sessionSyncManager != null) {
-            sessionSyncManager.syncSessionToServer(event.getPlayer(), event.getServer());
+            sessionSyncManager.syncSessionToServer(event.getPlayer());
         }
     }
 
@@ -381,13 +380,14 @@ public class VelocityAuthListener {
         // Velocity 的 DisconnectEvent 仅对已建立连接的玩家触发（pre-login 阶段断开走
         // PreLoginDisconnectEvent），getPlayer().getUsername() 不会抛异常。
         String username = event.getPlayer().getUsername();
+        String usernameKey = username.toLowerCase(Locale.ROOT);
 
         // 清理 Velocity 端会话，并通知后端服务器清理
         if (sessionSyncManager != null) {
             sessionSyncManager.removeSession(event.getPlayer());
         }
 
-        HandshakeState state = handshakeStates.get(username);
+        HandshakeState state = handshakeStates.get(usernameKey);
         if (state != null && state.premiumDecision && !state.hasJoinedPassed) {
             // 正版玩家在 hasJoined 通过前断开，两种情况无法通过事件区分：
             //   a) 盗版客户端冒用正版名，加密握手/hasJoined 验证失败被 Velocity 断开（真实拒绝）
@@ -399,7 +399,7 @@ public class VelocityAuthListener {
             logger.warn(Messages.get(Messages.AUTH_HANDSHAKE_FAILED, username));
         }
 
-        handshakeStates.remove(username);
+        handshakeStates.remove(usernameKey);
         debug(Messages.get(Messages.SESSION_DISCONNECT, username));
     }
 }

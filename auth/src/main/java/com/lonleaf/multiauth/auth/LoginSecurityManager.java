@@ -25,7 +25,8 @@ public class LoginSecurityManager {
     private final Set<String> registeringIps = ConcurrentHashMap.newKeySet();
     // volatile：reload 时由 AuthService.updateConfig 更新引用
     private volatile AuthConfig config;
-    private final DatabaseManager database;
+    // volatile：reload 切换数据库时更新引用
+    private volatile DatabaseManager database;
     private final Logger logger;
 
     public LoginSecurityManager(AuthConfig config, DatabaseManager database, Logger logger) {
@@ -37,6 +38,11 @@ public class LoginSecurityManager {
     /** 更新配置引用（reload 时由 AuthService 调用） */
     public void updateConfig(AuthConfig newConfig) {
         this.config = newConfig;
+    }
+
+    /** 切换数据库引用（reload 时由宿主注入新 DatabaseManager，避免持有死库） */
+    public void setDatabase(DatabaseManager database) {
+        this.database = database;
     }
 
     /** 规范化用户名：统一小写（与 DAO 层一致，避免大小写变体绕过账户失败计数/在线限制） */
@@ -173,15 +179,22 @@ public class LoginSecurityManager {
         }
     }
 
-    /** 注册成功后递增 IP 账号计数 */
-    public void onRegisterSuccess(String ip) {
+    /**
+     * 注册成功后递增 IP 账号计数。
+     *
+     * @return true = 计数写入成功；false = 写失败（调用方必须 fail-closed 回滚注册，
+     *         避免"账号已注册但计数未增"绕过单 IP 注册上限）
+     */
+    public boolean onRegisterSuccess(String ip) {
         if (ip == null) {
-            return;
+            return true;
         }
         try {
             database.incrementIpAccountCount(ip);
+            return true;
         } catch (Exception e) {
             logger.log(Level.WARNING, Messages.get(Messages.SEC_INCREMENT_IP_ACCOUNT_FAILED, ip, e.getMessage()), e);
+            return false;
         }
     }
 
@@ -250,5 +263,24 @@ public class LoginSecurityManager {
     public void clear() {
         accountAttempts.clear();
         ipAttempts.clear();
+    }
+
+    /**
+     * 清理过期的失败计数条目（防御性清理）。
+     * 失败计数 map 的 key 由攻击者任意控制且无 TTL，条目只增不减会撑爆内存；
+     * 仅在不在冷却期且超过空闲阈值时移除，冷却中的条目保留（不影响限流语义）。
+     *
+     * @param maxIdleMinutes 距上次失败超过该分钟数且不在冷却期的条目将被移除
+     */
+    public void cleanupExpiredAttempts(int maxIdleMinutes) {
+        long cutoff = System.currentTimeMillis() - maxIdleMinutes * 60_000L;
+        accountAttempts.entrySet().removeIf(e -> {
+            AttemptTracker t = e.getValue();
+            return !t.isInCooldown() && t.lastTime() > 0 && t.lastTime() < cutoff;
+        });
+        ipAttempts.entrySet().removeIf(e -> {
+            AttemptTracker t = e.getValue();
+            return !t.isInCooldown() && t.lastTime() > 0 && t.lastTime() < cutoff;
+        });
     }
 }

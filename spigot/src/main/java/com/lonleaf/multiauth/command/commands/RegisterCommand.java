@@ -50,6 +50,12 @@ public class RegisterCommand implements Command {
 
         authService.register(username, password, confirmPassword, ip)
                 .thenAccept(result -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (!player.isOnline()) {
+                        // 验证期间玩家已退出：撤销后台已写入的注册登录标记，避免下次同名连接免登录
+                        authService.logout(uuid);
+                        plugin.cancelAuthTimeout(uuid);
+                        return;
+                    }
                     player.sendMessage(result.message());
                     if (result.success()) {
                         for (String w : result.warnings()) {

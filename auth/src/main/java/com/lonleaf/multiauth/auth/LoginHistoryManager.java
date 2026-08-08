@@ -5,6 +5,7 @@ import com.lonleaf.multiauth.config.AuthConfig;
 import com.lonleaf.multiauth.db.DatabaseManager;
 import com.lonleaf.multiauth.db.LoginHistoryRecord;
 
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -15,7 +16,8 @@ import java.util.logging.Logger;
  */
 public class LoginHistoryManager {
 
-    private final DatabaseManager database;
+    // volatile：reload 切换数据库时更新引用
+    private volatile DatabaseManager database;
     // volatile：reload 时由 AuthService.updateConfig 更新引用
     private volatile AuthConfig config;
     private final Logger logger;
@@ -29,6 +31,11 @@ public class LoginHistoryManager {
     /** 更新配置引用（reload 时由 AuthService 调用） */
     public void updateConfig(AuthConfig newConfig) {
         this.config = newConfig;
+    }
+
+    /** 切换数据库引用（reload 时由宿主注入新 DatabaseManager，避免持有死库） */
+    public void setDatabase(DatabaseManager database) {
+        this.database = database;
     }
 
     /**
@@ -52,19 +59,17 @@ public class LoginHistoryManager {
         }
     }
 
-    /** 获取最近一次登录记录，不存在返回 null */
-    public LoginHistoryRecord getLastSuccessfulLogin(String username) {
-        try {
-            List<LoginHistoryRecord> list = database.getRecentLoginHistory(username, 1);
-            if (list == null || list.isEmpty()) {
-                return null;
-            }
-            return list.get(0);
-        } catch (Exception e) {
-            logger.log(Level.WARNING, Messages.get(Messages.HISTORY_GET_LAST_FAILED,
-                    username, e.getMessage()), e);
+    /**
+     * 获取最近一次登录记录，不存在返回 null。
+     * 数据库查询异常时向上抛出（不吞异常），由调用方（如会话恢复安全检查）
+     * 按 fail-closed 原则处理，避免查询失败被误判为"无历史"而放行。
+     */
+    public LoginHistoryRecord getLastSuccessfulLogin(String username) throws SQLException {
+        List<LoginHistoryRecord> list = database.getLoginHistoryChecked(username, 1);
+        if (list == null || list.isEmpty()) {
             return null;
         }
+        return list.get(0);
     }
 
     /** 获取指定玩家的登录历史列表 */

@@ -119,6 +119,8 @@ public class Messages {
     public static volatile String API_PROBE_IN_PROGRESS;
     public static volatile String API_OFFICIAL_CHECK_COMPLETE;
     public static volatile String API_FALLBACK_CHECK_COMPLETE;
+    /** 备用 API URL 模板非法（不含 {username} 占位符或无法解析），启动时剔除并警告 */
+    public static volatile String API_FALLBACK_INVALID_TEMPLATE;
 
     // --- 认证流程 ---
     public static volatile String AUTH_DATABASE_UNAVAILABLE;
@@ -126,6 +128,8 @@ public class Messages {
     public static volatile String AUTH_CONCURRENT_LOGIN_BLOCKED;
     public static volatile String AUTH_SERVER_BUSY;
     public static volatile String AUTH_USERNAME_CHECK_FAILED;
+    /** 用户名正版检查发生内部错误（配置/编程错误），fail-closed 拒绝而非按宕机降级放行 */
+    public static volatile String AUTH_CHECK_INTERNAL_ERROR;
     public static volatile String AUTH_PREMIUM_DETECTED;
     public static volatile String AUTH_PREMIUM_IN_AUTHLIST;
     public static volatile String AUTH_OFFLINE_ALLOWED;
@@ -202,6 +206,8 @@ public class Messages {
     public static volatile String SEC_GEO_CHECK_SKIPPED_LOG;
     public static volatile String SEC_GEO_DB_FAILED_DENY_LOG;
     public static volatile String AUTH_STATE_AUTHMANAGER_MISSING_LOG;
+    /** PlayerJoinEvent 处理出现未预期异常（防护日志） */
+    public static volatile String AUTH_PLAYER_JOIN_ERROR;
 
     // --- 日志参数：拒绝/放行原因与登录类型标签（可配置） ---
     public static volatile String DENY_REASON_DB_UNAVAILABLE;
@@ -260,6 +266,8 @@ public class Messages {
     public static volatile String PACKET_LOGIN_START_PARSE_FAILED;
     public static volatile String PACKET_ENC_RESPONSE_PARSE_FAILED;
     public static volatile String PACKET_ENC_REQUEST_WRAPPER_FAILED;
+    /** 已拒绝/失败连接的迟到 ENCRYPTION_RESPONSE 被取消（#17） */
+    public static volatile String PACKET_ENC_RESPONSE_LATE_DENIED;
     public static volatile String PACKET_FAKE_LOGIN_START_FAILED;
     public static volatile String PACKET_FAKE_LOGIN_START_FALLBACK_FAILED;
     public static volatile String PACKET_DISCONNECT_SEND_FAILED;
@@ -329,6 +337,9 @@ public class Messages {
     public static volatile String SESSION_SYNC_TTL_REMOVED;
     public static volatile String SESSION_SYNC_SECRET_MISSING;
     public static volatile String SESSION_SYNC_BAD_SIGNATURE;
+    public static volatile String SESSION_SYNC_AUTH_UP_LOG;
+    public static volatile String SESSION_SYNC_SKIP_OFFLINE_DEBUG;
+    public static volatile String SESSION_SYNC_SEND_FAILED_DEBUG;
     public static volatile String SEC_SESSION_RESUME_CHECK_FAILED;
     // 硬编码日志消息配置化
     public static volatile String CONFIG_LOADED_DEBUG;
@@ -343,6 +354,8 @@ public class Messages {
     public static volatile String PACKET_LISTENER_REGISTERED;
     public static volatile String PACKET_LOGIN_START_VERIFIED;
     public static volatile String PACKET_LOGIN_START_USERNAME;
+    public static volatile String PACKET_LOGIN_START_DUPLICATE;
+    public static volatile String PACKET_REGISTER_HANDSHAKE_EXISTS;
     public static volatile String PACKET_ENC_RESPONSE_RECEIVED;
     public static volatile String PACKET_ENC_REQUEST_SENT;
     public static volatile String PACKET_VERIFY_CHANNEL_CLOSED;
@@ -683,12 +696,16 @@ public class Messages {
         API_PROBE_IN_PROGRESS = messages.getOrDefault("api_probe_in_progress", "[API] Recovery probe in progress by another thread, fast-failing");
         API_OFFICIAL_CHECK_COMPLETE = messages.getOrDefault("api_official_check_complete", "[API][OFFICIAL] Username {0} check complete: {1} (took {2}ms)");
         API_FALLBACK_CHECK_COMPLETE = messages.getOrDefault("api_fallback_check_complete", "[API][FALLBACK#{0}] Username {1} check complete: {2} (took {3}ms)");
+        API_FALLBACK_INVALID_TEMPLATE = messages.getOrDefault("api_fallback_invalid_template",
+                "[API] Invalid fallback API URL template (must contain {username} placeholder), skipping: {0}");
 
         AUTH_DATABASE_UNAVAILABLE = messages.getOrDefault("auth_database_unavailable", "§cMultiAuth 数据库当前不可用，无法登录。");
         AUTH_SERVICE_NOT_INITIALIZED = messages.getOrDefault("auth_service_not_initialized", "§c认证服务未初始化，请联系管理员。");
         AUTH_CONCURRENT_LOGIN_BLOCKED = messages.getOrDefault("auth_concurrent_login_blocked", "§c该账号正在验证中，请稍后再试。");
         AUTH_SERVER_BUSY = messages.getOrDefault("auth_server_busy", "§c服务器认证繁忙，请稍后重试。");
         AUTH_USERNAME_CHECK_FAILED = messages.getOrDefault("auth_username_check_failed", "[AUTH] Player {0} username check failed: {1}");
+        AUTH_CHECK_INTERNAL_ERROR = messages.getOrDefault("auth_check_internal_error",
+                "§c认证检查发生内部错误，请稍后重试或联系管理员。");
         AUTH_PREMIUM_DETECTED = messages.getOrDefault("auth_premium_detected", "[AUTH] Player {0} username is premium (UUID={1}) - requiring Mojang verification");
         AUTH_PREMIUM_IN_AUTHLIST = messages.getOrDefault("auth_premium_in_authlist", "[AUTH] Player {0} not premium but in auth-list - requiring verification");
         AUTH_OFFLINE_ALLOWED = messages.getOrDefault("auth_offline_allowed", "[AUTH] Player {0} not premium - allowing offline login");
@@ -763,6 +780,8 @@ public class Messages {
                 "[AUDIT] Login denied for {0} - geolocation security check data query failed (fail-closed), error {1}");
         AUTH_STATE_AUTHMANAGER_MISSING_LOG = messages.getOrDefault("auth_state_authmanager_missing_log",
                 "[AUTH] AuthManager not initialized, cannot determine player type, {0} treated as offline player (fail-closed)");
+        AUTH_PLAYER_JOIN_ERROR = messages.getOrDefault("auth_player_join_error",
+                "[AUTH] Unexpected error while handling PlayerJoinEvent for {0}: {1}");
         SEC_INCREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("sec_increment_ip_account_failed", "[SEC] Failed to increment ip account count for {0}: {1}");
         SEC_DECREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("sec_decrement_ip_account_failed", "[SEC] Failed to decrement ip account count for {0}: {1}");
         DENY_REASON_DB_UNAVAILABLE = messages.getOrDefault("deny_reason_db_unavailable", "database unavailable");
@@ -825,6 +844,8 @@ public class Messages {
         PACKET_LOGIN_START_PARSE_FAILED = messages.getOrDefault("packet_login_start_parse_failed", "[PACKET][LOGIN_START] Parse failed: {0}");
         PACKET_ENC_RESPONSE_PARSE_FAILED = messages.getOrDefault("packet_enc_response_parse_failed", "[PACKET][ENCRYPTION_RESPONSE] Parse failed: {0}");
         PACKET_ENC_REQUEST_WRAPPER_FAILED = messages.getOrDefault("packet_enc_request_wrapper_failed", "[PACKET][ENCRYPTION_REQUEST] Wrapper failed, falling back to raw write: {0}");
+        PACKET_ENC_RESPONSE_LATE_DENIED = messages.getOrDefault("packet_enc_response_late_denied",
+                "[PACKET][ENCRYPTION_RESPONSE] Late response from a denied channel, cancelled (user already rejected)");
         PACKET_FAKE_LOGIN_START_FAILED = messages.getOrDefault("packet_fake_login_start_failed", "[PACKET][FAKE_LOGIN_START] Send failed: {0}");
         PACKET_FAKE_LOGIN_START_FALLBACK_FAILED = messages.getOrDefault("packet_fake_login_start_fallback_failed", "[PACKET][FAKE_LOGIN_START] Fallback also failed, kicking player {0}: {1}");
         PACKET_DISCONNECT_SEND_FAILED = messages.getOrDefault("packet_disconnect_send_failed", "[PACKET][DISCONNECT] Send failed, closing channel directly: {0}");
@@ -904,6 +925,12 @@ public class Messages {
                 "[AUTH] session-sync-secret is not configured on Velocity side; cross-server session sync messages are NOT authenticated. Set the same secret in Velocity and Spigot configs.");
         SESSION_SYNC_BAD_SIGNATURE = messages.getOrDefault("session_sync_bad_signature",
                 "[AUTH] Rejected cross-server session sync message from player {0} (UUID: {1}): invalid signature");
+        SESSION_SYNC_AUTH_UP_LOG = messages.getOrDefault("session_sync_auth_up_log",
+                "[SESSION] Backend reported auth success: {0} (UUID: {1}, IP: {2})");
+        SESSION_SYNC_SKIP_OFFLINE_DEBUG = messages.getOrDefault("session_sync_skip_offline_debug",
+                "[DEBUG] Offline player {0} is not recorded in proxy session (waiting for backend auth report)");
+        SESSION_SYNC_SEND_FAILED_DEBUG = messages.getOrDefault("session_sync_send_failed_debug",
+                "[DEBUG] Failed to send session sync message to {0}: {1}");
         SEC_SESSION_RESUME_CHECK_FAILED = messages.getOrDefault("sec_session_resume_check_failed",
                 "[SEC] Failed to check session resume security for {0}: {1}");
         CONFIG_LOADED_DEBUG = messages.getOrDefault("config_loaded_debug",
@@ -930,6 +957,10 @@ public class Messages {
                 "[PACKET][LOGIN_START] Verified user {0}, passing fake packet");
         PACKET_LOGIN_START_USERNAME = messages.getOrDefault("packet_login_start_username",
                 "[PACKET][LOGIN_START] username={0}, not in verifiedChannels, processing");
+        PACKET_LOGIN_START_DUPLICATE = messages.getOrDefault("packet_login_start_duplicate",
+                "[PACKET][LOGIN_START] Duplicate LOGIN_START for user {0}, dropping re-entry");
+        PACKET_REGISTER_HANDSHAKE_EXISTS = messages.getOrDefault("packet_register_handshake_exists",
+                "[PACKET][HANDSHAKE] Pending handshake already registered for channel (user={0}), reusing existing");
         PACKET_ENC_RESPONSE_RECEIVED = messages.getOrDefault("packet_enc_response_received",
                 "[PACKET][ENCRYPTION_RESPONSE] Received encryption response, user={0}");
         PACKET_ENC_REQUEST_SENT = messages.getOrDefault("packet_enc_request_sent",
@@ -1327,7 +1358,8 @@ public class Messages {
             sb.append("auth_info_never_logged_in=从未登录\n");
             sb.append("auth_info_not_registered=§c该玩家尚未注册。\n");
             sb.append("auth_module_disabled=§c认证模块已禁用。\n");
-            sb.append("auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。\n\n");
+            sb.append("auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。\n");
+            sb.append("auth_player_join_error=[AUTH] 处理玩家 {0} 的加入事件时发生未预期异常: {1}\n\n");
 
             sb.append("# 安全增强（SEC）\n");
             sb.append("sec_query_ip_stats_failed=[SEC] 查询 IP {0} 的统计信息失败: {1}\n");
@@ -1472,6 +1504,7 @@ public class Messages {
             sb.append("packet_login_start_verified=[PACKET][LOGIN_START] 已验证用户 {0}，放行假包\n");
             sb.append("packet_login_start_username=[PACKET][LOGIN_START] 用户名={0}，不在 verifiedChannels 中，处理中\n");
             sb.append("packet_enc_response_received=[PACKET][ENCRYPTION_RESPONSE] 收到加密响应，用户={0}\n");
+            sb.append("packet_enc_response_late_denied=[PACKET][ENCRYPTION_RESPONSE] 已拒绝连接的迟到响应，已取消（该用户已被拒绝登录）\n");
             sb.append("packet_enc_request_sent=[PACKET][ENCRYPTION_REQUEST] 已发送 (PacketEvents Wrapper)\n");
             sb.append("packet_verify_channel_closed=[AUTH] 玩家 {0} 验证完成时 channel 已关闭，跳过缓存验证结果\n");
             sb.append("packet_fake_login_start_sent=[PACKET][FAKE_LOGIN_START] 已发送假包 username={0} uuid={1}\n");
@@ -1705,7 +1738,8 @@ public class Messages {
             sb.append("auth_info_never_logged_in=Never logged in\n");
             sb.append("auth_info_not_registered=§cThis player is not registered.\n");
             sb.append("auth_module_disabled=§cAuth module is disabled.\n");
-            sb.append("auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.\n\n");
+            sb.append("auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.\n");
+            sb.append("auth_player_join_error=[AUTH] Unexpected error while handling PlayerJoinEvent for {0}: {1}\n\n");
 
             sb.append("# Security (SEC)\n");
             sb.append("sec_query_ip_stats_failed=[SEC] Failed to query ip stats for {0}: {1}\n");
@@ -1850,6 +1884,7 @@ public class Messages {
             sb.append("packet_login_start_verified=[PACKET][LOGIN_START] Verified user {0}, passing fake packet\n");
             sb.append("packet_login_start_username=[PACKET][LOGIN_START] username={0}, not in verifiedChannels, processing\n");
             sb.append("packet_enc_response_received=[PACKET][ENCRYPTION_RESPONSE] Received encryption response, user={0}\n");
+            sb.append("packet_enc_response_late_denied=[PACKET][ENCRYPTION_RESPONSE] Late response from a denied channel, cancelled (user already rejected)\n");
             sb.append("packet_enc_request_sent=[PACKET][ENCRYPTION_REQUEST] Sent (PacketEvents Wrapper)\n");
             sb.append("packet_verify_channel_closed=[AUTH] Player {0} channel closed during verification, skipping cache\n");
             sb.append("packet_fake_login_start_sent=[PACKET][FAKE_LOGIN_START] Sent fake packet username={0} uuid={1}\n");

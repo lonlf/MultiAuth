@@ -97,9 +97,20 @@ public class MojangApiService {
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
-        this.fallbackApiUrls = (fallbackApiUrls != null && !fallbackApiUrls.isEmpty())
-                ? List.copyOf(fallbackApiUrls)
-                : List.of();
+        // 构造时校验备用 API URL 模板：必须包含 {username} 占位符且可解析，
+        // 非法模板直接剔除并警告，避免运行期抛 IllegalArgumentException 被误判为 API 宕机
+        // （配置错误不等同于宕机，禁止触发宕机降级放行）
+        java.util.List<String> validUrls = new java.util.ArrayList<>();
+        if (fallbackApiUrls != null) {
+            for (String url : fallbackApiUrls) {
+                if (url == null || !url.contains("{username}")) {
+                    logger.warning(Messages.get(Messages.API_FALLBACK_INVALID_TEMPLATE, String.valueOf(url)));
+                    continue;
+                }
+                validUrls.add(url);
+            }
+        }
+        this.fallbackApiUrls = List.copyOf(validUrls);
         this.fallbackFailures = new java.util.concurrent.atomic.AtomicIntegerArray(this.fallbackApiUrls.size());
         this.fallbackLastFailureTime = new java.util.concurrent.atomic.AtomicLongArray(this.fallbackApiUrls.size());
         this.premiumCache = Caffeine.newBuilder()
@@ -228,6 +239,11 @@ public class MojangApiService {
                 Thread.currentThread().interrupt();
                 throw new IOException("Thread interrupted while checking official API", e);
             } catch (IOException e) {
+                // 限流（429/本地信号量超时）不等同于 API 宕机：直接 fail-closed 抛出，
+                // 禁止进入失败计数链触发宕机降级（防伪造 429 诱导降级放行）
+                if (e instanceof RateLimitException) {
+                    throw e;
+                }
                 markOfficialApiFailed(e);
                 // 官方失败：继续尝试备用 API
             }
@@ -268,6 +284,11 @@ public class MojangApiService {
                 Thread.currentThread().interrupt();
                 throw new IOException("Thread interrupted while checking fallback API #" + (idx + 1), e);
             } catch (IOException e) {
+                // 限流（429/本地信号量超时）不等同于 API 宕机：直接 fail-closed 抛出，
+                // 禁止进入失败计数链触发宕机降级（防伪造 429 诱导降级放行）
+                if (e instanceof RateLimitException) {
+                    throw e;
+                }
                 markFallbackFailed(idx, e);
                 triedCount++;
 
@@ -319,6 +340,12 @@ public class MojangApiService {
         if (status == 204 || status == 404) {
             return Optional.empty();
         }
+        if (status == 429) {
+            // HTTP 429 限流：不计入宕机失败（防止攻击者伪造 429 诱导宕机降级放行），
+            // 直接 fail-closed 抛出，由 AuthManager 映射为 RATE_LIMITED 拒绝（P1-9）
+            logger.warning(Messages.API_RATE_LIMIT_REACHED);
+            throw new RateLimitException("Official API rate limited (HTTP 429) for " + username);
+        }
         throw new IOException("Unexpected official API status: " + status);
     }
 
@@ -348,6 +375,12 @@ public class MojangApiService {
         }
         if (status == 204 || status == 404) {
             return Optional.empty();
+        }
+        if (status == 429) {
+            // HTTP 429 限流：不计入宕机失败（防止攻击者伪造 429 诱导宕机降级放行），
+            // 直接 fail-closed 抛出，由 AuthManager 映射为 RATE_LIMITED 拒绝（P1-9）
+            logger.warning(Messages.API_RATE_LIMIT_REACHED);
+            throw new RateLimitException("Fallback API #" + (index + 1) + " rate limited (HTTP 429) for " + username);
         }
         throw new IOException("Unexpected fallback API #" + (index + 1) + " status: " + status);
     }

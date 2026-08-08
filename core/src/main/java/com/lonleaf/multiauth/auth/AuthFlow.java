@@ -88,10 +88,11 @@ public class AuthFlow {
             AuthManager.UsernameCheckResult ucr;
             try {
                 ucr = authManager.checkUsername(username);
-            } catch (Exception e) {
-                logger.warning(Messages.get(Messages.AUTH_USERNAME_CHECK_FAILED, username, e.getMessage()));
-                ucr = new AuthManager.UsernameCheckResult(
-                        AuthManager.UsernameCheckResult.Status.API_UNREACHABLE, null);
+            } catch (RuntimeException e) {
+                // 配置/编程错误（checkUsername 已映射 IOException→宕机、RateLimitException→限流，
+                // 此处捕获未预期的 RuntimeException）：fail-closed 拒绝，禁止按宕机降级放行
+                logger.severe(Messages.get(Messages.AUTH_CHECK_INTERNAL_ERROR));
+                return Result.deny(Messages.AUTH_CHECK_INTERNAL_ERROR);
             }
 
             // 5. 根据检查结果分流
@@ -107,7 +108,7 @@ public class AuthFlow {
                     } else {
                         // 过程细节：允许离线登录（最终结果由平台层聚合日志输出）
                         logger.fine(Messages.get(Messages.AUTH_OFFLINE_ALLOWED, username));
-                        yield allowOffline(authManager, username);
+                        yield allowOffline(authManager, username, logger);
                     }
                 }
                 case API_UNREACHABLE -> {
@@ -118,6 +119,12 @@ public class AuthFlow {
                     // 本地 API 限流（并发洪峰触发）：fail-closed 拒绝，禁止走宕机放行路径
                     logger.warning(Messages.get(Messages.AUTH_API_RATE_LIMITED, username));
                     yield Result.deny(Messages.AUTH_API_RATE_LIMITED);
+                }
+                case INTERNAL_ERROR -> {
+                    // 配置/编程错误（checkUsername 内部抛出 RuntimeException）：fail-closed 拒绝，
+                    // 禁止按宕机策略放行离线玩家（防配置错误诱导降级放行）
+                    logger.severe(Messages.get(Messages.AUTH_CHECK_INTERNAL_ERROR));
+                    yield Result.deny(Messages.AUTH_CHECK_INTERNAL_ERROR);
                 }
             };
         } finally {
@@ -184,13 +191,21 @@ public class AuthFlow {
         }
         // 有离线历史记录 → 确认其为离线玩家，宕机期间允许离线登录
         logger.info(Messages.get(Messages.AUTH_DOWNTIME_ALLOW_OFFLINE, username));
-        return allowOffline(authManager, username);
+        return allowOffline(authManager, username, logger);
     }
 
     /**
      * 允许离线登录并持久化记录。
+     * 防降级保护：数据库中已有正版记录（is_premium=1）时拒绝写入离线记录，
+     * 防止 API 宕机降级/异常判定把正版玩家覆盖为离线（P1-14）。
      */
-    private static Result allowOffline(AuthManager authManager, String username) {
+    private static Result allowOffline(AuthManager authManager, String username, Logger logger) {
+        PlayerRecord existing = authManager.getPlayerRecord(username);
+        if (existing != null && existing.isPremium()) {
+            logger.warning(Messages.get(Messages.AUTH_AUDIT_DOWNTIME_PREMIUM_HISTORY,
+                    username, existing.uuid().toString()));
+            return Result.deny(Messages.AUTH_DOWNTIME_DENY);
+        }
         UUID offlineUuid = AuthManager.generateOfflineUuid(username);
         authManager.savePlayerRecord(username, false, offlineUuid);
         return Result.allowOffline(offlineUuid);
@@ -221,10 +236,11 @@ public class AuthFlow {
             AuthManager.UsernameCheckResult ucr;
             try {
                 ucr = authManager.checkUsername(username);
-            } catch (Exception e) {
-                logger.warning(Messages.get(Messages.AUTH_USERNAME_CHECK_FAILED, username, e.getMessage()));
-                ucr = new AuthManager.UsernameCheckResult(
-                        AuthManager.UsernameCheckResult.Status.API_UNREACHABLE, null);
+            } catch (RuntimeException e) {
+                // 配置/编程错误（checkUsername 已映射 IOException→宕机、RateLimitException→限流，
+                // 此处捕获未预期的 RuntimeException）：fail-closed 拒绝，禁止按宕机降级放行
+                logger.severe(Messages.get(Messages.AUTH_CHECK_INTERNAL_ERROR));
+                return Result.deny(Messages.AUTH_CHECK_INTERNAL_ERROR);
             }
 
             return switch (ucr.status()) {
@@ -233,7 +249,7 @@ public class AuthFlow {
                         logger.warning(Messages.get(Messages.AUTH_AUDIT_API_ONLY_AUTHLIST, username));
                         yield Result.deny(Messages.AUTH_INVALID_SESSION);
                     }
-                    yield allowOffline(authManager, username);
+                    yield allowOffline(authManager, username, logger);
                 }
                 case PREMIUM -> {
                     logger.warning(Messages.get(Messages.AUTH_AUDIT_API_ONLY_PREMIUM, username));
@@ -247,6 +263,12 @@ public class AuthFlow {
                     // 本地 API 限流（并发洪峰触发）：fail-closed 拒绝，禁止走宕机放行路径
                     logger.warning(Messages.get(Messages.AUTH_API_RATE_LIMITED, username));
                     yield Result.deny(Messages.AUTH_API_RATE_LIMITED);
+                }
+                case INTERNAL_ERROR -> {
+                    // 配置/编程错误（checkUsername 内部抛出 RuntimeException）：fail-closed 拒绝，
+                    // 禁止按宕机策略放行离线玩家（防配置错误诱导降级放行）
+                    logger.severe(Messages.get(Messages.AUTH_CHECK_INTERNAL_ERROR));
+                    yield Result.deny(Messages.AUTH_CHECK_INTERNAL_ERROR);
                 }
             };
         } finally {
@@ -307,10 +329,11 @@ public class AuthFlow {
             AuthManager.UsernameCheckResult ucr;
             try {
                 ucr = authManager.checkUsername(username);
-            } catch (Exception e) {
-                logger.warning(Messages.get(Messages.AUTH_USERNAME_CHECK_FAILED, username, e.getMessage()));
-                ucr = new AuthManager.UsernameCheckResult(
-                        AuthManager.UsernameCheckResult.Status.API_UNREACHABLE, null);
+            } catch (RuntimeException e) {
+                // 配置/编程错误（checkUsername 已映射 IOException→宕机、RateLimitException→限流，
+                // 此处捕获未预期的 RuntimeException）：fail-closed 拒绝，禁止按宕机降级放行
+                logger.severe(Messages.get(Messages.AUTH_CHECK_INTERNAL_ERROR));
+                return ProxyAuthResult.deny(Messages.AUTH_CHECK_INTERNAL_ERROR);
             }
 
             // 5. 根据检查结果分流（不含加密握手，由 Velocity 内置处理）
@@ -342,6 +365,12 @@ public class AuthFlow {
                     // 本地 API 限流（并发洪峰触发）：fail-closed 拒绝，禁止走宕机放行路径
                     logger.warning(Messages.get(Messages.AUTH_API_RATE_LIMITED, username));
                     yield ProxyAuthResult.deny(Messages.AUTH_API_RATE_LIMITED);
+                }
+                case INTERNAL_ERROR -> {
+                    // 配置/编程错误（checkUsername 内部抛出 RuntimeException）：fail-closed 拒绝，
+                    // 禁止按宕机策略放行离线玩家（防配置错误诱导降级放行）
+                    logger.severe(Messages.get(Messages.AUTH_CHECK_INTERNAL_ERROR));
+                    yield ProxyAuthResult.deny(Messages.AUTH_CHECK_INTERNAL_ERROR);
                 }
             };
         } finally {

@@ -36,7 +36,7 @@ use-mojang-uuid: true
 # Velocity 与 Spigot 端必须配置相同的密钥字符串，用于对 multiauth:session
 # 跨服会话同步消息做 HMAC-SHA256 验签，防止后端被直连时客户端伪造登录状态
 # 留空 = 不验签（仅拦截经代理转发的伪造消息，后端直连场景不安全）
-session-sync-secret: ""
+session-sync-secret: "change this to you own secret string."
 
 # 认证列表（proxy=false 时生效，玩家名列表，不区分大小写）
 # 即使 Mojang API 查得用户名非正版，若在此列表中仍强制要求完成 Mojang 加密验证

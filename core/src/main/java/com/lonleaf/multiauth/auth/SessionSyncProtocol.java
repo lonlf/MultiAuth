@@ -29,6 +29,9 @@ public final class SessionSyncProtocol {
     /** 消息类型：玩家断开连接（Velocity → Spigot） */
     public static final String ACTION_LOGOUT = "logout";
 
+    /** 消息类型：后端认证成功上报（Spigot → Velocity，离线玩家注册/登录成功后上报） */
+    public static final String ACTION_AUTH_UP = "auth_up";
+
     private SessionSyncProtocol() {}
 
     /**
@@ -72,6 +75,23 @@ public final class SessionSyncProtocol {
         }
     }
 
+    /**
+     * 构造后端认证成功上报消息（Spigot → Velocity，离线玩家注册/登录成功后上报）。
+     * Velocity 据此在会话中心记录会话，再向目标服务器广播 LOGIN_SYNC。
+     */
+    public static byte[] buildAuthUpMessage(String username, UUID uuid, String ip, String secret) {
+        try (ByteArrayOutputStream payloadStream = new ByteArrayOutputStream();
+             DataOutputStream out = new DataOutputStream(payloadStream)) {
+            out.writeUTF(ACTION_AUTH_UP);
+            out.writeUTF(username);
+            out.writeUTF(uuid.toString());
+            out.writeUTF(ip != null ? ip : "?");
+            return attachSignature(payloadStream.toByteArray(), secret);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to build auth-up message", e);
+        }
+    }
+
     /** 为 payload 附加签名：writeUTF(signature) + payload */
     private static byte[] attachSignature(byte[] payload, String secret) throws IOException {
         String signature = hmacHex(payload, secret);
@@ -107,6 +127,9 @@ public final class SessionSyncProtocol {
                     return new SessionSyncMessage(action, username, uuid, null, false, 0);
                 }
                 String ip = pin.readUTF();
+                if (ACTION_AUTH_UP.equals(action)) {
+                    return new SessionSyncMessage(action, username, uuid, ip, false, 0);
+                }
                 boolean isPremium = pin.readBoolean();
                 long loginTime = pin.readLong();
                 return new SessionSyncMessage(action, username, uuid, ip, isPremium, loginTime);

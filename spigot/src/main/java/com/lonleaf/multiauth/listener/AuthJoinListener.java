@@ -33,6 +33,9 @@ public class AuthJoinListener implements Listener {
     private final MultiAuth plugin;
     private final MultiverseHook multiverseHook;
 
+    /** 跨服切换时等待 Velocity LOGIN_SYNC 到达的宽限 tick 数（2 秒） */
+    private static final int LOGIN_SYNC_GRACE_TICKS = 40;
+
     public AuthJoinListener(AuthState state, AuthService authService, SpigotConfig config,
                             Core core, MultiAuth plugin) {
         this.state = state;
@@ -121,39 +124,71 @@ public class AuthJoinListener implements Listener {
                     return;
                 }
                 if (!registered) {
+                    // 未注册玩家不会被 LOGIN_SYNC 标记，直接提示注册
                     player.sendMessage(Messages.AUTH_REGISTER_PROMPT);
                     scheduleTimeout(player, authConfig.getAuthRegisterTimeout(), Messages.AUTH_REGISTER_TIMEOUT);
                     return;
                 }
-                if (!authService.tryResumeSession(username, ip, uuid)) {
-                    player.sendMessage(Messages.AUTH_LOGIN_PROMPT);
-                    scheduleTimeout(player, authConfig.getAuthLoginTimeout(), Messages.AUTH_LOGIN_TIMEOUT);
+                // 已注册但未登录：跨服会话同步场景下，Velocity 的 LOGIN_SYNC 可能晚于本检查到达
+                //（后端加入完成时机差异），短暂宽限等待，避免切换服务器后误报需要登录
+                if (isSessionSyncActive()) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                        if (!player.isOnline()) return;
+                        if (authService.isLoggedIn(uuid)) {
+                            return; // 宽限期内 LOGIN_SYNC 已到达
+                        }
+                        handleRegisteredPlayer(player, username, uuid, ip, authConfig, secCheck);
+                    }, LOGIN_SYNC_GRACE_TICKS);
                     return;
                 }
-                if (secCheck != null) {
-                    if (secCheck.shouldKick()) {
-                        player.kickPlayer(secCheck.warnings().isEmpty()
-                                ? Messages.AUTH_GEO_REQUIRE_LOGIN : secCheck.warnings().get(0));
-                        return;
-                    }
-                    if (!secCheck.allowResume()) {
-                        for (String w : secCheck.warnings()) {
-                            player.sendMessage(w);
-                        }
-                        player.sendMessage(Messages.AUTH_GEO_REQUIRE_LOGIN);
-                        player.sendMessage(Messages.AUTH_LOGIN_PROMPT);
-                        scheduleTimeout(player, authConfig.getAuthLoginTimeout(), Messages.AUTH_LOGIN_TIMEOUT);
-                        return;
-                    }
-                    for (String w : secCheck.warnings()) {
-                        player.sendMessage(w);
-                    }
-                }
-                authService.confirmSessionResume(username, ip);
-                player.sendMessage(Messages.AUTH_LOGIN_SUCCESS);
-                onLoginSuccess(player);
+                handleRegisteredPlayer(player, username, uuid, ip, authConfig, secCheck);
             });
         });
+    }
+
+    /**
+     * 处理已注册离线玩家的加入流程：尝试恢复持久会话，必要时提示登录。
+     * 跨服切换时由宽限期延迟调用，等待 Velocity LOGIN_SYNC 到达。
+     */
+    private void handleRegisteredPlayer(Player player, String username, UUID uuid, String ip,
+                                        AuthConfig authConfig, AuthService.SessionResumeCheck secCheck) {
+        if (!authService.tryResumeSession(username, ip, uuid)) {
+            player.sendMessage(Messages.AUTH_LOGIN_PROMPT);
+            scheduleTimeout(player, authConfig.getAuthLoginTimeout(), Messages.AUTH_LOGIN_TIMEOUT);
+            return;
+        }
+        if (secCheck != null) {
+            if (secCheck.shouldKick()) {
+                player.kickPlayer(secCheck.warnings().isEmpty()
+                        ? Messages.AUTH_GEO_REQUIRE_LOGIN : secCheck.warnings().get(0));
+                return;
+            }
+            if (!secCheck.allowResume()) {
+                // 异地登录安全检查要求重新登录：先撤销 tryResumeSession 已写入的登录标记，
+                // 否则玩家处于"已登录"状态却被告知需要登录，且绕过登录限制（P1-10）
+                authService.logout(uuid);
+                for (String w : secCheck.warnings()) {
+                    player.sendMessage(w);
+                }
+                player.sendMessage(Messages.AUTH_GEO_REQUIRE_LOGIN);
+                player.sendMessage(Messages.AUTH_LOGIN_PROMPT);
+                scheduleTimeout(player, authConfig.getAuthLoginTimeout(), Messages.AUTH_LOGIN_TIMEOUT);
+                return;
+            }
+            for (String w : secCheck.warnings()) {
+                player.sendMessage(w);
+            }
+        }
+        authService.confirmSessionResume(username, ip);
+        player.sendMessage(Messages.AUTH_LOGIN_SUCCESS);
+        onLoginSuccess(player);
+    }
+
+    /** 跨服会话同步是否启用：代理模式且已配置签名密钥 */
+    private boolean isSessionSyncActive() {
+        if (!config.isProxy()) return false;
+        String secret = config.getConfig().getSessionSyncSecret();
+        return secret != null && !secret.isBlank();
     }
 
     // ==================== 玩家退出 ====================
@@ -191,6 +226,9 @@ public class AuthJoinListener implements Listener {
         if (authConfig.isAuthReturnLastLocation()) {
             returnToLastLocation(player);
         }
+        // 向 Velocity 会话中心上报认证成功（离线玩家注册/登录成功后），
+        // 使跨服切换时目标服务器能收到 LOGIN_SYNC 保持登录状态
+        plugin.notifySessionAuthUp(player);
     }
 
     // ==================== 位置相关 ====================

@@ -236,8 +236,8 @@ public class Core {
      * @return 迁移的记录数，-1 表示失败
      */
     public int migrateDatabase(String targetType) {
+        DatabaseManager target = null;
         try {
-            DatabaseManager target;
             String type = targetType.toLowerCase();
 
             if ("mysql".equals(type)) {
@@ -254,13 +254,21 @@ public class Core {
 
             target.connect();
             int count = database.migrateTo(target);
-            target.disconnect();
 
             logger.info(Messages.get(Messages.DB_MIGRATION_COMPLETE, String.valueOf(count), targetType));
             return count;
         } catch (Exception e) {
             logger.severe(Messages.get(Messages.DB_MIGRATION_FAILED, e.getMessage()));
             return -1;
+        } finally {
+            // 无论成功/失败都关闭目标连接，避免迁移中断时目标连接池泄漏
+            if (target != null) {
+                try {
+                    target.disconnect();
+                } catch (Exception e) {
+                    logger.fine(Messages.get(Messages.CORE_CLEANUP_ERROR, e.getMessage()));
+                }
+            }
         }
     }
 
@@ -283,7 +291,6 @@ public class Core {
             scheduler = null;
         }
 
-        boolean dbRebuilt = false;
         if (dbChanged) {
             logger.info(Messages.DB_REBUILD_CONNECTION);
             if (database != null) {
@@ -297,8 +304,6 @@ public class Core {
             if (!initDatabase()) {
                 databaseHealthy = false;
                 logger.severe(Messages.DB_INIT_FAILED);
-            } else {
-                dbRebuilt = true;
             }
         }
 

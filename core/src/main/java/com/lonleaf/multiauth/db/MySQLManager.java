@@ -26,6 +26,10 @@ public class MySQLManager implements DatabaseManager {
     private static final int IDLE_TIMEOUT_MINUTES = 10;
     private static final int MAX_LIFETIME_MINUTES = 30;
     private static final int MAX_POOL_SIZE = 10;
+    /** JDBC 驱动 TCP 建连超时（毫秒）：防火墙 DROP 等场景快速失败，避免全局卡顿 */
+    private static final int JDBC_CONNECT_TIMEOUT_MS = 5_000;
+    /** JDBC socket 读超时（毫秒）：防止已建立连接读挂起拖住调用线程 */
+    private static final int JDBC_SOCKET_TIMEOUT_MS = 30_000;
 
     private final String host;
     private final int port;
@@ -37,6 +41,9 @@ public class MySQLManager implements DatabaseManager {
     private final Logger logger;
 
     private volatile HikariDataSource dataSource;
+    /** 已关闭标志：disconnect() 置位后禁止再 connect()，防止 reload/shutdown 后旧心跳线程
+     *  在已弃用的实例上重建连接池造成泄漏（#9） */
+    private volatile boolean closed;
     private final String tableName;
     private final String authTableName;
     private final String loginHistoryTableName;
@@ -206,6 +213,11 @@ public class MySQLManager implements DatabaseManager {
 
     @Override
     public synchronized void connect() throws SQLException {
+        // 已显式关闭（reload 切换数据库 / 插件关服）的实例禁止重建连接池：
+        // 旧心跳线程可能仍在运行并持有本引用，此时新建的池无人关闭，形成连接池泄漏（#9）
+        if (closed) {
+            throw new SQLException("MySQLManager has been closed");
+        }
         if (dataSource != null && !dataSource.isClosed()) {
             // 连接池存活，但如果 ping 失败则需要重建（heartbeat 重连对 MySQL 才会真正生效）
             if (ping()) {
@@ -225,7 +237,10 @@ public class MySQLManager implements DatabaseManager {
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database
-                + "?useSSL=" + useSsl + "&serverTimezone=UTC&characterEncoding=utf8&allowPublicKeyRetrieval=true");
+                + "?useSSL=" + useSsl + "&serverTimezone=UTC&characterEncoding=utf8"
+                + "&allowPublicKeyRetrieval=true"
+                + "&connectTimeout=" + JDBC_CONNECT_TIMEOUT_MS
+                + "&socketTimeout=" + JDBC_SOCKET_TIMEOUT_MS);
         config.setUsername(username);
         config.setPassword(password);
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
@@ -235,7 +250,9 @@ public class MySQLManager implements DatabaseManager {
         config.setConnectionTimeout(CONNECTION_TIMEOUT_SECONDS * 1000L);
         config.setIdleTimeout(IDLE_TIMEOUT_MINUTES * 60_000L);
         config.setMaxLifetime(MAX_LIFETIME_MINUTES * 60_000L);
-        config.setKeepaliveTime(60_000L); // 每 60s 探活一次连接
+        // 不启用 HikariCP keepalive（默认 0=禁用）：插件心跳（heartbeat-interval，默认 60s）每个周期
+        // 都会借连接执行 SELECT 1，配合下方 connectionTestQuery 的借出前校验，池中连接始终被探活，
+        // 与 keepalive 周期重叠只会造成重复 ping（#16）
         config.setLeakDetectionThreshold(60_000L);
         // MySQL 验证查询：连接借出前先用 isValid 检测，避免使用已断开的连接
         config.setConnectionTestQuery("SELECT 1");
@@ -280,11 +297,25 @@ public class MySQLManager implements DatabaseManager {
             addMysqlColumnIfNotExists(conn, "last_z", "DOUBLE");
             addMysqlColumnIfNotExists(conn, "last_yaw", "FLOAT");
             addMysqlColumnIfNotExists(conn, "last_pitch", "FLOAT");
+        } catch (SQLException e) {
+            // 建表/迁移失败（如账号无 DDL 权限）：关闭刚创建的连接池并置空，
+            // 避免"已连接但表缺失"的半健康状态与连接池泄漏
+            HikariDataSource ds = dataSource;
+            dataSource = null;
+            if (ds != null) {
+                try {
+                    ds.close();
+                } catch (Exception closeEx) {
+                    logger.fine(Messages.get(Messages.DB_CLOSE_DATA_SOURCE_FAILED, closeEx.getMessage()));
+                }
+            }
+            throw new SQLException("Failed to initialize MySQL tables: " + e.getMessage(), e);
         }
     }
 
     @Override
     public synchronized void disconnect() {
+        closed = true;
         if (dataSource != null && !dataSource.isClosed()) {
             try {
                 dataSource.close();
@@ -616,9 +647,9 @@ public class MySQLManager implements DatabaseManager {
     }
 
     @Override
-    public void saveAuthAccount(AuthAccount account) {
+    public boolean saveAuthAccount(AuthAccount account) {
         try (Connection conn = borrowConnection()) {
-            if (conn == null) return;
+            if (conn == null) return false;
             try (PreparedStatement ps = conn.prepareStatement(saveAuthAccountSql())) {
                 ps.setString(1, normName(account.username()));
                 ps.setString(2, account.passwordHash());
@@ -626,23 +657,27 @@ public class MySQLManager implements DatabaseManager {
                 ps.setLong(4, account.lastLoginTime());
                 ps.setString(5, account.lastIp());
                 ps.executeUpdate();
+                return true;
             }
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_SAVE_AUTH_ACCOUNT_FAILED, account.username()), e);
+            return false;
         }
     }
 
     @Override
-    public void updateAuthPassword(String username, String passwordHash) {
+    public boolean updateAuthPassword(String username, String passwordHash) {
         try (Connection conn = borrowConnection()) {
-            if (conn == null) return;
+            if (conn == null) return false;
             try (PreparedStatement ps = conn.prepareStatement(updateAuthPasswordSql())) {
                 ps.setString(1, passwordHash);
                 ps.setString(2, normName(username));
                 ps.executeUpdate();
+                return true;
             }
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_AUTH_PASSWORD_FAILED, username), e);
+            return false;
         }
     }
 
@@ -753,6 +788,30 @@ public class MySQLManager implements DatabaseManager {
             }
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_GET_LOGIN_HISTORY_FAILED, username), e);
+        }
+        return result;
+    }
+
+    @Override
+    public List<LoginHistoryRecord> getLoginHistoryChecked(String username, int limit) throws SQLException {
+        List<LoginHistoryRecord> result = new ArrayList<>();
+        try (Connection conn = borrowConnection()) {
+            if (conn == null) throw new SQLException("no connection available");
+            try (PreparedStatement ps = conn.prepareStatement(getRecentLoginHistorySql())) {
+                ps.setString(1, normName(username));
+                ps.setInt(2, limit);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        String name = rs.getString("username");
+                        String ip = rs.getString("ip");
+                        long loginTime = rs.getLong("login_time");
+                        boolean success = rs.getInt("success") != 0;
+                        String country = rs.getString("country");
+                        String city = rs.getString("city");
+                        result.add(new LoginHistoryRecord(name, ip, loginTime, success, country, city));
+                    }
+                }
+            }
         }
         return result;
     }

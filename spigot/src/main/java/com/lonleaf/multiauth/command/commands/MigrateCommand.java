@@ -2,7 +2,9 @@ package com.lonleaf.multiauth.command.commands;
 
 import com.lonleaf.multiauth.Core;
 import com.lonleaf.multiauth.Messages;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,8 +15,10 @@ import java.util.List;
 public class MigrateCommand implements Command {
 
     private final Core core;
+    private final JavaPlugin plugin;
 
-    public MigrateCommand(Core core) {
+    public MigrateCommand(JavaPlugin plugin, Core core) {
+        this.plugin = plugin;
         this.core = core;
     }
 
@@ -49,12 +53,19 @@ public class MigrateCommand implements Command {
             return true;
         }
 
-        int count = core.migrateDatabase(target);
-        if (count >= 0) {
-            sender.sendMessage(Messages.get(Messages.CMD_MIGRATE_SUCCESS, String.valueOf(count), target));
-        } else {
-            sender.sendMessage(Messages.get(Messages.CMD_MIGRATE_FAILED, Messages.CMD_CHECK_CONSOLE));
-        }
+        // 异步执行迁移，避免大库全表读写阻塞主线程导致服务器 tick 停滞（#15）
+        sender.sendMessage(Messages.get(Messages.CMD_MIGRATE_IN_PROGRESS, target));
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            int count = core.migrateDatabase(target);
+            // 回到主线程回发结果，保证命令发送线程安全
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (count >= 0) {
+                    sender.sendMessage(Messages.get(Messages.CMD_MIGRATE_SUCCESS, String.valueOf(count), target));
+                } else {
+                    sender.sendMessage(Messages.get(Messages.CMD_MIGRATE_FAILED, Messages.CMD_CHECK_CONSOLE));
+                }
+            });
+        });
         return true;
     }
 

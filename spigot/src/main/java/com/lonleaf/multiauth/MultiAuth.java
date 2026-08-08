@@ -7,6 +7,7 @@ import com.lonleaf.multiauth.auth.AuthService;
 import com.lonleaf.multiauth.auth.LoginHistoryManager;
 import com.lonleaf.multiauth.auth.LoginSecurityManager;
 import com.lonleaf.multiauth.geo.IpGeoService;
+import com.lonleaf.multiauth.db.DatabaseManager;
 import com.lonleaf.multiauth.listener.AuthJoinListener;
 import com.lonleaf.multiauth.listener.AuthState;
 import com.lonleaf.multiauth.listener.PlayerRestrictionListener;
@@ -105,10 +106,19 @@ public final class MultiAuth extends JavaPlugin {
                 this.sessionSyncReceiver.register();
             }
 
-            // 定期清理过期的持久化会话，避免 persistentSessions 内存泄漏
+            // 定期清理过期的持久化会话，避免 persistentSessions 内存泄漏；
+            // 同时防御性清理失败计数与预登录摘要（两者 key 由攻击者控制且无 TTL，需定期清理防内存 DoS）
             getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
                 try {
                     authService.cleanExpiredSessions();
+                    if (loginSecurityManager != null) {
+                        // 失败计数空闲超过 10 分钟且不在冷却期 → 移除（不影响限流语义）
+                        loginSecurityManager.cleanupExpiredAttempts(10);
+                    }
+                    if (authListener != null) {
+                        // 预登录摘要超过 5 分钟 → 移除（正常玩家 join 时会被消费，仅清理"连上即断"残留）
+                        authListener.cleanupExpiredLoginSummaries(300);
+                    }
                 } catch (Exception e) {
                     julLogger.warning(Messages.get(Messages.SESSION_CLEAN_FAILED, e.getMessage()));
                 }
@@ -200,6 +210,18 @@ public final class MultiAuth extends JavaPlugin {
      * 安全管理器需要清空内存中的失败计数/IP在线计数）。
      */
     public void reloadSecurityServices() {
+        // 注入最新数据库引用：core.reload 可能已切换数据库类型（如 SQLite→MySQL），
+        // 若仍持有旧引用则访问已断开/旧实例的死库（P1-6）
+        DatabaseManager currentDb = core != null ? core.getDatabase() : null;
+        if (authService != null && currentDb != null) {
+            authService.setDatabase(currentDb);
+        }
+        if (loginSecurityManager != null && currentDb != null) {
+            loginSecurityManager.setDatabase(currentDb);
+        }
+        if (loginHistoryManager != null && currentDb != null) {
+            loginHistoryManager.setDatabase(currentDb);
+        }
         // 关闭旧的 IpGeoService（释放 xdb 句柄）
         if (ipGeoService != null) {
             ipGeoService.close();
@@ -209,9 +231,9 @@ public final class MultiAuth extends JavaPlugin {
         if (loginSecurityManager != null) {
             loginSecurityManager.clear();
         }
-        // 清空会话与安全状态
+        // 清理验证中的瞬时状态与失败计数（保留在线玩家的登录状态，避免 reload 静默清会话 #8）
         if (authService != null) {
-            authService.clearSessions();
+            authService.clearForReload();
         }
         // 若 auth 模块启用，则按新配置重建
         if (config.getConfig().isAuthEnabled() && authService != null) {
@@ -238,6 +260,13 @@ public final class MultiAuth extends JavaPlugin {
     public void onAuthLoginSuccess(org.bukkit.entity.Player player) {
         if (authJoinListener != null) {
             authJoinListener.onLoginSuccess(player);
+        }
+    }
+
+    /** 通知 Velocity 会话中心：玩家已在本服务器认证成功（离线玩家注册/登录成功后调用） */
+    public void notifySessionAuthUp(org.bukkit.entity.Player player) {
+        if (sessionSyncReceiver != null) {
+            sessionSyncReceiver.reportAuthSuccess(player);
         }
     }
 

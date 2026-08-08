@@ -77,6 +77,7 @@ api_fast_fail_downtime=[API] Fast-fail during downtime ({0}s until next recovery
 api_probe_in_progress=[API] Recovery probe in progress by another thread, fast-failing
 api_official_check_complete=[API][OFFICIAL] Username {0} check complete: {1} (took {2}ms)
 api_fallback_check_complete=[API][FALLBACK#{0}] Username {1} check complete: {2} (took {3}ms)
+api_fallback_invalid_template=[API] Invalid fallback API URL template (must contain {username} placeholder), skipping: {0}
 
 # Auth
 auth_database_unavailable=§cMultiAuth database is currently unavailable, login not possible.
@@ -84,6 +85,7 @@ auth_service_not_initialized=§cAuthentication service not initialized, please c
 auth_concurrent_login_blocked=§cThis account is being verified, please try again later.
 auth_server_busy=§cAuthentication is busy, please try again later.
 auth_username_check_failed=[AUTH] Player {0} username check failed: {1}
+auth_check_internal_error=§cAuthentication check encountered an internal error, please try again later or contact an admin.
 auth_premium_detected=[AUTH] Player {0} username is premium (UUID={1}) - requiring Mojang verification
 auth_premium_in_authlist=[AUTH] Player {0} not premium but in auth-list - requiring verification
 auth_offline_allowed=[AUTH] Player {0} not premium - allowing offline login
@@ -166,6 +168,7 @@ plugin_packetevent_install_hint=[MultiAuth] Please install the PacketEvents plug
 packet_no_verify_callback=[PACKET][LOGIN_START] No verification callback set, user {0} cannot login
 packet_login_start_parse_failed=[PACKET][LOGIN_START] Parse failed: {0}
 packet_enc_response_parse_failed=[PACKET][ENCRYPTION_RESPONSE] Parse failed: {0}
+packet_enc_response_late_denied=[PACKET][ENCRYPTION_RESPONSE] Late response from a denied channel, cancelled (user already rejected)
 packet_enc_request_wrapper_failed=[PACKET][ENCRYPTION_REQUEST] Wrapper failed, falling back to raw write: {0}
 packet_fake_login_start_failed=[PACKET][FAKE_LOGIN_START] Send failed: {0}
 packet_fake_login_start_fallback_failed=[PACKET][FAKE_LOGIN_START] Fallback also failed, kicking player {0}: {1}
@@ -236,6 +239,9 @@ session_sync_reject_client=[AUTH] Blocked client-forged cross-server session syn
 session_sync_ttl_removed=[SESSION] Removed expired session record (TTL): {0} (UUID: {1})
 session_sync_secret_missing=[AUTH] session-sync-secret is not configured on Velocity side; cross-server session sync messages are NOT authenticated. Set the same secret in Velocity and Spigot configs.
 session_sync_bad_signature=[AUTH] Rejected cross-server session sync message from player {0} (UUID: {1}): invalid signature
+session_sync_auth_up_log=[SESSION] Backend reported auth success: {0} (UUID: {1}, IP: {2})
+session_sync_skip_offline_debug=[DEBUG] Offline player {0} is not recorded in proxy session (waiting for backend auth report)
+session_sync_send_failed_debug=[DEBUG] Failed to send session sync message to {0}: {1}
 sec_session_resume_check_failed=[SEC] Failed to check session resume security for {0}: {1}
 auth_create_auth_table_failed_log=[AUTH] Failed to create auth table: {0}
 auth_create_security_tables_failed_log=[AUTH] Failed to create security tables: {0}
@@ -308,6 +314,8 @@ auth_account_unregistered_log=[AUTH] Account unregistered: {0}
 packet_listener_registered=[PACKET] PacketEvents listener registered (Plan A: LOGIN_START interception + fake packet)
 packet_login_start_verified=[PACKET][LOGIN_START] Verified user {0}, passing fake packet
 packet_login_start_username=[PACKET][LOGIN_START] username={0}, not in verifiedChannels, processing
+packet_login_start_duplicate=[PACKET][LOGIN_START] Duplicate LOGIN_START for user {0}, dropping re-entry
+packet_register_handshake_exists=[PACKET][HANDSHAKE] Pending handshake already registered for channel (user={0}), reusing existing
 packet_enc_response_received=[PACKET][ENCRYPTION_RESPONSE] Received encryption response, user={0}
 packet_enc_request_sent=[PACKET][ENCRYPTION_REQUEST] Sent (PacketEvents Wrapper)
 packet_verify_channel_closed=[AUTH] Player {0} channel closed during verification, skipping cache
@@ -375,6 +383,7 @@ auth_info_never_logged_in=Never logged in
 auth_info_not_registered=§cThis player is not registered.
 auth_module_disabled=§cAuth module is disabled.
 auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.
+auth_player_join_error=[AUTH] Unexpected error while handling PlayerJoinEvent for {0}: {1}
 
 # Security (SEC)
 sec_query_ip_stats_failed=[SEC] Failed to query ip stats for {0}: {1}

@@ -17,6 +17,12 @@ language = "zh_cn"
 # true  = 输出详细调试日志（握手步骤/决策细节等，便于排查问题）
 debug = false
 
+# 是否使用 Mojang 正版 UUID（proxy=true 跨服模式下由 Velocity 端决定）
+# true  = 正版玩家使用 Mojang 正版 UUID
+# false = 正版玩家也使用离线 UUID（正版与离线共享存档/权限）
+# 需与 Spigot 端 use-mojang-uuid 保持一致，避免两端配置不一致导致记录反复改写
+cross-server-use-mojang-uuid = true
+
 # 认证列表（玩家名列表，不区分大小写）
 # 所有玩家连接后先尝试 Mojang 正版验证：
 #   验证成功 → 使用正版 UUID 进入服务器
@@ -31,7 +37,7 @@ auth-list = [
 # 跨服会话同步消息做 HMAC-SHA256 验签
 # 留空 = 关闭跨服会话同步：Velocity 不发送同步消息，后端拒绝一切同步消息
 #         （客户端伪造拦截仍生效，防止直连后端时绕过认证限制）
-session-sync-secret = ""
+session-sync-secret = "change this to you own secret string."
 
 # Mojang API 配置
 [mojang-api]

@@ -57,6 +57,12 @@ public class SpigotPacketListener extends PacketListenerAbstract {
     private final java.util.Set<Channel> disconnectedChannels =
             java.util.Collections.synchronizedSet(java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>()));
 
+    /** 验证已失败/被拒绝的 Channel 集合 — WeakHashMap 自动清理断开的 channel。
+     *  用于拦截验证失败后迟到的 ENCRYPTION_RESPONSE 包（验证完成前等待的响应超时/失败后，
+     *  客户端重复或迟到的包不应透传给已不期望该包的服务器登录状态机）（#17）。 */
+    private final java.util.Set<Channel> deniedChannels =
+            java.util.Collections.synchronizedSet(java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>()));
+
     /** LOGIN_START 回调（由 SpigotAuthListener 设置） */
     private volatile LoginStartCallback loginStartCallback;
 
@@ -154,7 +160,12 @@ public class SpigotPacketListener extends PacketListenerAbstract {
             // 注意：closeFuture 只触发一次。若验证在 channel 关闭之后才完成，
             // putVerificationResult 会通过 closed 标志跳过缓存，防止 verifiedUsers 残留
             LoginState state = new LoginState(username);
-            channelToUsername.put(channel, state);
+            // 防重入：同一 channel 已注册登录状态（恶意客户端重复发送 LOGIN_START）时
+            // 丢弃重复包，避免重复注册 closeFuture 监听器与重复触发验证回调（P1-15）
+            if (channelToUsername.putIfAbsent(channel, state) != null) {
+                logger.fine(Messages.get(Messages.PACKET_LOGIN_START_DUPLICATE, username));
+                return;
+            }
             channel.closeFuture().addListener((io.netty.channel.ChannelFutureListener) future -> {
                 Channel ch = future.channel();
                 LoginState st = channelToUsername.remove(ch);
@@ -203,6 +214,15 @@ public class SpigotPacketListener extends PacketListenerAbstract {
 
         PendingHandshake handshake = pendingHandshakes.get(channel);
         if (handshake == null) {
+            // 无待处理握手：
+            //  - 验证成功后服务器进入自己的加密握手流程，客户端针对服务器 EncryptionRequest
+            //    的 ENCRYPTION_RESPONSE 必须透传（此时 pendingHandshakes 已清空）
+            //  - 验证已失败/被拒绝（sendDisconnect 已发送）后迟到的重复/迟到包则取消，
+            //    避免透传给已不期望该包的服务器登录状态机（#17）
+            if (deniedChannels.contains(channel)) {
+                logger.fine(Messages.get(Messages.PACKET_ENC_RESPONSE_LATE_DENIED));
+                event.setCancelled(true);
+            }
             return;
         }
 
@@ -233,7 +253,13 @@ public class SpigotPacketListener extends PacketListenerAbstract {
     /** 注册待处理的加密握手。 */
     public PendingHandshake registerHandshake(String username, Channel channel, AuthCrypto crypto) {
         PendingHandshake handshake = new PendingHandshake(crypto, username);
-        pendingHandshakes.put(channel, handshake);
+        // 防重入：同一 channel 已有待处理握手（重复 ENCRYPTION_REQUEST 场景）时复用已有握手，
+        // 避免覆盖导致旧加密响应无人处理或验证线程等待被替换的 future（P1-15）
+        PendingHandshake existing = pendingHandshakes.putIfAbsent(channel, handshake);
+        if (existing != null) {
+            logger.warning(Messages.get(Messages.PACKET_REGISTER_HANDSHAKE_EXISTS, username));
+            return existing;
+        }
         return handshake;
     }
 
@@ -266,6 +292,16 @@ public class SpigotPacketListener extends PacketListenerAbstract {
      */
     public void markVerified(Channel channel) {
         verifiedChannels.add(channel);
+    }
+
+    /**
+     * 标记 Channel 验证已失败/被拒绝（sendDisconnect 已发送）。
+     * 该 Channel 之后迟到的 ENCRYPTION_RESPONSE 将被取消而非透传给服务器（#17）。
+     */
+    public void markDenied(Channel channel) {
+        if (channel != null) {
+            deniedChannels.add(channel);
+        }
     }
 
     /**

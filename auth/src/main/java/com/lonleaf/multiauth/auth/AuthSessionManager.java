@@ -171,10 +171,19 @@ public class AuthSessionManager {
         persistentSessions.entrySet().removeIf(e -> e.getValue().loginTime() < threshold);
     }
 
-    /** 清除所有登录状态与持久化会话（插件停用/reload 时调用） */
+    /** 清除所有登录状态与持久化会话（插件停用/关服时调用） */
     public void clear() {
         loggedInPlayers.clear();
         processingPlayers.clear();
         persistentSessions.clear();
+    }
+
+    /**
+     * 清除验证中的瞬时状态（reload 时调用）：仅清理正在登录/注册验证中的占位，
+     * 保留已登录玩家与持久化会话，避免 reload 静默清会话导致在线玩家被当作未登录
+     * 限制/踢出，或强制已认证玩家重新登录（#8）。
+     */
+    public void clearProcessing() {
+        processingPlayers.clear();
     }
 }

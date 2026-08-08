@@ -59,11 +59,11 @@ public interface DatabaseManager {
     /** 获取 auth 账号记录，不存在返回 null */
     AuthAccount getAuthAccount(String username);
 
-    /** 保存（插入或更新）auth 账号记录 */
-    void saveAuthAccount(AuthAccount account);
+    /** 保存（插入或更新）auth 账号记录，返回是否保存成功 */
+    boolean saveAuthAccount(AuthAccount account);
 
-    /** 更新密码哈希 */
-    void updateAuthPassword(String username, String passwordHash);
+    /** 更新密码哈希，返回是否更新成功 */
+    boolean updateAuthPassword(String username, String passwordHash);
 
     /** 更新最后登录时间和 IP */
     void updateAuthLogin(String username, long loginTime, String ip);
@@ -84,6 +84,14 @@ public interface DatabaseManager {
 
     /** 获取玩家最近 N 条成功登录记录，按时间倒序 */
     java.util.List<LoginHistoryRecord> getRecentLoginHistory(String username, int limit);
+
+    /**
+     * 获取玩家最近 N 条登录记录（按时间倒序），与 getRecentLoginHistory 不同：
+     * 内部不吞异常，数据库异常时直接向上抛出（供安全检查 fail-closed 使用）。
+     *
+     * @throws SQLException 数据库查询异常
+     */
+    java.util.List<LoginHistoryRecord> getLoginHistoryChecked(String username, int limit) throws SQLException;
 
     /** 删除玩家多余的历史记录，保留 maxRecords 条 */
     void trimLoginHistory(String username, int maxRecords);

@@ -48,7 +48,16 @@ public class SessionSyncReceiver implements PluginMessageListener {
             String username = msg.username();
 
             if (SessionSyncProtocol.ACTION_LOGIN.equals(msg.action())) {
-                // Velocity 同步登录状态：标记为已登录 + 恢复持久会话
+                // Velocity 同步登录状态：先确认玩家当前在线。跨服切换间隙/玩家已断开时
+                // LOGIN_SYNC 可能迟到，若玩家已不在本服则不应写内存登录集或刷新持久会话
+                //（残留登录标记会导致玩家离线期间处于"已登录"状态、重连时免认证），P1-11
+                Player online = plugin.getServer().getPlayer(uuid);
+                if (online == null) {
+                    logger.fine(Messages.get(Messages.SESSION_SYNC_LOGIN, username, msg.ip(),
+                            String.valueOf(msg.isPremium())) + " (skipped: player offline)");
+                    return;
+                }
+                // 标记为已登录 + 恢复持久会话
                 authService.markLoggedIn(uuid);
                 authService.confirmSessionResume(username, msg.ip());
                 // 取消超时踢出任务（如果已启动）
@@ -74,10 +83,30 @@ public class SessionSyncReceiver implements PluginMessageListener {
         }
     }
 
-    /** 注册 Plugin Messaging 通道 */
+    /**
+     * 向 Velocity 上报玩家认证成功（离线玩家注册/登录成功后调用）。
+     * Velocity 作为会话中心记录会话，并向当前服务器及后续跨服目标广播 LOGIN_SYNC，
+     * 使已认证玩家在跨服切换后保持登录状态。
+     */
+    public void reportAuthSuccess(Player player) {
+        String secret = secretSupplier.get();
+        if (secret == null || secret.isBlank()) {
+            return; // 未配置密钥 = 跨服会话同步关闭
+        }
+        String username = player.getName();
+        UUID uuid = player.getUniqueId();
+        String ip = getPlayerIp(player);
+        byte[] data = SessionSyncProtocol.buildAuthUpMessage(username, uuid, ip, secret);
+        player.sendPluginMessage(plugin, SessionSyncProtocol.CHANNEL_ID, data);
+        logger.fine(Messages.get(Messages.SESSION_SYNC_AUTH_UP_LOG, username, uuid.toString(), ip));
+    }
+
+    /** 注册 Plugin Messaging 通道（入站接收 LOGIN_SYNC/LOGOUT_SYNC，出站发送 AUTH_UP 上报） */
     public void register() {
         plugin.getServer().getMessenger().registerIncomingPluginChannel(
                 plugin, SessionSyncProtocol.CHANNEL_ID, this);
+        plugin.getServer().getMessenger().registerOutgoingPluginChannel(
+                plugin, SessionSyncProtocol.CHANNEL_ID);
         logger.fine(Messages.get(Messages.SESSION_SYNC_RECEIVER_REGISTERED, SessionSyncProtocol.CHANNEL_ID));
     }
 
@@ -85,5 +114,16 @@ public class SessionSyncReceiver implements PluginMessageListener {
     public void unregister() {
         plugin.getServer().getMessenger().unregisterIncomingPluginChannel(
                 plugin, SessionSyncProtocol.CHANNEL_ID, this);
+        plugin.getServer().getMessenger().unregisterOutgoingPluginChannel(
+                plugin, SessionSyncProtocol.CHANNEL_ID);
+    }
+
+    private static String getPlayerIp(Player player) {
+        try {
+            java.net.InetAddress addr = player.getAddress().getAddress();
+            return addr != null ? addr.getHostAddress() : "unknown";
+        } catch (Exception e) {
+            return "unknown";
+        }
     }
 }

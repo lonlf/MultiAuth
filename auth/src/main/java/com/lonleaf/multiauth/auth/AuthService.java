@@ -24,7 +24,8 @@ import java.util.logging.Logger;
  */
 public class AuthService {
 
-    private final DatabaseManager database;
+    // volatile：reload 切换数据库（如 SQLite→MySQL）时更新引用，保证登录线程立即可见新数据库
+    private volatile DatabaseManager database;
     private final PasswordHasher passwordHasher;
     private final AuthSessionManager sessionManager;
     // volatile：reload 时更新引用，保证 auth 线程立即可见新配置
@@ -56,6 +57,11 @@ public class AuthService {
         } catch (Exception e) {
             logger.log(Level.WARNING, Messages.get(Messages.AUTH_CREATE_AUTH_TABLE_FAILED_LOG, e.getMessage()), e);
         }
+    }
+
+    /** 切换数据库引用（reload 时由宿主注入新 DatabaseManager，避免持有死库） */
+    public void setDatabase(DatabaseManager database) {
+        this.database = database;
     }
 
     /**
@@ -196,9 +202,27 @@ public class AuthService {
                 try {
                     long now = System.currentTimeMillis();
                     // lastLoginTime = now：注册即自动登录，记录登录时间供 /multiauth info 查询
-                    database.saveAuthAccount(new AuthAccount(username, hash, now, now, finalIp));
+                    boolean saved = database.saveAuthAccount(new AuthAccount(username, hash, now, now, finalIp));
+                    if (!saved) {
+                        logger.warning(Messages.get(Messages.AUTH_SAVE_ACCOUNT_FAILED_LOG,
+                                username, "database write returned false"));
+                        return new AuthResult(false, Messages.AUTH_REGISTER_FAILED);
+                    }
                     if (securityManager != null) {
-                        securityManager.onRegisterSuccess(finalIp);
+                        boolean counted = securityManager.onRegisterSuccess(finalIp);
+                        if (!counted) {
+                            // IP 计数写失败：回滚已写入的账号，避免"账号已注册但计数未增"
+                            // 绕过单 IP 注册上限（fail-closed）
+                            try {
+                                database.deleteAuthAccount(username);
+                            } catch (Exception ex) {
+                                logger.log(Level.WARNING, Messages.get(Messages.DB_DELETE_AUTH_ACCOUNT_FAILED,
+                                        username), ex);
+                            }
+                            logger.warning(Messages.get(Messages.SEC_INCREMENT_IP_ACCOUNT_FAILED,
+                                    finalIp, "registration rolled back"));
+                            return new AuthResult(false, Messages.AUTH_REGISTER_FAILED);
+                        }
                     }
                     logger.info(Messages.get(Messages.AUTH_REGISTER_SUCCESS_LOG, username, finalIp));
                     return new AuthResult(true, Messages.AUTH_REGISTER_SUCCESS);
@@ -297,16 +321,20 @@ public class AuthService {
 
             // 异步执行 geo 与历史查询（避免阻塞主线程）：与密码验证并行执行
             final CompletableFuture<GeoContext> geoFuture = CompletableFuture.supplyAsync(() -> {
-                // 1. 历史数据查询（DB 操作）：异常时 fail-closed 拒绝登录（与 checkSessionResumeSecurity 一致）
+                // 1. 历史数据查询（DB 操作）：功能启用时异常 fail-closed 拒绝登录（与 checkSessionResumeSecurity 一致）；
+                //    功能未启用（sec-login-history=false）时跳过查询，不因历史查询失败误拒登录（#11）
                 LoginHistoryRecord lastLogin;
-                try {
-                    lastLogin = historyManager != null
-                            ? historyManager.getLastSuccessfulLogin(username) : null;
-                } catch (Exception ex) {
-                    logger.log(Level.WARNING, Messages.get(Messages.AUTH_GEO_HISTORY_QUERY_FAILED_LOG,
-                            username, ex.getMessage()), ex);
-                    logger.warning(Messages.get(Messages.SEC_GEO_DB_FAILED_DENY_LOG, username, String.valueOf(ex.getMessage())));
-                    return new GeoContext(null, null, null, true);
+                if (historyManager == null || !config.isSecLoginHistoryEnabled()) {
+                    lastLogin = null;
+                } else {
+                    try {
+                        lastLogin = historyManager.getLastSuccessfulLogin(username);
+                    } catch (Exception ex) {
+                        logger.log(Level.WARNING, Messages.get(Messages.AUTH_GEO_HISTORY_QUERY_FAILED_LOG,
+                                username, ex.getMessage()), ex);
+                        logger.warning(Messages.get(Messages.SEC_GEO_DB_FAILED_DENY_LOG, username, String.valueOf(ex.getMessage())));
+                        return new GeoContext(null, null, null, true);
+                    }
                 }
                 String pi = (lastLogin != null) ? lastLogin.ip() : null;
                 // 2. 地理位置查询（外部服务）：异常/不可用仅降级跳过 geo 检测（IP 变更检测仍基于 prevIp 生效）
@@ -598,7 +626,12 @@ public class AuthService {
                                 return passwordHasher.hash(newPassword)
                                         .thenApply(hash -> {
                                             try {
-                                                database.updateAuthPassword(username, hash);
+                                                boolean updated = database.updateAuthPassword(username, hash);
+                                                if (!updated) {
+                                                    logger.warning(Messages.get(Messages.AUTH_PASSWORD_UPDATE_FAILED_LOG,
+                                                            username, "database write returned false"));
+                                                    return new AuthResult(false, Messages.AUTH_CHANGEPASSWORD_FAILED);
+                                                }
                                                 logger.info(Messages.get(Messages.AUTH_CHANGE_PASSWORD_SUCCESS_LOG, username));
                                                 return new AuthResult(true, Messages.AUTH_CHANGEPASSWORD_SUCCESS);
                                             } catch (Exception e) {
@@ -735,9 +768,13 @@ public class AuthService {
         }
     }
 
-    /** 清除所有会话与安全状态（reload 时调用） */
-    public void clearSessions() {
-        sessionManager.clear();
+    /**
+     * reload 时清理瞬时状态：仅清空验证中的占位与失败计数，
+     * 保留在线玩家的登录状态与持久化会话（避免 reload 静默清会话，#8）；
+     * LoginSecurityManager.clear() 仅清空失败计数，保留 IP 在线计数（D10）。
+     */
+    public void clearForReload() {
+        sessionManager.clearProcessing();
         if (securityManager != null) {
             securityManager.clear();
         }

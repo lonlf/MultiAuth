@@ -48,6 +48,12 @@ public class LoginCommand implements Command {
 
         authService.login(username, password, ip, uuid)
                 .thenAccept(result -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (!player.isOnline()) {
+                        // 验证期间玩家已退出：撤销后台已写入的登录标记，避免下次同名连接免登录
+                        authService.logout(uuid);
+                        plugin.cancelAuthTimeout(uuid);
+                        return;
+                    }
                     if (result.shouldKick()) {
                         // 达到失败阈值/IP 限制/异地踢出 → 踢出玩家
                         player.kickPlayer(result.message());

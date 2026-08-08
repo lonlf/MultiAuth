@@ -98,6 +98,12 @@ public class MojangSessionService {
             if (status == 204 || status == 404) {
                 return new HasJoinedResult(HasJoinedResult.Status.NOT_PREMIUM, null);
             }
+            if (status == 429) {
+                // HTTP 限流：与 checkPremium 的 RateLimitException 语义一致，隔离于宕机拒绝路径。
+                // 若按 MOJANG_UNREACHABLE 处理，一旦宕机降级放行策略覆盖 hasJoined，
+                // 攻击者可伪造 429 诱导降级放行（#18）
+                return new HasJoinedResult(HasJoinedResult.Status.RATE_LIMITED, null);
+            }
             return new HasJoinedResult(HasJoinedResult.Status.MOJANG_UNREACHABLE, null);
         } catch (IOException e) {
             return new HasJoinedResult(HasJoinedResult.Status.MOJANG_UNREACHABLE, null);
