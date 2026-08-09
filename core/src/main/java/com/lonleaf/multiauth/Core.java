@@ -64,10 +64,10 @@ public class Core {
         if (proxyMode) {
             // proxy=true：Mojang 验证完全由 Velocity 端执行，Spigot 端不做任何 API 调用
             logger.fine(Messages.get(Messages.CORE_PROXY_MODE_DEBUG));
-            this.mojangApiService = new MojangApiService(java.util.Collections.emptyList(), logger, config.getMojangRequestLimit());
+            this.mojangApiService = new MojangApiService(false, java.util.Collections.emptyList(), logger, config.getMojangRequestLimit());
         } else {
             // proxy=false / Velocity 端：启用 Mojang API（仅在玩家连接时调用）
-            this.mojangApiService = new MojangApiService(config.getFallbackApiUrls(), logger, config.getMojangRequestLimit());
+            this.mojangApiService = new MojangApiService(true, config.getFallbackApiUrls(), logger, config.getMojangRequestLimit());
             logger.fine(Messages.get(Messages.CORE_API_INIT_DEBUG));
         }
 
@@ -321,9 +321,9 @@ public class Core {
         // mojangApiService：每次 reload 都重建
         MojangApiService newMojangApiService;
         if (proxyMode) {
-            newMojangApiService = new MojangApiService(java.util.Collections.emptyList(), logger, newConfig.getMojangRequestLimit());
+            newMojangApiService = new MojangApiService(false, java.util.Collections.emptyList(), logger, newConfig.getMojangRequestLimit());
         } else {
-            newMojangApiService = new MojangApiService(newConfig.getFallbackApiUrls(), logger, newConfig.getMojangRequestLimit());
+            newMojangApiService = new MojangApiService(true, newConfig.getFallbackApiUrls(), logger, newConfig.getMojangRequestLimit());
         }
 
         // 2. 创建新 authManager（引用新服务）

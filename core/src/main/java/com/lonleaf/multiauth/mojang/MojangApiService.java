@@ -40,6 +40,8 @@ public class MojangApiService {
     }
 
     private final Logger logger;
+    /** 是否承担正版检测职责（proxy=true 的 Spigot 端不做验证，为 false；Velocity 端/独立模式始终 true） */
+    private final boolean enabled;
 
     private static final String OFFICIAL_API_BASE = "https://api.mojang.com";
     private static final String OFFICIAL_API_PATH = "/users/profiles/minecraft/";
@@ -92,7 +94,8 @@ public class MojangApiService {
     /** 下次允许执行恢复探测的时间戳（仅 allApisDown=true 时有效）；恢复成功后重置为 0 */
     private final java.util.concurrent.atomic.AtomicLong nextRecoveryProbeTime = new java.util.concurrent.atomic.AtomicLong(0);
 
-    public MojangApiService(List<String> fallbackApiUrls, Logger logger, int rpsLimit) {
+    public MojangApiService(boolean enabled, List<String> fallbackApiUrls, Logger logger, int rpsLimit) {
+        this.enabled = enabled;
         this.logger = logger;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
@@ -145,11 +148,12 @@ public class MojangApiService {
     }
 
     /**
-     * 检查层（checkPremium）是否启用。
-     * proxy=true 的 Spigot 端不做任何 API 调用，fallback 列表为空即视为未启用。
+     * 检查层（checkPremium）是否启用（是否承担正版检测职责）。
+     * proxy=true 的 Spigot 端不做任何 API 调用，为 false；Velocity 端/独立模式始终为 true
+     * （即使未配置备用 API，也使用官方 API 验证）。
      */
     public boolean isEnabled() {
-        return !fallbackApiUrls.isEmpty();
+        return enabled;
     }
 
     /**
