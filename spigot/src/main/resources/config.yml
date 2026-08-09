@@ -1,18 +1,31 @@
 # MultiAuth Spigot 配置文件
+#
+# MultiAuth Spigot configuration file
 
 # 语言设置
 # 插件启动时会生成 lang/ 文件夹，内含多种语言文件
 # 修改此项后执行 /multiauth reload 即可生效
 # 支持: zh_cn (简体中文), en_gb (英语)
 # 默认 en_gb；首次启动时若系统语言匹配内置语言文件则自动写入对应值
+#
+# Language settings
+# The plugin generates a lang/ folder on startup, containing multiple language files
+# Run /multiauth reload to apply the change
+# Supported: zh_cn (Simplified Chinese), en_gb (English)
+# Default is en_gb; auto-set on first start when the system locale matches a bundled language file
 language: en_gb
 
 # 调试模式
+# Debug mode
 debug: false
 
 # 玩家进服后是否在消息栏显示登录状态（正版/离线 + UUID）
 # true  = 玩家加入服务器后在消息栏收到登录状态通知
 # false = 玩家不接收该通知（生产日志仍会记录每个玩家的登录状态，不受此开关影响）
+#
+# Show login status (premium/offline + UUID) in chat when a player joins
+# true  = Players receive a login status notification in chat on join
+# false = No notification; production logs still record each player's login status
 notify-player-status: true
 
 # 代理模式
@@ -23,23 +36,45 @@ notify-player-status: true
 #           如数据库未共享，Spigot 会自动同步记录，但无法检测跨端的正版记录冲突
 # false = Spigot 端自行执行完整 Mojang 验证流程（Velocity 端无需安装任何插件）
 #         此模式要求 server.properties 中 online-mode=false
+#
+# Proxy mode
+# true  = Trust the Velocity proxy's verification result (MultiAuth must be installed on the proxy)
+#         Velocity's velocity.toml must set online-mode = true
+#         Spigot only validates the UUID forwarded by Velocity against the database
+#         ⚠ Strongly recommended to share the same database between Velocity and Spigot (MySQL or SQLite at the same path)
+#           If not shared, Spigot auto-syncs records but cannot detect cross-server premium record conflicts
+# false = Spigot performs the full Mojang verification itself (no plugin needed on Velocity)
+#         This mode requires online-mode=false in server.properties
 proxy: false
 
 # 是否使用 Mojang 正版 UUID（proxy=false 时生效,代理模式下由 Velocity 传入UUID）
 # true  = 验证通过后使用正版 UUID
 # false = 始终使用离线 UUID（基于玩家名生成）
+#
+# Use Mojang premium UUID (applies when proxy=false; UUIDs come from Velocity in proxy mode)
+# true  = Use the premium UUID after successful verification
+# false = Always use the offline UUID (derived from the player name)
 use-mojang-uuid: true
 
 # 跨服会话同步签名密钥（proxy=true 时生效，强烈建议配置）
 # Velocity 与 Spigot 端必须配置相同的密钥字符串
 # 留空 = 不验签（仅拦截经代理转发的伪造消息，后端直连场景不安全）
+#
+# Cross-server session sync signing secret (used when proxy=true, strongly recommended)
+# Velocity and Spigot must use the same secret string
+# Empty = no signature verification (only blocks forged messages forwarded by the proxy; unsafe when connecting directly to the backend)
 session-sync-secret: "change this to you own secret string."
 
 # 认证列表（proxy=false 时生效，玩家名列表，不区分大小写）
 # 即使 Mojang API 查得用户名非正版，若在此列表中仍强制要求完成 Mojang 加密验证
+#
+# Auth list (applies when proxy=false; player names, case-insensitive)
+# Players listed here are forced through Mojang encryption verification even if the Mojang API reports them as non-premium
 auth-list: []
 
 # Mojang API 配置（proxy=false 时生效）
+#
+# Mojang API configuration (applies when proxy=false)
 mojang-api:
   # 注意！该API仅用于检测玩家游戏名情况，不用于正版验证；仅防止离线玩家无法进入服务器.
   # 备用 API 地址列表（官方 API 宕机时依次尝试，留空则不启用备用）
@@ -47,23 +82,37 @@ mojang-api:
   # 当所有 API 均不可用时，会拒绝所有玩家登录（日志中会有详细提示）
   # 官方 Mojang API: https://api.mojang.com/users/profiles/minecraft/{username}
   # 常见备用 API:
-  #   - "https://api.minetools.eu/uuid/{username}"
+  #
+  # Note: this API only checks whether a username is premium; it is not used for premium verification
+  # Fallback API URLs (tried in order when the official API is down; leave empty to disable)
+  # The {username} placeholder is replaced with the player name
+  # When all APIs are unreachable, all logins are rejected (details in the log)
+  # Official Mojang API: https://api.mojang.com/users/profiles/minecraft/{username}
+  # Common fallback APIs:
   fallback-urls:
     # - "https://api.minetools.eu/uuid/{username}"
 
   # 每个用户名每秒最多向 Mojang API 发起的请求数（0=不限制）
   # 防止同一用户名反复重连/脚本循环触发 Mojang 429.
+  #
+  # Max requests per username per second to the Mojang API (0 = unlimited)
+  # Prevents repeated reconnects/script loops from the same username triggering Mojang 429
   request-limit: 2
 
 # 数据库配置（proxy=true / false 均需配置，与 Velocity 端共享同一数据库）
+#
+# Database configuration (required for both proxy=true and false; share the same database with Velocity)
 database:
   # 数据库类型: sqlite 或 mysql
+  # Database type: sqlite or mysql
   type: sqlite
 
   # SQLite 配置（type = sqlite 时生效）
+  # SQLite configuration (used when type = sqlite)
   sqlite-file: multiauth.db
 
   # MySQL 配置（type = mysql 时生效）
+  # MySQL configuration (used when type = mysql)
   mysql-host: localhost
   mysql-port: 3306
   mysql-database: multiauth
@@ -71,43 +120,74 @@ database:
   mysql-password: ""
   mysql-table-prefix: multiauth_
   # 是否使用 SSL 连接 MySQL 数据库（建议生产环境开启）
+  # Use SSL for the MySQL connection (recommended in production)
   mysql-use-ssl: false
 
   # 心跳间隔（秒），定期检查数据库连接是否存活
+  # Heartbeat interval (seconds); periodically checks whether the database connection is alive
   heartbeat-interval: 60
 
 # 备份配置
+#
+# Backup configuration
 backup:
   # 是否启用定时备份
+  # Enable scheduled backups
   enabled: true
   # 备份间隔（小时）
+  # Backup interval (hours)
   interval-hours: 24
   # 备份文件存放目录（相对于插件数据目录）
+  # Backup directory (relative to the plugin data folder)
   dir: backups
   # 最大备份数量，超出后自动清理最旧的
+  # Maximum number of backups; the oldest ones are removed when exceeded
   max-count: 7
 
 # 离线玩家注册登录配置
 # 仅对离线玩家（非正版）生效，正版玩家不受限制
+#
+# Offline player registration and login configuration
+# Applies to offline (non-premium) players only; premium players are unaffected
 auth:
   # 是否启用离线玩家注册登录
+  # Enable offline player registration and login
   enabled: true
   # 密码最小长度
+  # Minimum password length
   password-min-length: 4
   # 密码最大长度
+  # Maximum password length
   password-max-length: 32
   # 未登录玩家是否强制冒险模式（防止破坏方块）
+  # Force adventure mode for unauthenticated players (prevents block breaking)
   force-adventure: false
   # 未登录玩家是否固定位置（禁止移动）
+  # Freeze position for unauthenticated players (no movement)
   freeze-position: true
   # 未登录玩家限制项开关（可单独开关各项限制）
-  restrict-move: true        # 禁止移动
-  restrict-chat: true        # 禁止聊天
-  restrict-interact: true    # 禁止交互（方块/实体/物品）
-  restrict-damage: true      # 免疫伤害且不能造成伤害
-  restrict-command: true     # 禁止使用除 allow-commands 以外的命令
+  #
+  # Restrictions for unauthenticated players (each can be toggled)
+  # 禁止移动
+  # Disable movement
+  restrict-move: true
+  # 禁止聊天
+  # Disable chat
+  restrict-chat: true
+  # 禁止交互（方块/实体/物品）
+  # Disable interaction (blocks/entities/items)
+  restrict-interact: true
+  # 免疫伤害且不能造成伤害
+  # Immune to damage and cannot deal damage
+  restrict-damage: true
+  # 禁止使用除 allow-commands 以外的命令
+  # Block all commands except those in allow-commands
+  restrict-command: true
   # 未登录玩家允许执行的命令列表（不区分大小写）
   # 默认允许注册和登录命令及其别名
+  #
+  # Commands allowed for unauthenticated players (case-insensitive)
+  # Registration and login commands and their aliases are allowed by default
   allow-commands:
     - register
     - login
@@ -115,13 +195,22 @@ auth:
     - l
   # 登录超时时间（秒），超时未登录则踢出玩家
   # 设置 <=0 可禁用超时限制
+  #
+  # Login timeout (seconds); players not logged in within the time are kicked
+  # Set <= 0 to disable the timeout
   login-timeout: 600
   # 注册超时时间（秒），超时未注册则踢出玩家
+  # Registration timeout (seconds); players not registered within the time are kicked
   register-timeout: 180
   # 未登录玩家进服时是否传送到出生点
   # enable: 是否启用出生点传送
   # world: 留空则使用玩家当前世界出生点；填写世界名（支持 Multiverse 世界）则传送到指定坐标
   #        若配置的世界不存在（且 Multiverse 无法加载），则回退到当前世界出生点
+  #
+  # Teleport unauthenticated players to the spawn point on join
+  # enable: Whether spawn teleport is enabled
+  # world: Empty = the current world's spawn; a world name (Multiverse supported) teleports to the configured coordinates
+  #        Falls back to the current world spawn if the configured world does not exist (and Multiverse cannot load it)
   login-spawn-point:
     enable: false
     world: ""
@@ -133,65 +222,134 @@ auth:
   # 登录成功后是否回到上次下线地点
   # 正版玩家：启用后直接传送到上次下线位置（不会被传送到出生点）
   # 离线玩家：登录/注册成功后传送到上次下线位置
+  #
+  # Return to the last quit location after login
+  # Premium players: teleported to the last quit location (not to spawn)
+  # Offline players: teleported to the last quit location after login/registration
   return-last-location: false
   # 登录后是否强制生存模式（覆盖原始游戏模式）
+  # Force survival mode after login (overrides the original game mode)
   force-survival: false
 
-  # ==================== 安全增强 ====================
+  # ==================== 安全增强(Security) ====================
   security:
     # 失败计数与冷却
+    #
+    # Failed attempt counting and cooldown
     failed-login:
       enabled: true
       # 账户级别：保护单个账户不被暴力破解
+      # Account level: protects a single account from brute force
       account:
-        max-attempts: 5            # 最大失败次数，达到后进入冷却（0=不限制）
-        cooldown: 300              # 冷却时间（秒），冷却期内拒绝登录
-        reset-on-success: true     # 登录成功后重置计数
+        # 最大失败次数，达到后进入冷却（0=不限制）
+        # Max failures before cooldown (0 = unlimited)
+        max-attempts: 5
+        # 冷却时间（秒），冷却期内拒绝登录
+        # Cooldown (seconds); logins are rejected during cooldown
+        cooldown: 300
+        # 登录成功后重置计数
+        # Reset the counter on successful login
+        reset-on-success: true
       # IP 级别：防止同一 IP 对多账户批量尝试
+      # IP level: prevents bulk attempts against multiple accounts from the same IP
       ip:
-        max-attempts: 10           # 单 IP 跨账户最大失败次数（0=不限制）
-        cooldown: 600              # IP 封禁冷却时间（秒）
-        reset-on-success: false    # IP 级别不随单次成功重置
+        # 单 IP 跨账户最大失败次数（0=不限制）
+        # Max cross-account failures per IP (0 = unlimited)
+        max-attempts: 10
+        # IP 封禁冷却时间（秒）
+        # IP cooldown (seconds)
+        cooldown: 600
+        # IP 级别不随单次成功重置
+        # IP counter is not reset by a single success
+        reset-on-success: false
 
     # 单 IP 账号数量限制
+    #
+    # Account count limits per IP
     ip-limits:
       enabled: true
-      max-accounts-per-ip: 3        # 单 IP 最多注册账号数（0=不限制）
-      max-online-per-ip: 2         # 单 IP 最多同时在线账号数（0=不限制）
+      # 单 IP 最多注册账号数（0=不限制）
+      # Max registered accounts per IP (0 = unlimited)
+      max-accounts-per-ip: 3
+      # 单 IP 最多同时在线账号数（0=不限制）
+      # Max concurrent online accounts per IP (0 = unlimited)
+      max-online-per-ip: 2
 
     # IP 变更警告
+    #
+    # IP change warning
     ip-change:
       enabled: true
-      warn-player: false            # 向玩家发送 IP 变更警告
-      notify-admin: true            # 通知在线管理员（有 multiauth.admin 权限）
+      # 向玩家发送 IP 变更警告
+      # Send an IP change warning to the player
+      warn-player: false
+      # 通知在线管理员（有 multiauth.admin 权限）
+      # Notify online admins (with multiauth.admin permission)
+      notify-admin: true
 
     # IP 地理位置检测（ip2region 离线查询）
+    #
+    # IP geolocation detection (ip2region offline lookup)
     geo-detection:
-      enabled: false                # 默认关闭（启用后首次自动下载 xdb 文件）
-      xdb-dir: "ip2region"          # xdb 文件存放目录（相对插件数据目录）
-      auto-download: true            # 文件不存在时自动从 GitHub 下载
+      # 默认关闭（启用后首次自动下载 xdb 文件）
+      # Disabled by default (downloads the xdb file on first use)
+      enabled: false
+      # xdb 文件存放目录（相对插件数据目录）
+      # Directory for xdb files (relative to the plugin data folder)
+      xdb-dir: "ip2region"
+      # 文件不存在时自动从 GitHub 下载
+      # Automatically download from GitHub when missing
+      auto-download: true
       v4:
-        enabled: true               # 默认启用 IPv4 查询
-        file: "ip2region_v4.xdb"    # 本地文件名（~10MB）
+        # 默认启用 IPv4 查询
+        # IPv4 lookup enabled by default
+        enabled: true
+        # 本地文件名（~10MB）
+        # Local file name (~10MB)
+        file: "ip2region_v4.xdb"
       v6:
-        enabled: false               # 默认关闭 IPv6 查询
-        file: "ip2region_v6.xdb"    # 本地文件名（~70MB）
-      cache-policy: "vIndexCache"    # 缓存策略: file / vIndexCache / bufferCache
-      searchers: 15                 # 查询线程池大小
+        # 默认关闭 IPv6 查询
+        # IPv6 lookup disabled by default
+        enabled: false
+        # 本地文件名（~70MB）
+        # Local file name (~70MB)
+        file: "ip2region_v6.xdb"
+      # 缓存策略: file / vIndexCache / bufferCache
+      # Cache policy: file / vIndexCache / bufferCache
+      cache-policy: "vIndexCache"
+      # 查询线程池大小
+      # Searcher thread pool size
+      searchers: 15
       cross-country:
-        action: warn                # warn=警告 | kick=踢出 | require-login=阻止会话恢复（仅影响重连免密恢复，正常登录时等同 warn）
+        # warn=警告 | kick=踢出 | require-login=阻止会话恢复（仅影响重连免密恢复，正常登录时等同 warn）
+        # warn | kick | require-login (blocks passwordless session resume on reconnect; same as warn during normal login)
+        action: warn
       cross-city:
-        action: warn                # warn=警告 | kick=踢出 | require-login=阻止会话恢复（仅影响重连免密恢复，正常登录时等同 warn）
-      skip-lan: true                # 局域网 IP 跳过地理检测
+        # warn=警告 | kick=踢出 | require-login=阻止会话恢复（仅影响重连免密恢复，正常登录时等同 warn）
+        # warn | kick | require-login (blocks passwordless session resume on reconnect; same as warn during normal login)
+        action: warn
+      # 局域网 IP 跳过地理检测
+      # Skip geolocation detection for LAN IPs
+      skip-lan: true
 
     # 登录历史记录
+    #
+    # Login history
     login-history:
       enabled: true
-      max-records-per-player: 20    # 每玩家保留历史记录条数，超出删旧
+      # 每玩家保留历史记录条数，超出删旧
+      # Records kept per player; older entries are removed when exceeded
+      max-records-per-player: 20
 
 # 会话配置
+#
+# Session configuration
 session:
   # 会话超时时间（分钟），0=禁用
   # 启用后，玩家登录成功后在超时时间内退出并重新进入无需再次登录
   # 前提：前后两次登录 IP 相同
+  #
+  # Session timeout (minutes); 0 = disabled
+  # When enabled, players who quit and rejoin within the timeout do not need to log in again
+  # Requires the same IP on both logins
   timeout: 0

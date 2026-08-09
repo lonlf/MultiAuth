@@ -1,31 +1,56 @@
 # MultiAuth Velocity 配置文件
 #
+# MultiAuth Velocity configuration file
+#
 # 重要：本插件对每个连接显式设置验证结果（正版=forceOnlineMode，离线=forceOfflineMode），
 # 因此 velocity.toml 的全局 online-mode 设置不再影响本插件的验证流程。
 #   - 正版玩家：forceOnlineMode() 强制执行加密握手 + hasJoined 验证
 #   - 非正版玩家：forceOfflineMode() 跳过验证，使用离线 UUID
 # 建议仍保持 velocity.toml online-mode = true，避免影响其他依赖全局配置的插件
+#
+# Important: this plugin explicitly sets the verification result per connection (premium=forceOnlineMode, offline=forceOfflineMode),
+# so the global online-mode in velocity.toml no longer affects this plugin's verification flow.
+#   - Premium players: forceOnlineMode() enforces the encrypted handshake + hasJoined verification
+#   - Non-premium players: forceOfflineMode() skips verification and uses the offline UUID
+# It is recommended to keep velocity.toml online-mode = true to avoid affecting plugins that rely on the global setting
 
 # 语言设置
 # 插件启动时会生成 lang/ 文件夹，内含多种语言文件
 # 修改此项后执行 /multiauth reload 即可生效
 # 支持: zh_cn (简体中文), en_gb (英语)
 # 默认 en_gb；首次启动时若系统语言匹配内置语言文件则自动写入对应值
+#
+# Language settings
+# The plugin generates a lang/ folder on startup, containing multiple language files
+# Run /multiauth reload to apply the change
+# Supported: zh_cn (Simplified Chinese), en_gb (English)
+# Default is en_gb; auto-set on first start when the system locale matches a bundled language file
 language = "en_gb"
 
 # 调试模式
+# Debug mode
 debug = false
 
 # 是否使用 Mojang 正版 UUID（proxy=true 跨服模式下由 Velocity 端决定）
 # true  = 正版玩家使用 Mojang 正版 UUID
 # false = 正版玩家也使用离线 UUID（基于玩家名生成）
 # 需与 Spigot 端 use-mojang-uuid 保持一致，避免两端配置不一致导致记录反复改写
+#
+# Use Mojang premium UUID (decided by Velocity in proxy=true cross-server mode)
+# true  = Premium players use the Mojang premium UUID
+# false = Premium players also use the offline UUID (derived from the player name)
+# Keep this consistent with use-mojang-uuid on the Spigot side to avoid records being repeatedly rewritten
 cross-server-use-mojang-uuid = true
 
 # 认证列表（玩家名列表，不区分大小写）
 # 所有玩家连接后先尝试 Mojang 正版验证：
 #   验证成功 → 使用正版 UUID 进入服务器
 #   验证失败 → 若玩家名在此列表中则踢出，否则以离线模式登录
+#
+# Auth list (player names, case-insensitive)
+# All players first attempt Mojang premium verification on connect:
+#   Verification success → join with the premium UUID
+#   Verification failure → kicked if listed, otherwise joins in offline mode
 auth-list = [
     "Notch",
     "jeb_"
@@ -35,33 +60,53 @@ auth-list = [
 # Spigot 端必须配置相同的密钥字符串
 # 留空 = 关闭跨服会话同步：Velocity 不发送同步消息，后端拒绝一切同步消息
 #         （客户端伪造拦截仍生效，防止直连后端时绕过认证限制）
+#
+# Cross-server session sync signing secret (leave empty to disable session sync)
+# The Spigot side must use the same secret string
+# Empty = session sync disabled: Velocity sends no sync messages and backends reject all sync messages
+#         (blocking forged client messages still works, preventing auth bypass via direct backend connection)
 session-sync-secret = "change this to you own secret string."
 
 # Mojang API 配置
+#
+# Mojang API configuration
 [mojang-api]
 # 备用 API 地址列表（官方 API 宕机时依次尝试，留空则不启用备用）
 # 占位符 {username} 会被替换为玩家名
 # 当所有 API 均不可用时，会拒绝所有玩家登录（日志中会有详细提示）
 # 官方 Mojang API: https://api.mojang.com/users/profiles/minecraft/{username}
 # 常见备用 API:
-#   - "https://api.minetools.eu/uuid/{username}"
+#
+# Fallback API URLs (tried in order when the official API is down; leave empty to disable)
+# The {username} placeholder is replaced with the player name
+# When all APIs are unreachable, all logins are rejected (details in the log)
+# Official Mojang API: https://api.mojang.com/users/profiles/minecraft/{username}
+# Common fallback APIs:
 fallback-urls = [
     # "https://api.minetools.eu/uuid/{username}",
 ]
 
 # 每个用户名每秒最多向 Mojang API 发起的请求数（0=不限制）
 # 防止同一用户名反复重连/脚本循环触发 Mojang 429
+#
+# Max requests per username per second to the Mojang API (0 = unlimited)
+# Prevents repeated reconnects/script loops from the same username triggering Mojang 429
 request-limit = 2
 
 # 数据库配置
+#
+# Database configuration
 [database]
 # 数据库类型: sqlite 或 mysql
+# Database type: sqlite or mysql
 type = "sqlite"
 
 # SQLite 配置（type = sqlite 时生效）
+# SQLite configuration (used when type = sqlite)
 sqlite-file = "multiauth.db"
 
 # MySQL 配置（type = mysql 时生效）
+# MySQL configuration (used when type = mysql)
 mysql-host = "localhost"
 mysql-port = 3306
 mysql-database = "multiauth"
@@ -69,18 +114,26 @@ mysql-username = "root"
 mysql-password = ""
 mysql-table-prefix = "multiauth_"
 # 是否使用 SSL 连接 MySQL 数据库（建议生产环境开启）
+# Use SSL for the MySQL connection (recommended in production)
 mysql-use-ssl = false
 
 # 心跳间隔（秒），定期检查数据库连接是否存活
+# Heartbeat interval (seconds); periodically checks whether the database connection is alive
 heartbeat-interval = 60
 
 # 备份配置
+#
+# Backup configuration
 [backup]
 # 是否启用定时备份
+# Enable scheduled backups
 enabled = true
 # 备份间隔（小时）
+# Backup interval (hours)
 interval-hours = 24
 # 备份文件存放目录（相对于插件数据目录）
+# Backup directory (relative to the plugin data folder)
 dir = "backups"
 # 最大备份数量，超出后自动清理最旧的
+# Maximum number of backups; the oldest ones are removed when exceeded
 max-count = 7
