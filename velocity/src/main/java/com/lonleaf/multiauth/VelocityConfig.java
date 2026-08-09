@@ -40,6 +40,8 @@ public class VelocityConfig {
                         logger.info(Messages.get(Messages.CONFIG_DEFAULT_CREATED));
                     }
                 }
+                // 首次启动：按系统语言自动设置 language 项
+                applySystemLanguageToFile();
             }
 
             newConfig = CommentedFileConfig.builder(configPath).build();
@@ -77,6 +79,23 @@ public class VelocityConfig {
         load();
     }
 
+    /**
+     * 首次启动时根据系统语言自动设置 config.toml 的 language 项（仅当检测结果与默认 en_gb 不同时写入）。
+     */
+    private void applySystemLanguageToFile() {
+        String detected = Messages.detectSystemLanguage();
+        if ("en_gb".equals(detected)) {
+            return;
+        }
+        try (CommentedFileConfig cfg = CommentedFileConfig.builder(configPath).build()) {
+            cfg.load();
+            cfg.set("language", detected);
+            cfg.save();
+        } catch (Exception e) {
+            logger.warn(Messages.get(Messages.CONFIG_LOAD_FAILED, e.getMessage()));
+        }
+    }
+
     /** debug 日志：仅 debug=true 时输出 */
     private void debug(String msg) {
         if (config.isDebug()) {
@@ -87,7 +106,7 @@ public class VelocityConfig {
     @SuppressWarnings("unchecked")
     private void applyConfig(CommentedFileConfig source) {
         // 语言
-        config.setLanguage(source.getOrElse("language", "zh_cn"));
+        config.setLanguage(source.getOrElse("language", "en_gb"));
 
         // 调试模式
         config.setDebug(source.getOrElse("debug", false));

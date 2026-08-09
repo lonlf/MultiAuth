@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,13 +23,16 @@ public class Messages {
     private static final Logger LOGGER = Logger.getLogger(Messages.class.getName());
 
     /** 当前语言代码 */
-    private static volatile String currentLang = "zh_cn";
+    private static volatile String currentLang = "en_gb";
 
     /** 语言文件目录 */
     private static Path langDir;
 
     /** 默认资源路径前缀（打包在 JAR 中的内置语言文件） */
     private static final String RESOURCE_PREFIX = "/lang/";
+
+    /** 内置语言文件清单（新增语言需在此登记，同时作为语言族回退的候选） */
+    private static final String[] BUILTIN_LANGS = {"zh_cn", "en_gb"};
 
     /** 消息存储（ConcurrentHashMap 保证 reload 时并发读取线程安全） */
     private static final Map<String, String> messages = new ConcurrentHashMap<>();
@@ -470,7 +474,7 @@ public class Messages {
      */
     public static void init(Path dataDirectory, String lang) {
         langDir = dataDirectory.resolve("lang");
-        currentLang = (lang != null && !lang.isBlank()) ? lang : "zh_cn";
+        currentLang = (lang != null && !lang.isBlank()) ? lang : "en_gb";
 
         try {
             Files.createDirectories(langDir);
@@ -517,14 +521,85 @@ public class Messages {
         return currentLang;
     }
 
+    /**
+     * 判断语言代码是否受支持：外部 lang/ 目录或 JAR 内置资源中存在对应语言文件。
+     */
+    public static boolean isSupportedLanguage(String lang) {
+        if (lang == null || lang.isBlank()) {
+            return false;
+        }
+        if (langDir != null && Files.exists(langDir.resolve(lang + ".yml"))) {
+            return true;
+        }
+        try (InputStream in = Messages.class.getResourceAsStream(RESOURCE_PREFIX + lang + ".yml")) {
+            return in != null;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /**
+     * 按系统 Locale 选择语言（i18n 父子匹配链）：
+     * 完整 Locale（zh_CN→zh_cn, en_GB→en_gb）→ 语言主码（zh/en）→ 语言族回退（zh_tw→zh_cn, en_us→en_gb）→ 默认 en_gb。
+     * 语言代码与 lang/ 目录文件命名约定一致（{@code <lang>_<country>} 小写），无需映射表。
+     */
+    public static String detectSystemLanguage() {
+        Locale def = Locale.getDefault();
+        // 完整 Locale（如 zh_CN、en_GB、en_US）小写后与语言文件命名一致
+        String full = def.toString().toLowerCase(Locale.ROOT);
+        if (isSupportedLanguage(full)) {
+            return full;
+        }
+        // 语言主码（如 zh、en），仅当存在对应语言文件时使用
+        String main = def.getLanguage().toLowerCase(Locale.ROOT);
+        if (isSupportedLanguage(main)) {
+            return main;
+        }
+        // 语言族回退：在已有语言文件中找 <主码>_ 前缀（如 zh_tw → zh_cn、en_us → en_gb）
+        String family = findLanguageFamily(main);
+        if (family != null) {
+            return family;
+        }
+        return "en_gb";
+    }
+
+    /**
+     * 语言族回退：在外部 lang/ 目录与内置语言中查找以语言主码开头（{@code <main>_}）的语言文件。
+     * @return 匹配的语言代码，无匹配返回 null
+     */
+    private static String findLanguageFamily(String main) {
+        if (main == null || main.isEmpty()) {
+            return null;
+        }
+        // 外部 lang/ 目录优先（管理员新增的语言文件可参与语言族匹配）
+        if (langDir != null && Files.isDirectory(langDir)) {
+            try (var stream = Files.list(langDir)) {
+                for (Path p : (Iterable<Path>) stream::iterator) {
+                    String name = p.getFileName().toString();
+                    if (name.startsWith(main + "_") && name.endsWith(".yml")) {
+                        return name.substring(0, name.length() - 4);
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.fine("Failed to list lang dir for language family: " + e.getMessage());
+            }
+        }
+        // 内置语言兜底
+        for (String builtin : BUILTIN_LANGS) {
+            if (builtin.startsWith(main + "_")) {
+                return builtin;
+            }
+        }
+        return null;
+    }
+
     // ==================== 内部方法 ====================
 
     /**
      * 从 JAR 内置资源提取默认语言文件到数据目录
      */
     private static void extractBuiltinLanguages() throws IOException {
-        String[] builtins = {"zh_cn", "en_gb"};
-        for (String lang : builtins) {
+        for (String lang : BUILTIN_LANGS) {
             Path target = langDir.resolve(lang + ".yml");
             if (!Files.exists(target)) {
                 String resourcePath = RESOURCE_PREFIX + lang + ".yml";

@@ -4,7 +4,8 @@
 # 插件启动时会生成 lang/ 文件夹，内含多种语言文件
 # 修改此项后执行 /multiauth reload 即可生效
 # 支持: zh_cn (简体中文), en_gb (英语)
-language: zh_cn
+# 默认 en_gb；首次启动时若系统语言匹配内置语言文件则自动写入对应值
+language: en_gb
 
 # 调试模式
 debug: false

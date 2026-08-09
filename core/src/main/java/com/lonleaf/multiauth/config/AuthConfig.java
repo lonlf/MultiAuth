@@ -27,8 +27,8 @@ public class AuthConfig {
 
     // ==================== 语言 ====================
 
-    /** 语言代码（如 zh_cn, en_gb），默认 zh_cn */
-    private String language = "zh_cn";
+    /** 语言代码（如 zh_cn, en_gb），默认 en_gb */
+    private String language = "en_gb";
 
     // ==================== Mojang API ====================
 
@@ -228,7 +228,7 @@ public class AuthConfig {
     }
 
     public String getLanguage() { return language; }
-    public void setLanguage(String language) { this.language = (language != null && !language.isBlank()) ? language : "zh_cn"; }
+    public void setLanguage(String language) { this.language = (language != null && !language.isBlank()) ? language : "en_gb"; }
 
     /** 获取备用 API URL 列表，返回不可变副本 */
     public List<String> getFallbackApiUrls() {

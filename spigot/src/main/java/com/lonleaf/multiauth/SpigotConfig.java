@@ -28,13 +28,29 @@ public class SpigotConfig {
      * 加载配置文件；saveDefaultConfig 会自动释放资源中的 config.yml。
      */
     public void load() {
+        // 首次启动（config.yml 不存在）：saveDefaultConfig 复制模板后按系统语言自动设置 language 项
+        boolean firstStart = !new java.io.File(plugin.getDataFolder(), "config.yml").exists();
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
 
         FileConfiguration fileConfig = plugin.getConfig();
+        if (firstStart) {
+            applySystemLanguage(fileConfig);
+        }
         applyConfig(fileConfig);
 
         logger.fine(Messages.get(Messages.CONFIG_LOADED_DEBUG, String.valueOf(config.isProxy()), String.valueOf(config.isUseMojangUuid()), String.valueOf(config.isDebug())));
+    }
+
+    /**
+     * 首次启动时根据系统语言自动设置 language 项（仅当检测结果与默认 en_gb 不同时写入）。
+     */
+    private void applySystemLanguage(FileConfiguration fileConfig) {
+        String detected = Messages.detectSystemLanguage();
+        if (!"en_gb".equals(detected)) {
+            fileConfig.set("language", detected);
+            plugin.saveConfig();
+        }
     }
 
     /**
@@ -50,7 +66,7 @@ public class SpigotConfig {
         // 构建新的 AuthConfig 对象，所有 setter 完成后原子替换（volatile 写），避免 reload 期间读到半更新状态
         AuthConfig newConfig = new AuthConfig();
         // 语言
-        newConfig.setLanguage(f.getString("language", "zh_cn"));
+        newConfig.setLanguage(f.getString("language", "en_gb"));
 
         // 调试模式
         newConfig.setDebug(f.getBoolean("debug", false));

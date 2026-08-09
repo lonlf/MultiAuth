@@ -89,25 +89,5 @@
             <version>3.2.1</version>
             <scope>compile</scope>
         </dependency>
-        <!-- Netty：KickMsgInterceptor 拦截器需要访问 Netty Channel（provided，运行时由 Velocity 提供）
-             版本与 Spigot 端保持一致，避免从远程仓库重新下载（离线环境可用） -->
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-transport</artifactId>
-            <version>4.1.68.Final</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-codec</artifactId>
-            <version>4.1.68.Final</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-buffer</artifactId>
-            <version>4.1.68.Final</version>
-            <scope>provided</scope>
-        </dependency>
     </dependencies>
 </project>
