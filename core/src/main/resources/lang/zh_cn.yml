@@ -381,6 +381,7 @@ auth_info_never_logged_in=从未登录
 auth_info_not_registered=§c该玩家尚未注册。
 auth_info_status_online=在线
 auth_info_status_offline=离线
+auth_info_location=\n§7登出地点: §f{0}
 auth_module_disabled=§c认证模块已禁用。
 auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。
 auth_player_join_error=[AUTH] 处理玩家 {0} 的加入事件时发生未预期异常: {1}

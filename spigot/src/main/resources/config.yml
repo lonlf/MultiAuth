@@ -223,10 +223,13 @@ auth:
   # 登录成功后是否回到上次下线地点
   # 正版玩家：启用后直接传送到上次下线位置（不会被传送到出生点）
   # 离线玩家：登录/注册成功后传送到上次下线位置
+  # 注意：登出位置始终记录到数据库（供 /multiauth info 管理员查询），该开关仅控制登录后是否传送
   #
   # Return to the last quit location after login
   # Premium players: teleported to the last quit location (not to spawn)
   # Offline players: teleported to the last quit location after login/registration
+  # Note: the quit location is always stored in the database (for /multiauth info admin query),
+  #       this switch only controls whether players are teleported back after login
   return-last-location: false
   # 登录后是否强制生存模式（覆盖原始游戏模式）
   # Force survival mode after login (overrides the original game mode)

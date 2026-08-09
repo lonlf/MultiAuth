@@ -199,9 +199,8 @@ public class AuthJoinListener implements Listener {
         UUID uuid = player.getUniqueId();
         String ip = getPlayerIp(player);
         String username = player.getName();
-        if (config.getConfig().isAuthReturnLastLocation()) {
-            savePlayerLocation(player);
-        }
+        // 无论 return-last-location 开关如何，都记录登出位置（供 /multiauth info 管理员查询）
+        savePlayerLocation(player);
         authService.onPlayerQuit(uuid, ip, username);
         state.clearPlayerState(uuid);
     }

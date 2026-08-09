@@ -125,7 +125,7 @@ cross-server-use-mojang-uuid = true
 | `/multiauth reload`              | —                             | 重载配置（管理员）     |
 | `/multiauth status`              | —                             | 查看插件状态（版本/数据库/模式/API/玩家统计，管理员） |
 | `/multiauth backup`              | —                             | 手动备份（管理员）     |
-| `/multiauth info [player]`       | —                             | 查看账号信息（玩家查自己，管理员可查任意玩家；含类型/UUID/首次进入/最后IP/地理位置/在线状态） |
+| `/multiauth info [player]`       | —                             | 查看账号信息（玩家查自己，管理员可查任意玩家；含类型/UUID/首次进入/最后IP/地理位置/在线状态，管理员额外显示登出地点） |
 | `/multiauth unregister <player>` | —                             | 注销账号（管理员）     |
 | `/vmultiauth *`                  | _                             | Velocity控制台命令 |
 

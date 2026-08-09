@@ -193,6 +193,7 @@ public class Messages {
     public static volatile String AUTH_INFO_NOT_REGISTERED;
     public static volatile String AUTH_INFO_STATUS_ONLINE;
     public static volatile String AUTH_INFO_STATUS_OFFLINE;
+    public static volatile String AUTH_INFO_LOCATION;
     public static volatile String AUTH_MODULE_DISABLED;
     public static volatile String AUTH_UNREGISTER_KICK;
 
@@ -839,6 +840,7 @@ public class Messages {
         AUTH_INFO_NOT_REGISTERED = messages.getOrDefault("auth_info_not_registered", "§c该玩家尚未注册。");
         AUTH_INFO_STATUS_ONLINE = messages.getOrDefault("auth_info_status_online", "在线");
         AUTH_INFO_STATUS_OFFLINE = messages.getOrDefault("auth_info_status_offline", "离线");
+        AUTH_INFO_LOCATION = messages.getOrDefault("auth_info_location", "\n§7登出地点: §f{0}");
         AUTH_MODULE_DISABLED = messages.getOrDefault("auth_module_disabled", "§c认证模块已禁用。");
         AUTH_UNREGISTER_KICK = messages.getOrDefault("auth_unregister_kick", "§c您的账号已被管理员删除，请重新注册。");
         // 安全增强消息

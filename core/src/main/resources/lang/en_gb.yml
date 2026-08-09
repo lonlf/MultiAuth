@@ -381,6 +381,7 @@ auth_info_never_logged_in=Never logged in
 auth_info_not_registered=§cThis player is not registered.
 auth_info_status_online=Online
 auth_info_status_offline=Offline
+auth_info_location=\n§7Logout location: §f{0}
 auth_module_disabled=§cAuth module is disabled.
 auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.
 auth_player_join_error=[AUTH] Unexpected error while handling PlayerJoinEvent for {0}: {1}

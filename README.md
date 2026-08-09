@@ -124,7 +124,7 @@ cross-server-use-mojang-uuid = true
 | `/multiauth reload` | — | Reload configuration (admin) |
 | `/multiauth status` | — | View plugin status (version, database, mode, Mojang API, player statistics) (admin) |
 | `/multiauth backup` | — | Manual backup (admin) |
-| `/multiauth info [player]` | — | View account info (no arg = self; others require admin; shows type/UUID/first join/last IP/geo/online status) |
+| `/multiauth info [player]` | — | View account info (no arg = self; others require admin; shows type/UUID/first join/last IP/geo/online status, plus logout location for admins) |
 | `/multiauth unregister <player>` | — | Unregister account (admin) |
 | `/vmultiauth *` | — | Velocity console command |
 

@@ -73,9 +73,10 @@ public class InfoCommand implements Command {
             String lastIp = account.lastIp() != null ? account.lastIp() : Messages.get(Messages.GENERIC_UNKNOWN);
             String geo = formatGeo(account.lastIp());
             // 离线账号无存储 UUID，使用离线算法生成（离线 UUID 固定且可复现）
+            String location = isAdmin ? formatLocation(core.getAuthManager().getPlayerRecord(targetName)) : null;
             source.sendMessage(Command.legacy(buildInfo(Messages.AUTH_INFO_OFFLINE_EXTRA,
                     targetName, AuthManager.generateOfflineUuid(targetName).toString(), status, lastIp, geo,
-                    registerTime, lastLogin)));
+                    location, registerTime, lastLogin)));
             return true;
         }
 
@@ -89,9 +90,10 @@ public class InfoCommand implements Command {
                     : Messages.get(Messages.GENERIC_UNKNOWN);
             String lastIp = record.lastIp() != null ? record.lastIp() : Messages.get(Messages.GENERIC_UNKNOWN);
             String geo = formatGeo(record.lastIp());
+            String location = isAdmin ? formatLocation(record) : null;
             source.sendMessage(Command.legacy(buildInfo(Messages.AUTH_INFO_PREMIUM_EXTRA,
                     targetName, record.uuid().toString(), status, lastIp, geo,
-                    lastUpdate, firstJoin)));
+                    location, lastUpdate, firstJoin)));
             return true;
         }
 
@@ -99,11 +101,24 @@ public class InfoCommand implements Command {
         return true;
     }
 
-    /** 组装信息：公共部分（玩家名/UUID/状态/最后IP/地理位置）+ 按账户类型追加的专属部分 */
+    /** 组装信息：公共部分（玩家名/UUID/状态/最后IP/地理位置）+ 类型专属 + 登出地点（仅管理员） */
     private String buildInfo(String extraKey, String name, String uuid, String status,
-                             String lastIp, String geo, String... extraArgs) {
+                             String lastIp, String geo, String location, String... extraArgs) {
         String base = Messages.get(Messages.AUTH_INFO_BASE, name, uuid, status, lastIp, geo);
-        return base + Messages.get(extraKey, extraArgs);
+        String msg = base + Messages.get(extraKey, extraArgs);
+        if (location != null) {
+            msg += location;
+        }
+        return msg;
+    }
+
+    /** 格式化登出地点（世界名 + 坐标），无记录或未记录位置时显示"未知" */
+    private String formatLocation(PlayerRecord record) {
+        if (record == null || record.lastWorld() == null) {
+            return Messages.get(Messages.AUTH_INFO_LOCATION, Messages.get(Messages.GENERIC_UNKNOWN));
+        }
+        String coords = String.format("%.1f, %.1f, %.1f", record.lastX(), record.lastY(), record.lastZ());
+        return Messages.get(Messages.AUTH_INFO_LOCATION, record.lastWorld() + " (" + coords + ")");
     }
 
     /** 查询 IP 地理位置（国家/省份/城市），geo 服务未就绪或无结果时返回"未知" */
