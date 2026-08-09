@@ -17,7 +17,7 @@ commands:
   register:
     description: Register an offline account
     usage: /register <password> <confirmPassword>
-    aliases: [reg]
+    aliases: [reg, r]
   login:
     description: Login to an offline account
     usage: /login <password>

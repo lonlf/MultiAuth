@@ -40,7 +40,7 @@ public class AuthState {
     private final ConcurrentMap<UUID, Boolean> offlinePlayerCache = new ConcurrentHashMap<>();
 
     /** 允许未登录玩家使用的命令（从配置加载，不区分大小写） */
-    private volatile Set<String> allowedCommands = Set.of("register", "login", "reg", "l");
+    private volatile Set<String> allowedCommands = Set.of("register", "login", "reg", "r", "l");
 
     public AuthState(AuthService authService, SpigotConfig config, Core core, MultiAuth plugin) {
         this.authService = authService;

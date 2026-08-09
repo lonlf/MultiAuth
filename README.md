@@ -118,15 +118,22 @@ cross-server-use-mojang-uuid = true
 
 | Command | Usage | Description |
 |---|---|---|
-| `/register` `/reg` | `/register <password> <confirm>` | Register an account (offline player) |
+| `/register` `/reg` `/r` | `/register <password> <confirm>` | Register an account (offline player) |
 | `/login` `/l` | `/login <password>` | Login (registered offline player) |
 | `/changepassword` | `/changepassword <old> <new>` | Change password |
 | `/multiauth reload` | — | Reload configuration (admin) |
-| `/multiauth status` | — | View plugin status (version, database, mode, statistics) (admin) |
+| `/multiauth status` | — | View plugin status (version, database, mode, Mojang API, player statistics) (admin) |
 | `/multiauth backup` | — | Manual backup (admin) |
-| `/multiauth info [player]` | — | View account info (no arg = self; others require admin) |
+| `/multiauth info [player]` | — | View account info (no arg = self; others require admin; shows type/UUID/first join/last IP/geo/online status) |
 | `/multiauth unregister <player>` | — | Unregister account (admin) |
 | `/vmultiauth *` | — | Velocity console command |
+
+### Permissions
+
+| Permission Node | Default | Description |
+|---|---|---|
+| `multiauth.admin` | OP | Admin commands (reload/status/backup/migrate/unregister) and `info` for any player |
+| `multiauth.info` | All players | `info` to view your own account info |
 
 ### Minimal Configuration
 

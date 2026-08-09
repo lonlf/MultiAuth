@@ -109,7 +109,7 @@ public class AuthConfig {
     private boolean authRestrictCommand = true;
 
     /** 未登录玩家允许执行的命令列表（不区分大小写） */
-    private List<String> authAllowCommands = new java.util.ArrayList<>(java.util.List.of("register", "login", "reg", "l"));
+    private List<String> authAllowCommands = new java.util.ArrayList<>(java.util.List.of("register", "login", "reg", "r", "l"));
 
     /** 登录超时时间（秒），超时未登录则踢出，默认 600 秒（10 分钟） */
     private int authLoginTimeout = 600;

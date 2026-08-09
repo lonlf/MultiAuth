@@ -119,15 +119,22 @@ cross-server-use-mojang-uuid = true
 
 | 命令                               | 用法                            | 说明            |
 |----------------------------------|-------------------------------|---------------|
-| `/register` `/reg`               | `/register <密码> <确认密码>`       | 注册账号（离线玩家）    |
+| `/register` `/reg` `/r`          | `/register <密码> <确认密码>`       | 注册账号（离线玩家）    |
 | `/login` `/l`                    | `/login <密码>`                 | 登录（已注册离线玩家）   |
 | `/changepassword`                | `/changepassword <旧密码> <新密码>` | 修改密码          |
 | `/multiauth reload`              | —                             | 重载配置（管理员）     |
-| `/multiauth status`              | —                             | 查看插件状态（管理员）   |
+| `/multiauth status`              | —                             | 查看插件状态（版本/数据库/模式/API/玩家统计，管理员） |
 | `/multiauth backup`              | —                             | 手动备份（管理员）     |
-| `/multiauth info [player]`       | —                             | 查看账号信息（无参数查自己；查询他人需管理员）   |
+| `/multiauth info [player]`       | —                             | 查看账号信息（玩家查自己，管理员可查任意玩家；含类型/UUID/首次进入/最后IP/地理位置/在线状态） |
 | `/multiauth unregister <player>` | —                             | 注销账号（管理员）     |
 | `/vmultiauth *`                  | _                             | Velocity控制台命令 |
+
+### 权限
+
+| 权限节点 | 默认 | 说明 |
+|---|---|---|
+| `multiauth.admin` | OP | 管理命令（reload/status/backup/migrate/unregister）及 `info` 查询任意玩家 |
+| `multiauth.info` | 所有玩家 | `info` 查询自己的账号信息 |
 
 ### 最小配置
 
