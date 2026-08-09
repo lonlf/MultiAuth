@@ -5,6 +5,7 @@ import com.lonleaf.multiauth.config.AuthConfig;
 import com.lonleaf.multiauth.db.DatabaseManager;
 import com.lonleaf.multiauth.db.MySQLManager;
 import com.lonleaf.multiauth.db.SQLiteManager;
+import com.lonleaf.multiauth.geo.IpGeoService;
 import com.lonleaf.multiauth.mojang.MojangApiService;
 import com.lonleaf.multiauth.mojang.MojangSessionService;
 
@@ -28,6 +29,7 @@ public class Core {
     private volatile MojangSessionService mojangService;
     private volatile MojangApiService mojangApiService;
     private volatile AuthManager authManager;
+    private volatile IpGeoService ipGeoService;
     private final Logger logger;
     private final Path dataDirectory;
 
@@ -71,6 +73,9 @@ public class Core {
 
         // 初始化 AuthManager
         this.authManager = new AuthManager(database, mojangService, mojangApiService);
+
+        // 初始化 IP 地理位置服务（供命令展示 geo 信息与安全模块复用；配置禁用时内部直接置为不可用）
+        this.ipGeoService = new IpGeoService(config, dataDirectory, logger);
 
         // 启动定时任务（仅数据库心跳 + 备份，不含 API 心跳）
         startSchedulers();
@@ -329,6 +334,17 @@ public class Core {
         this.mojangApiService = newMojangApiService;
         this.authManager = newAuthManager;
 
+        // 重建 IpGeoService：按新配置（geo 开关/xdb 文件/缓存策略）重新加载
+        IpGeoService oldIpGeoService = this.ipGeoService;
+        this.ipGeoService = new IpGeoService(newConfig, dataDirectory, logger);
+        if (oldIpGeoService != null) {
+            try {
+                oldIpGeoService.close();
+            } catch (Exception e) {
+                logger.fine(Messages.get(Messages.CORE_CLEANUP_ERROR, e.getMessage()));
+            }
+        }
+
         // 4. 最后 close 旧服务（旧 HttpClient），此时 auth 线程已使用新 authManager
         if (oldMojangService != null) {
             try {
@@ -378,6 +394,13 @@ public class Core {
         if (scheduler != null) {
             scheduler.shutdownNow();
         }
+        if (ipGeoService != null) {
+            try {
+                ipGeoService.close();
+            } catch (Exception e) {
+                logger.fine(Messages.get(Messages.CORE_CLEANUP_ERROR, e.getMessage()));
+            }
+        }
         // 关闭 HTTP 服务，释放 HttpClient 资源
         if (mojangService != null) {
             try {
@@ -426,5 +449,9 @@ public class Core {
 
     public MojangApiService getMojangApiService() {
         return mojangApiService;
+    }
+
+    public IpGeoService getIpGeoService() {
+        return ipGeoService;
     }
 }

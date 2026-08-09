@@ -136,7 +136,7 @@ kick_message_sent=[KICK] 玩家 {0} 收到消息：{1}
 login_success=[LOGIN] 玩家 {0} 登录成功 [{1}] UUID={2} IP={3}
 login_success_premium=[LOGIN] 玩家 {0} 登录成功 [正版] UUID={1} IP={2}
 login_success_offline=[LOGIN] 玩家 {0} 登录成功 [离线] UUID={1} IP={2}
-state_miss=[STATE-MISS] 玩家 {0} 无 PreLogin 决策缓存（插件 reload 竞态？），推断身份={1}，已写入记录
+state_miss=[STATE-MISS] 玩家 {0} 无 PreLogin 决策缓存（插件 reload 竞态？），走 fail-closed 兜底：不推断身份、不重写 UUID、不补写数据库记录
 packet_fake_login_start_kick=§c登录验证成功，但登录包注入失败，请重新连接
 
 # 宕机 / API-only 审计日志
@@ -192,7 +192,7 @@ verify_connection_failed=[VERIFY] 获取 Connection 失败：{0}
 # 命令相关
 cmd_help=MultiAuth 命令：\n  /multiauth reload  - 重载配置\n  /multiauth status  - 查看插件状态\n  /multiauth backup  - 强制备份数据库\n  /multiauth migrate <type> - 迁移数据库 (sqlite|mysql)\n  /multiauth info <玩家> - 查看离线玩家账号信息\n  /multiauth unregister <玩家> - 删除离线玩家账号
 cmd_no_permission=§c你没有权限执行此命令。
-cmd_status=MultiAuth 状态：\n  数据库：{0}\n  Mojang API：{1}\n  正版玩家数：{2}\n  总记录数：{3}
+cmd_status=MultiAuth 状态：\n  版本: {0}\n  数据库: {1}\n  模式: {2}\n  Mojang API: {3}\n  总历史玩家数: {4}\n  正版玩家数: {5}
 cmd_reload_success=§a配置重新加载成功
 cmd_migrate_usage=§c用法：/multiauth migrate <sqlite|mysql>
 cmd_migrate_success=§a迁移完成：{0} 条记录已迁移到 {1}
@@ -202,25 +202,22 @@ cmd_backup_success=§a数据库备份已成功创建
 cmd_backup_failed=§c数据库备份失败，请查看控制台了解详情
 cmd_plugin_info=§6MultiAuth v{0} - 玩家认证插件
 cmd_info_usage=§e用法：/multiauth info <玩家>
+cmd_info_self_only=§c您只能查询自己的信息。
 cmd_unregister_usage=§e用法：/multiauth unregister <玩家>
 cmd_changepassword_usage=§e用法：/changepassword <旧密码> <新密码>
-cmd_status_player_title=§6===== 认证状态 - {0} =====
 cmd_migrate_same_type=目标类型与当前相同，无需迁移
 cmd_check_console=请查看控制台了解详情
 cmd_mode_proxy=代理模式
 cmd_mode_direct=直连模式
 db_status_healthy=健康
 db_status_unhealthy=异常
+api_status_normal=正常
+api_status_down=宕机
+api_status_disabled=未启用
+api_status_unknown=未知
 cmd_core_not_initialized=§cCore 未初始化，无法执行此命令。
 cmd_migrate_in_progress=§7正在迁移数据到 {0} ...
 cmd_backup_in_progress=§7正在创建数据库备份...
-cmd_status_title=§6=== MultiAuth 状态 ===
-cmd_status_db_type=§7数据库类型: §f{0}
-cmd_status_db_status=§7数据库状态: {0}
-cmd_status_use_mojang_uuid=§7使用 Mojang UUID: §f{0}
-cmd_status_auth_list=§7认证列表: §f{0}
-cmd_status_fallback_api=§7备用 API: §f{0}
-cmd_status_fallback_not_configured=(未配置)
 
 # 会话相关
 session_start=[SESSION] 玩家 {0} 连接中 - 开始 {1} 验证
@@ -377,10 +374,13 @@ auth_login_timeout=§c登录超时，您已被踢出服务器。
 auth_register_timeout=§c注册超时，您已被踢出服务器。
 auth_unregister_success=§a已删除玩家 {0} 的账号。
 auth_unregister_not_found=§c未找到玩家 {0} 的注册信息。
-auth_info_format=§6玩家 {0} 的账号信息：\n§7注册时间: §f{1}\n§7最后登录: §f{2}\n§7最后IP: §f{3}
-auth_info_premium_format=§6玩家 {0} 的信息：\n§7类型: §b正版\n§7UUID: §f{1}\n§7最后登录: §f{2}
+auth_info_base=§6玩家 {0} 的信息：\n§7UUID: §f{1}\n§7状态: §f{2}\n§7最后IP: §f{3}\n§7地理位置: §f{4}
+auth_info_offline_extra=\n§7类型: §b离线账号\n§7注册时间: §f{0}\n§7最后登录: §f{1}
+auth_info_premium_extra=\n§7类型: §b正版\n§7最后登录: §f{0}\n§7第一次进入: §f{1}
 auth_info_never_logged_in=从未登录
 auth_info_not_registered=§c该玩家尚未注册。
+auth_info_status_online=在线
+auth_info_status_offline=离线
 auth_module_disabled=§c认证模块已禁用。
 auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。
 auth_player_join_error=[AUTH] 处理玩家 {0} 的加入事件时发生未预期异常: {1}

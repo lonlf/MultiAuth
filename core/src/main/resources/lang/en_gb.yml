@@ -136,7 +136,7 @@ kick_message_sent=[KICK] Player {0} received message: {1}
 login_success=[LOGIN] Player {0} login success [{1}] UUID={2} IP={3}
 login_success_premium=[LOGIN] Player {0} login success [premium] UUID={1} IP={2}
 login_success_offline=[LOGIN] Player {0} login success [offline] UUID={1} IP={2}
-state_miss=[STATE-MISS] Player {0} has no PreLogin decision cache (plugin reload race?), inferred identity={1}, record written
+state_miss=[STATE-MISS] Player {0} has no PreLogin decision cache (plugin reload race?), fail-closed fallback: no identity inference, no UUID rewrite, no DB record written
 packet_fake_login_start_kick=§cLogin verification succeeded, but login packet injection failed, please reconnect
 
 # Downtime / API-only audit logs
@@ -192,7 +192,7 @@ verify_connection_failed=[VERIFY] Failed to get Connection: {0}
 # Commands
 cmd_help=MultiAuth Commands:\n  /multiauth reload  - Reload config\n  /multiauth status  - Show plugin status\n  /multiauth backup  - Force database backup\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)\n  /multiauth info <player> - View offline player account info\n  /multiauth unregister <player> - Delete offline player account
 cmd_no_permission=§cYou don't have permission to use this command.
-cmd_status=MultiAuth Status:\n  Database: {0}\n  Mojang API: {1}\n  Premium Players: {2}\n  Total Records: {3}
+cmd_status=MultiAuth Status:\n  Version: {0}\n  Database: {1}\n  Mode: {2}\n  Mojang API: {3}\n  Total Historic Players: {4}\n  Premium Players: {5}
 cmd_reload_success=§aConfig reloaded successfully
 cmd_migrate_usage=§cUsage: /multiauth migrate <sqlite|mysql>
 cmd_migrate_success=§aMigration complete: {0} records migrated to {1}
@@ -202,25 +202,22 @@ cmd_backup_success=§aDatabase backup created successfully
 cmd_backup_failed=§cDatabase backup failed. Check console for details.
 cmd_plugin_info=§6MultiAuth v{0} - Player authentication plugin
 cmd_info_usage=§eUsage: /multiauth info <player>
+cmd_info_self_only=§cYou can only query your own information.
 cmd_unregister_usage=§eUsage: /multiauth unregister <player>
 cmd_changepassword_usage=§eUsage: /changepassword <oldPassword> <newPassword>
-cmd_status_player_title=§6===== Auth Status - {0} =====
 cmd_migrate_same_type=Target type is the same as current, no migration needed
 cmd_check_console=check console for details
 cmd_mode_proxy=Proxy mode
 cmd_mode_direct=Direct
 db_status_healthy=Healthy
 db_status_unhealthy=Unhealthy
+api_status_normal=Normal
+api_status_down=Down
+api_status_disabled=Disabled
+api_status_unknown=Unknown
 cmd_core_not_initialized=§cCore not initialized, cannot execute this command.
 cmd_migrate_in_progress=§7Migrating data to {0} ...
 cmd_backup_in_progress=§7Creating database backup...
-cmd_status_title=§6=== MultiAuth Status ===
-cmd_status_db_type=§7Database type: §f{0}
-cmd_status_db_status=§7Database status: {0}
-cmd_status_use_mojang_uuid=§7Use Mojang UUID: §f{0}
-cmd_status_auth_list=§7Auth list: §f{0}
-cmd_status_fallback_api=§7Fallback API: §f{0}
-cmd_status_fallback_not_configured=(not configured)
 
 # Session
 session_start=[SESSION] Player {0} connecting - starting {1} verification
@@ -377,10 +374,13 @@ auth_login_timeout=§cLogin timeout, you have been kicked from the server.
 auth_register_timeout=§cRegistration timeout, you have been kicked from the server.
 auth_unregister_success=§aAccount deleted for player {0}.
 auth_unregister_not_found=§cNo registration found for player {0}.
-auth_info_format=§6Account info for {0}:\n§7Registered: §f{1}\n§7Last login: §f{2}\n§7Last IP: §f{3}
-auth_info_premium_format=§6Player {0} info:\n§7Type: §bPremium\n§7UUID: §f{1}\n§7Last login: §f{2}
+auth_info_base=§6Player {0} info:\n§7UUID: §f{1}\n§7Status: §f{2}\n§7Last IP: §f{3}\n§7Geo: §f{4}
+auth_info_offline_extra=\n§7Type: §bOffline\n§7Registered: §f{0}\n§7Last login: §f{1}
+auth_info_premium_extra=\n§7Type: §bPremium\n§7Last login: §f{0}\n§7First join: §f{1}
 auth_info_never_logged_in=Never logged in
 auth_info_not_registered=§cThis player is not registered.
+auth_info_status_online=Online
+auth_info_status_offline=Offline
 auth_module_disabled=§cAuth module is disabled.
 auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.
 auth_player_join_error=[AUTH] Unexpected error while handling PlayerJoinEvent for {0}: {1}

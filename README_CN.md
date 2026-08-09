@@ -123,9 +123,9 @@ cross-server-use-mojang-uuid = true
 | `/login` `/l`                    | `/login <密码>`                 | 登录（已注册离线玩家）   |
 | `/changepassword`                | `/changepassword <旧密码> <新密码>` | 修改密码          |
 | `/multiauth reload`              | —                             | 重载配置（管理员）     |
-| `/multiauth status [player]`     | —                             | 查看状态          |
+| `/multiauth status`              | —                             | 查看插件状态（管理员）   |
 | `/multiauth backup`              | —                             | 手动备份（管理员）     |
-| `/multiauth info <player>`       | —                             | 查看账号信息（管理员）   |
+| `/multiauth info [player]`       | —                             | 查看账号信息（无参数查自己；查询他人需管理员）   |
 | `/multiauth unregister <player>` | —                             | 注销账号（管理员）     |
 | `/vmultiauth *`                  | _                             | Velocity控制台命令 |
 

@@ -186,10 +186,13 @@ public class Messages {
     public static volatile String AUTH_REGISTER_TIMEOUT;
     public static volatile String AUTH_UNREGISTER_SUCCESS;
     public static volatile String AUTH_UNREGISTER_NOT_FOUND;
-    public static volatile String AUTH_INFO_FORMAT;
-    public static volatile String AUTH_INFO_PREMIUM_FORMAT;
+    public static volatile String AUTH_INFO_BASE;
+    public static volatile String AUTH_INFO_OFFLINE_EXTRA;
+    public static volatile String AUTH_INFO_PREMIUM_EXTRA;
     public static volatile String AUTH_INFO_NEVER_LOGGED_IN;
     public static volatile String AUTH_INFO_NOT_REGISTERED;
+    public static volatile String AUTH_INFO_STATUS_ONLINE;
+    public static volatile String AUTH_INFO_STATUS_OFFLINE;
     public static volatile String AUTH_MODULE_DISABLED;
     public static volatile String AUTH_UNREGISTER_KICK;
 
@@ -304,25 +307,22 @@ public class Messages {
     public static volatile String CMD_BACKUP_FAILED;
     public static volatile String CMD_PLUGIN_INFO;
     public static volatile String CMD_INFO_USAGE;
+    public static volatile String CMD_INFO_SELF_ONLY;
     public static volatile String CMD_UNREGISTER_USAGE;
     public static volatile String CMD_CHANGEPASSWORD_USAGE;
-    public static volatile String CMD_STATUS_PLAYER_TITLE;
     public static volatile String CMD_MIGRATE_SAME_TYPE;
     public static volatile String CMD_CHECK_CONSOLE;
     public static volatile String CMD_MODE_PROXY;
     public static volatile String CMD_MODE_DIRECT;
     public static volatile String DB_STATUS_HEALTHY;
     public static volatile String DB_STATUS_UNHEALTHY;
+    public static volatile String API_STATUS_NORMAL;
+    public static volatile String API_STATUS_DOWN;
+    public static volatile String API_STATUS_DISABLED;
+    public static volatile String API_STATUS_UNKNOWN;
     public static volatile String CMD_CORE_NOT_INITIALIZED;
     public static volatile String CMD_MIGRATE_IN_PROGRESS;
     public static volatile String CMD_BACKUP_IN_PROGRESS;
-    public static volatile String CMD_STATUS_TITLE;
-    public static volatile String CMD_STATUS_DB_TYPE;
-    public static volatile String CMD_STATUS_DB_STATUS;
-    public static volatile String CMD_STATUS_USE_MOJANG_UUID;
-    public static volatile String CMD_STATUS_AUTH_LIST;
-    public static volatile String CMD_STATUS_FALLBACK_API;
-    public static volatile String CMD_STATUS_FALLBACK_NOT_CONFIGURED;
 
     // --- 会话相关 ---
     public static volatile String SESSION_START;
@@ -832,10 +832,13 @@ public class Messages {
         AUTH_REGISTER_TIMEOUT = messages.getOrDefault("auth_register_timeout", "§c注册超时，您已被踢出服务器。");
         AUTH_UNREGISTER_SUCCESS = messages.getOrDefault("auth_unregister_success", "§a已删除玩家 {0} 的账号。");
         AUTH_UNREGISTER_NOT_FOUND = messages.getOrDefault("auth_unregister_not_found", "§c未找到玩家 {0} 的注册信息。");
-        AUTH_INFO_FORMAT = messages.getOrDefault("auth_info_format", "§6玩家 {0} 的账号信息：\n§7注册时间: §f{1}\n§7最后登录: §f{2}\n§7最后IP: §f{3}");
-        AUTH_INFO_PREMIUM_FORMAT = messages.getOrDefault("auth_info_premium_format", "§6玩家 {0} 的信息：\n§7类型: §b正版\n§7UUID: §f{1}\n§7最后登录: §f{2}");
+        AUTH_INFO_BASE = messages.getOrDefault("auth_info_base", "§6玩家 {0} 的信息：\n§7UUID: §f{1}\n§7状态: §f{2}\n§7最后IP: §f{3}\n§7地理位置: §f{4}");
+        AUTH_INFO_OFFLINE_EXTRA = messages.getOrDefault("auth_info_offline_extra", "\n§7类型: §b离线账号\n§7注册时间: §f{0}\n§7最后登录: §f{1}");
+        AUTH_INFO_PREMIUM_EXTRA = messages.getOrDefault("auth_info_premium_extra", "\n§7类型: §b正版\n§7最后登录: §f{0}\n§7第一次进入: §f{1}");
         AUTH_INFO_NEVER_LOGGED_IN = messages.getOrDefault("auth_info_never_logged_in", "从未登录");
         AUTH_INFO_NOT_REGISTERED = messages.getOrDefault("auth_info_not_registered", "§c该玩家尚未注册。");
+        AUTH_INFO_STATUS_ONLINE = messages.getOrDefault("auth_info_status_online", "在线");
+        AUTH_INFO_STATUS_OFFLINE = messages.getOrDefault("auth_info_status_offline", "离线");
         AUTH_MODULE_DISABLED = messages.getOrDefault("auth_module_disabled", "§c认证模块已禁用。");
         AUTH_UNREGISTER_KICK = messages.getOrDefault("auth_unregister_kick", "§c您的账号已被管理员删除，请重新注册。");
         // 安全增强消息
@@ -882,7 +885,7 @@ public class Messages {
         LOGIN_SUCCESS = messages.getOrDefault("login_success", "[LOGIN] Player {0} login success [{1}] UUID={2} IP={3}");
         LOGIN_SUCCESS_PREMIUM = messages.getOrDefault("login_success_premium", "[LOGIN] Player {0} login success [premium] UUID={1} IP={2}");
         LOGIN_SUCCESS_OFFLINE = messages.getOrDefault("login_success_offline", "[LOGIN] Player {0} login success [offline] UUID={1} IP={2}");
-        STATE_MISS = messages.getOrDefault("state_miss", "[STATE-MISS] Player {0} has no PreLogin decision cache (plugin reload race?), inferred identity={1}, record written");
+        STATE_MISS = messages.getOrDefault("state_miss", "[STATE-MISS] Player {0} has no PreLogin decision cache (plugin reload race?), fail-closed fallback: no identity inference, no UUID rewrite, no DB record written");
         PACKET_FAKE_LOGIN_START_KICK = messages.getOrDefault("packet_fake_login_start_kick", "§cLogin verification succeeded, but login packet injection failed, please reconnect");
 
         AUTH_AUDIT_HASJOINED_UNREACHABLE = messages.getOrDefault("auth_audit_hasjoined_unreachable",
@@ -943,7 +946,7 @@ public class Messages {
 
         CMD_HELP = messages.getOrDefault("cmd_help", "MultiAuth Commands:\n  /multiauth reload  - Reload config\n  /multiauth status  - Show plugin status\n  /multiauth backup  - Force database backup\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)");
         CMD_NO_PERMISSION = messages.getOrDefault("cmd_no_permission", "§cYou don't have permission to use this command.");
-        CMD_STATUS = messages.getOrDefault("cmd_status", "MultiAuth Status:\n  Database: {0}\n  Mojang API: {1}\n  Premium Players: {2}\n  Total Records: {3}");
+        CMD_STATUS = messages.getOrDefault("cmd_status", "MultiAuth Status:\n  Version: {0}\n  Database: {1}\n  Mode: {2}\n  Mojang API: {3}\n  Total Historic Players: {4}\n  Premium Players: {5}");
         CMD_RELOAD_SUCCESS = messages.getOrDefault("cmd_reload_success", "§aConfig reloaded successfully");
         CMD_MIGRATE_USAGE = messages.getOrDefault("cmd_migrate_usage", "§cUsage: /multiauth migrate <sqlite|mysql>");
         CMD_MIGRATE_SUCCESS = messages.getOrDefault("cmd_migrate_success", "§aMigration complete: {0} records migrated to {1}");
@@ -953,25 +956,22 @@ public class Messages {
         CMD_BACKUP_FAILED = messages.getOrDefault("cmd_backup_failed", "§c数据库备份失败，请查看控制台了解详情");
         CMD_PLUGIN_INFO = messages.getOrDefault("cmd_plugin_info", "§6MultiAuth v{0} - Player authentication plugin");
         CMD_INFO_USAGE = messages.getOrDefault("cmd_info_usage", "§e用法：/multiauth info <玩家>");
+        CMD_INFO_SELF_ONLY = messages.getOrDefault("cmd_info_self_only", "§c您只能查询自己的信息。");
         CMD_UNREGISTER_USAGE = messages.getOrDefault("cmd_unregister_usage", "§e用法：/multiauth unregister <玩家>");
         CMD_CHANGEPASSWORD_USAGE = messages.getOrDefault("cmd_changepassword_usage", "§e用法：/changepassword <旧密码> <新密码>");
-        CMD_STATUS_PLAYER_TITLE = messages.getOrDefault("cmd_status_player_title", "§6===== 认证状态 - {0} =====");
         CMD_MIGRATE_SAME_TYPE = messages.getOrDefault("cmd_migrate_same_type", "目标类型与当前相同，无需迁移");
         CMD_CHECK_CONSOLE = messages.getOrDefault("cmd_check_console", "请查看控制台了解详情");
         CMD_MODE_PROXY = messages.getOrDefault("cmd_mode_proxy", "代理模式");
         CMD_MODE_DIRECT = messages.getOrDefault("cmd_mode_direct", "直连模式");
         DB_STATUS_HEALTHY = messages.getOrDefault("db_status_healthy", "健康");
         DB_STATUS_UNHEALTHY = messages.getOrDefault("db_status_unhealthy", "异常");
+        API_STATUS_NORMAL = messages.getOrDefault("api_status_normal", "正常");
+        API_STATUS_DOWN = messages.getOrDefault("api_status_down", "宕机");
+        API_STATUS_DISABLED = messages.getOrDefault("api_status_disabled", "未启用");
+        API_STATUS_UNKNOWN = messages.getOrDefault("api_status_unknown", "未知");
         CMD_CORE_NOT_INITIALIZED = messages.getOrDefault("cmd_core_not_initialized", "§cCore 未初始化，无法执行此命令。");
         CMD_MIGRATE_IN_PROGRESS = messages.getOrDefault("cmd_migrate_in_progress", "§7正在迁移数据到 {0} ...");
         CMD_BACKUP_IN_PROGRESS = messages.getOrDefault("cmd_backup_in_progress", "§7正在创建数据库备份...");
-        CMD_STATUS_TITLE = messages.getOrDefault("cmd_status_title", "§6=== MultiAuth 状态 ===");
-        CMD_STATUS_DB_TYPE = messages.getOrDefault("cmd_status_db_type", "§7数据库类型: §f{0}");
-        CMD_STATUS_DB_STATUS = messages.getOrDefault("cmd_status_db_status", "§7数据库状态: {0}");
-        CMD_STATUS_USE_MOJANG_UUID = messages.getOrDefault("cmd_status_use_mojang_uuid", "§7使用 Mojang UUID: §f{0}");
-        CMD_STATUS_AUTH_LIST = messages.getOrDefault("cmd_status_auth_list", "§7认证列表: §f{0}");
-        CMD_STATUS_FALLBACK_API = messages.getOrDefault("cmd_status_fallback_api", "§7备用 API: §f{0}");
-        CMD_STATUS_FALLBACK_NOT_CONFIGURED = messages.getOrDefault("cmd_status_fallback_not_configured", "(未配置)");
 
         SESSION_START = messages.getOrDefault("session_start", "[SESSION] Player {0} connecting - starting {1} verification");
         SESSION_COMPLETE = messages.getOrDefault("session_complete", "[SESSION] Player {0} authentication complete - {1}");
@@ -1429,9 +1429,13 @@ public class Messages {
             sb.append("auth_register_timeout=§c注册超时，您已被踢出服务器。\n");
             sb.append("auth_unregister_success=§a已删除玩家 {0} 的账号。\n");
             sb.append("auth_unregister_not_found=§c未找到玩家 {0} 的注册信息。\n");
-            sb.append("auth_info_format=§6玩家 {0} 的账号信息：\\n§7注册时间: §f{1}\\n§7最后登录: §f{2}\\n§7最后IP: §f{3}\n");
+            sb.append("auth_info_base=§6玩家 {0} 的信息：\\n§7UUID: §f{1}\\n§7状态: §f{2}\\n§7最后IP: §f{3}\\n§7地理位置: §f{4}\n");
+            sb.append("auth_info_offline_extra=\\n§7类型: §b离线账号\\n§7注册时间: §f{0}\\n§7最后登录: §f{1}\n");
+            sb.append("auth_info_premium_extra=\\n§7类型: §b正版\\n§7最后登录: §f{0}\\n§7第一次进入: §f{1}\n");
             sb.append("auth_info_never_logged_in=从未登录\n");
             sb.append("auth_info_not_registered=§c该玩家尚未注册。\n");
+            sb.append("auth_info_status_online=在线\n");
+            sb.append("auth_info_status_offline=离线\n");
             sb.append("auth_module_disabled=§c认证模块已禁用。\n");
             sb.append("auth_unregister_kick=§c您的账号已被管理员删除，请重新注册。\n");
             sb.append("auth_player_join_error=[AUTH] 处理玩家 {0} 的加入事件时发生未预期异常: {1}\n\n");
@@ -1465,7 +1469,7 @@ public class Messages {
             sb.append("login_success=[LOGIN] 玩家 {0} 登录成功 [{1}] UUID={2} IP={3}\n");
             sb.append("login_success_premium=[LOGIN] 玩家 {0} 登录成功 [正版] UUID={1} IP={2}\n");
             sb.append("login_success_offline=[LOGIN] 玩家 {0} 登录成功 [离线] UUID={1} IP={2}\n");
-            sb.append("state_miss=[STATE-MISS] 玩家 {0} 无 PreLogin 决策缓存（插件 reload 竞态？），推断身份={1}，已写入记录\n");
+            sb.append("state_miss=[STATE-MISS] 玩家 {0} 无 PreLogin 决策缓存（插件 reload 竞态？），走 fail-closed 兜底：不推断身份、不重写 UUID、不补写数据库记录\n");
             sb.append("packet_fake_login_start_kick=§c登录验证成功，但登录包注入失败，请重新连接\n\n");
 
             sb.append("# 宕机 / API-only 审计日志\n");
@@ -1518,7 +1522,7 @@ public class Messages {
             sb.append("# 命令相关\n");
             sb.append("cmd_help=MultiAuth 命令：\\n  /multiauth reload  - 重载配置\\n  /multiauth status  - 查看插件状态\\n  /multiauth backup  - 强制备份数据库\\n  /multiauth migrate <type> - 迁移数据库 (sqlite|mysql)\\n  /multiauth info <玩家> - 查看离线玩家账号信息\\n  /multiauth unregister <玩家> - 删除离线玩家账号\n");
             sb.append("cmd_no_permission=§c你没有权限执行此命令。\n");
-            sb.append("cmd_status=MultiAuth 状态：\\n  数据库：{0}\\n  Mojang API：{1}\\n  正版玩家数：{2}\\n  总记录数：{3}\n");
+            sb.append("cmd_status=MultiAuth 状态：\\n  版本: {0}\\n  数据库: {1}\\n  模式: {2}\\n  Mojang API: {3}\\n  总历史玩家数: {4}\\n  正版玩家数: {5}\n");
             sb.append("cmd_reload_success=§a配置重新加载成功\n");
             sb.append("cmd_migrate_usage=§c用法：/multiauth migrate <sqlite|mysql>\n");
             sb.append("cmd_migrate_success=§a迁移完成：{0} 条记录已迁移到 {1}\n");
@@ -1528,6 +1532,7 @@ public class Messages {
             sb.append("cmd_backup_failed=§c数据库备份失败，请查看控制台了解详情\n");
             sb.append("cmd_plugin_info=§6MultiAuth v{0} - 玩家认证插件\n");
             sb.append("cmd_info_usage=§e用法：/multiauth info <玩家>\n");
+            sb.append("cmd_info_self_only=§c您只能查询自己的信息。\n");
             sb.append("cmd_unregister_usage=§e用法：/multiauth unregister <玩家>\n");
             sb.append("cmd_changepassword_usage=§e用法：/changepassword <旧密码> <新密码>\n");
             sb.append("cmd_status_player_title=§6===== 认证状态 - {0} =====\n");
@@ -1537,6 +1542,10 @@ public class Messages {
             sb.append("cmd_mode_direct=直连模式\n");
             sb.append("db_status_healthy=健康\n");
             sb.append("db_status_unhealthy=异常\n");
+            sb.append("api_status_normal=正常\n");
+            sb.append("api_status_down=宕机\n");
+            sb.append("api_status_disabled=未启用\n");
+            sb.append("api_status_unknown=未知\n");
             sb.append("cmd_core_not_initialized=§cCore 未初始化，无法执行此命令。\n");
             sb.append("cmd_migrate_in_progress=§7正在迁移数据到 {0} ...\n");
             sb.append("cmd_backup_in_progress=§7正在创建数据库备份...\n");
@@ -1809,9 +1818,13 @@ public class Messages {
             sb.append("auth_register_timeout=§cRegistration timeout, you have been kicked from the server.\n");
             sb.append("auth_unregister_success=§aAccount deleted for player {0}.\n");
             sb.append("auth_unregister_not_found=§cNo registration found for player {0}.\n");
-            sb.append("auth_info_format=§6Account info for {0}:\\n§7Registered: §f{1}\\n§7Last login: §f{2}\\n§7Last IP: §f{3}\n");
+            sb.append("auth_info_base=§6Player {0} info:\\n§7UUID: §f{1}\\n§7Status: §f{2}\\n§7Last IP: §f{3}\\n§7Geo: §f{4}\n");
+            sb.append("auth_info_offline_extra=\\n§7Type: §bOffline\\n§7Registered: §f{0}\\n§7Last login: §f{1}\n");
+            sb.append("auth_info_premium_extra=\\n§7Type: §bPremium\\n§7Last login: §f{0}\\n§7First join: §f{1}\n");
             sb.append("auth_info_never_logged_in=Never logged in\n");
             sb.append("auth_info_not_registered=§cThis player is not registered.\n");
+            sb.append("auth_info_status_online=Online\n");
+            sb.append("auth_info_status_offline=Offline\n");
             sb.append("auth_module_disabled=§cAuth module is disabled.\n");
             sb.append("auth_unregister_kick=§cYour account has been deleted by an admin. Please re-register.\n");
             sb.append("auth_player_join_error=[AUTH] Unexpected error while handling PlayerJoinEvent for {0}: {1}\n\n");
@@ -1845,7 +1858,7 @@ public class Messages {
             sb.append("login_success=[LOGIN] Player {0} login success [{1}] UUID={2} IP={3}\n");
             sb.append("login_success_premium=[LOGIN] Player {0} login success [premium] UUID={1} IP={2}\n");
             sb.append("login_success_offline=[LOGIN] Player {0} login success [offline] UUID={1} IP={2}\n");
-            sb.append("state_miss=[STATE-MISS] Player {0} has no PreLogin decision cache (plugin reload race?), inferred identity={1}, record written\n");
+            sb.append("state_miss=[STATE-MISS] Player {0} has no PreLogin decision cache (plugin reload race?), fail-closed fallback: no identity inference, no UUID rewrite, no DB record written\n");
             sb.append("packet_fake_login_start_kick=§cLogin verification succeeded, but login packet injection failed, please reconnect\n\n");
 
             sb.append("# Downtime / API-only audit logs\n");
@@ -1898,7 +1911,7 @@ public class Messages {
             sb.append("# Commands\n");
             sb.append("cmd_help=MultiAuth Commands:\\n  /multiauth reload  - Reload config\\n  /multiauth status  - Show plugin status\\n  /multiauth backup  - Force database backup\\n  /multiauth migrate <type> - Migrate database (sqlite|mysql)\\n  /multiauth info <player> - View offline player account info\\n  /multiauth unregister <player> - Delete offline player account\n");
             sb.append("cmd_no_permission=§cYou don't have permission to use this command.\n");
-            sb.append("cmd_status=MultiAuth Status:\\n  Database: {0}\\n  Mojang API: {1}\\n  Premium Players: {2}\\n  Total Records: {3}\n");
+            sb.append("cmd_status=MultiAuth Status:\\n  Version: {0}\\n  Database: {1}\\n  Mode: {2}\\n  Mojang API: {3}\\n  Total Historic Players: {4}\\n  Premium Players: {5}\n");
             sb.append("cmd_reload_success=§aConfig reloaded successfully\n");
             sb.append("cmd_migrate_usage=§cUsage: /multiauth migrate <sqlite|mysql>\n");
             sb.append("cmd_migrate_success=§aMigration complete: {0} records migrated to {1}\n");
@@ -1908,6 +1921,7 @@ public class Messages {
             sb.append("cmd_backup_failed=§cDatabase backup failed. Check console for details.\n");
             sb.append("cmd_plugin_info=§6MultiAuth v{0} - Player authentication plugin\n");
             sb.append("cmd_info_usage=§eUsage: /multiauth info <player>\n");
+            sb.append("cmd_info_self_only=§cYou can only query your own information.\n");
             sb.append("cmd_unregister_usage=§eUsage: /multiauth unregister <player>\n");
             sb.append("cmd_changepassword_usage=§eUsage: /changepassword <oldPassword> <newPassword>\n");
             sb.append("cmd_status_player_title=§6===== Auth Status - {0} =====\n");
@@ -1917,6 +1931,10 @@ public class Messages {
             sb.append("cmd_mode_direct=Direct\n");
             sb.append("db_status_healthy=Healthy\n");
             sb.append("db_status_unhealthy=Unhealthy\n");
+            sb.append("api_status_normal=Normal\n");
+            sb.append("api_status_down=Down\n");
+            sb.append("api_status_disabled=Disabled\n");
+            sb.append("api_status_unknown=Unknown\n");
             sb.append("cmd_core_not_initialized=§cCore not initialized, cannot execute this command.\n");
             sb.append("cmd_migrate_in_progress=§7Migrating data to {0} ...\n");
             sb.append("cmd_backup_in_progress=§7Creating database backup...\n");

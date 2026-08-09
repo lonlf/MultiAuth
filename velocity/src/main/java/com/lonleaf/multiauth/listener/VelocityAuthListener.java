@@ -285,10 +285,14 @@ public class VelocityAuthListener {
      * 异步保存玩家记录到数据库，避免在事件线程同步阻塞 DB UPSERT。
      * 参数按值传递，调用前的重写结果（如 use-mojang-uuid=false 改写的 uuid）会被正确捕获。
      */
-    private void savePlayerRecordAsync(String username, boolean premium, UUID uuid) {
+    private void savePlayerRecordAsync(String username, boolean premium, UUID uuid, String ip) {
         server.getScheduler().buildTask(plugin, () -> {
             try {
                 core.getAuthManager().savePlayerRecord(username, premium, uuid);
+                // 记录最后登录 IP（正版记录，/multiauth info 使用）
+                if (ip != null) {
+                    core.getAuthManager().updatePlayerLastIp(username, ip);
+                }
             } catch (Exception e) {
                 logger.warn(Messages.get(Messages.DB_SAVE_FAILED, e.getMessage()));
             }
@@ -314,7 +318,7 @@ public class VelocityAuthListener {
             // （正版 hasJoined 通过 / 离线 profile 生成）。fail-closed：不推断身份、不重写 UUID、
             // 不补写数据库记录——状态缺失时无法可靠区分正版/离线，猜测写库可能写入错误记录，
             // 且该次登录的身份决策已由 Velocity 决定，保持其默认行为（P1-8）
-            logger.warn(Messages.get(Messages.STATE_MISS, username, Messages.LOGIN_TYPE_OFFLINE));
+            logger.warn(Messages.get(Messages.STATE_MISS, username));
             return;
         }
 
@@ -330,7 +334,7 @@ public class VelocityAuthListener {
                 }
             }
             putHandshakeState(usernameKey, new HandshakeState(true, true, event.getConnection()));
-            savePlayerRecordAsync(username, true, uuid);
+            savePlayerRecordAsync(username, true, uuid, getRemoteIp(event.getConnection()));
             // 聚合日志（生产必要）：hasJoined 验证通过后才输出登录成功，避免 onPreLogin 过早打印误导
             logger.info(Messages.get(Messages.LOGIN_SUCCESS_PREMIUM, username,
                     uuid.toString(), getRemoteIp(event.getConnection())));
@@ -339,7 +343,7 @@ public class VelocityAuthListener {
             debug(Messages.get(Messages.SESSION_JOIN_NOTIFY, username, uuid.toString(), "true"));
         } else {
             putHandshakeState(usernameKey, new HandshakeState(false, true, event.getConnection()));
-            savePlayerRecordAsync(username, false, uuid);
+            savePlayerRecordAsync(username, false, uuid, getRemoteIp(event.getConnection()));
             // 聚合日志（生产必要）：离线玩家 profile 生成后输出登录成功
             logger.info(Messages.get(Messages.LOGIN_SUCCESS_OFFLINE, username,
                     uuid.toString(), getRemoteIp(event.getConnection())));

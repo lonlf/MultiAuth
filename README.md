@@ -122,9 +122,9 @@ cross-server-use-mojang-uuid = true
 | `/login` `/l` | `/login <password>` | Login (registered offline player) |
 | `/changepassword` | `/changepassword <old> <new>` | Change password |
 | `/multiauth reload` | — | Reload configuration (admin) |
-| `/multiauth status [player]` | — | View status |
+| `/multiauth status` | — | View plugin status (version, database, mode, statistics) (admin) |
 | `/multiauth backup` | — | Manual backup (admin) |
-| `/multiauth info <player>` | — | View account info (admin) |
+| `/multiauth info [player]` | — | View account info (no arg = self; others require admin) |
 | `/multiauth unregister <player>` | — | Unregister account (admin) |
 | `/vmultiauth *` | — | Velocity console command |
 

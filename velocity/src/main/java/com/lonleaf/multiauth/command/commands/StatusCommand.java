@@ -2,22 +2,25 @@ package com.lonleaf.multiauth.command.commands;
 
 import com.lonleaf.multiauth.Core;
 import com.lonleaf.multiauth.Messages;
-import com.lonleaf.multiauth.VelocityConfig;
+import com.lonleaf.multiauth.MultiAuth;
+import com.lonleaf.multiauth.auth.AuthManager;
+import com.lonleaf.multiauth.mojang.MojangApiService;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.plugin.Plugin;
 
 import java.util.List;
 
 /**
- * /multiauth status —— 查看插件运行状态（数据库类型/健康度、UUID 模式、认证列表、备用 API）。
+ * /vmultiauth status —— 查看插件运行状态（版本、数据库、模式、API、玩家统计）。
  */
 public class StatusCommand implements Command {
 
+    private final MultiAuth plugin;
     private final Core core;
-    private final VelocityConfig config;
 
-    public StatusCommand(Core core, VelocityConfig config) {
+    public StatusCommand(MultiAuth plugin, Core core) {
+        this.plugin = plugin;
         this.core = core;
-        this.config = config;
     }
 
     @Override
@@ -32,23 +35,35 @@ public class StatusCommand implements Command {
 
         boolean dbHealthy = core.isDatabaseHealthy();
         String dbType = core.getConfig().getDatabaseType();
-        boolean useMojangUuid = config.isUseMojangUuid();
-        String dbStatusText = dbHealthy
-                ? "§a" + Messages.get(Messages.DB_STATUS_HEALTHY)
-                : "§c" + Messages.get(Messages.DB_STATUS_UNHEALTHY);
+        String dbStatus = dbHealthy ? Messages.DB_STATUS_HEALTHY : Messages.DB_STATUS_UNHEALTHY;
+        AuthManager authManager = core.getAuthManager();
+        int premium = authManager != null ? authManager.getPremiumRecordCount() : -1;
+        int total = authManager != null ? authManager.getRecordCount() : -1;
+        String premiumCount = premium >= 0 ? String.valueOf(premium) : "?";
+        String totalRecords = total >= 0 ? String.valueOf(total) : "?";
 
-        source.sendMessage(Command.legacy(Messages.get(Messages.CMD_STATUS_TITLE)));
-        source.sendMessage(Command.legacy(Messages.get(Messages.CMD_STATUS_DB_TYPE, dbType)));
-        source.sendMessage(Command.legacy(Messages.get(Messages.CMD_STATUS_DB_STATUS, dbStatusText)));
-        source.sendMessage(Command.legacy(Messages.get(Messages.CMD_STATUS_USE_MOJANG_UUID, String.valueOf(useMojangUuid))));
-        source.sendMessage(Command.legacy(Messages.get(Messages.CMD_STATUS_AUTH_LIST, String.join(", ", config.getConfig().getAuthList()))));
-
-        List<String> fallbackUrls = core.getConfig().getFallbackApiUrls();
-        String fallbackDisplay = fallbackUrls.isEmpty()
-                ? Messages.get(Messages.CMD_STATUS_FALLBACK_NOT_CONFIGURED)
-                : String.join(", ", fallbackUrls);
-        source.sendMessage(Command.legacy(Messages.get(Messages.CMD_STATUS_FALLBACK_API, fallbackDisplay)));
+        // Velocity 端始终作为代理执行验证
+        source.sendMessage(Command.legacy(Messages.get(Messages.CMD_STATUS,
+                plugin.getClass().getAnnotation(Plugin.class).version(),
+                dbType + " (" + dbStatus + ")",
+                Messages.CMD_MODE_PROXY,
+                resolveApiStatus(),
+                totalRecords, premiumCount)));
         return true;
+    }
+
+    /** API 状态：未初始化/未启用/宕机/正常（基于真实验证调用的宕机跟踪，无额外网络请求） */
+    private String resolveApiStatus() {
+        MojangApiService api = core.getMojangApiService();
+        if (api == null) {
+            return Messages.get(Messages.API_STATUS_UNKNOWN);
+        }
+        if (!api.isEnabled()) {
+            return Messages.get(Messages.API_STATUS_DISABLED);
+        }
+        return api.isAllDown()
+                ? Messages.get(Messages.API_STATUS_DOWN)
+                : Messages.get(Messages.API_STATUS_NORMAL);
     }
 
     @Override

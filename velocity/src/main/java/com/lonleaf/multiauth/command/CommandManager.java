@@ -13,6 +13,7 @@ import com.lonleaf.multiauth.command.commands.StatusCommand;
 import com.lonleaf.multiauth.command.commands.UnregisterCommand;
 import com.velocitypowered.api.command.RawCommand;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import org.slf4j.Logger;
 
@@ -41,8 +42,8 @@ public class CommandManager {
         this.reloadCommand = new ReloadCommand(config, core, logger, plugin);
         this.migrateCommand = new MigrateCommand(core, logger);
         this.backupCommand = new BackupCommand(core);
-        this.statusCommand = new StatusCommand(core, config);
-        this.infoCommand = new InfoCommand(core);
+        this.statusCommand = new StatusCommand(plugin, core);
+        this.infoCommand = new InfoCommand(core, server);
         this.unregisterCommand = new UnregisterCommand(core, server, logger);
         registerCommand(plugin, server);
     }
@@ -64,13 +65,18 @@ public class CommandManager {
                 sendUsage(invocation);
                 return;
             }
-            // 管理员子命令需要 multiauth.admin 权限；status 需要 multiauth.status（默认 true）
-            String sub = args[0].toLowerCase();
+            // 权限：管理员可执行全部子命令；普通玩家仅可执行 info 查询自己
+            // （根命令 hasPermission 限制仅控制台可执行，此处为一致的防御性检查）
             boolean isAdmin = invocation.source().hasPermission("multiauth.admin");
-            if (!sub.equals("status") && !isAdmin) {
-                invocation.source().sendMessage(
-                        Command.legacy(Messages.get(Messages.CMD_NO_PERMISSION)));
-                return;
+            if (!isAdmin) {
+                boolean canSelfInfo = args[0].equalsIgnoreCase("info")
+                        && invocation.source() instanceof Player
+                        && invocation.source().hasPermission("multiauth.info");
+                if (!canSelfInfo) {
+                    invocation.source().sendMessage(
+                            Command.legacy(Messages.get(Messages.CMD_NO_PERMISSION)));
+                    return;
+                }
             }
             // 遍历子命令，首个匹配的执行并返回
             List<Boolean> results = new ArrayList<>();
@@ -98,9 +104,16 @@ public class CommandManager {
             if (args.length <= 1) {
                 String prefix = args.length == 0 ? "" : args[0];
                 List<String> result = new ArrayList<>();
+                if (!isAdmin) {
+                    // 普通玩家（multiauth.info）仅可补全 info（查询自己）
+                    if (invocation.source() instanceof Player
+                            && invocation.source().hasPermission("multiauth.info")
+                            && "info".startsWith(prefix.toLowerCase())) {
+                        result.add("info");
+                    }
+                    return result;
+                }
                 for (String sub : SUBCOMMANDS) {
-                    // 非管理员只能看到 status（与 Spigot 端 filterSubCommands 一致）
-                    if (!sub.equals("status") && !isAdmin) continue;
                     if (sub.startsWith(prefix.toLowerCase())) {
                         result.add(sub);
                     }

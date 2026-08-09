@@ -29,6 +29,6 @@ permissions:
   multiauth.admin:
     description: Allows reloading the plugin config and managing auth accounts
     default: op
-  multiauth.status:
-    description: Allows viewing player auth status
+  multiauth.info:
+    description: Allows players to view their own account info
     default: true

@@ -37,7 +37,6 @@ public final class MultiAuth extends JavaPlugin {
     // 安全增强服务
     private LoginSecurityManager loginSecurityManager;
     private LoginHistoryManager loginHistoryManager;
-    private IpGeoService ipGeoService;
 
     @Override
     public void onEnable() {
@@ -83,7 +82,8 @@ public final class MultiAuth extends JavaPlugin {
             // 初始化安全增强服务：登录安全管理器（失败计数/冷却/IP限制）、登录历史、地理位置查询
             this.loginSecurityManager = new LoginSecurityManager(config.getConfig(), core.getDatabase(), julLogger);
             this.loginHistoryManager = new LoginHistoryManager(core.getDatabase(), config.getConfig(), julLogger);
-            this.ipGeoService = new IpGeoService(config.getConfig(), dataDirectory, julLogger);
+            // 地理位置服务由 Core 统一持有（Spigot/Velocity 复用同一实例，reload 时一并重建）
+            IpGeoService ipGeoService = core.getIpGeoService();
             // 注入到 AuthService
             this.authService.setSecurityServices(loginSecurityManager, loginHistoryManager, ipGeoService);
             // 初始化共享状态 + 限制监听器 + 登录流程监听器（拆分自原 AuthListener）
@@ -179,9 +179,6 @@ public final class MultiAuth extends JavaPlugin {
         if (authState != null) {
             authState.clearAll();
         }
-        if (ipGeoService != null) {
-            ipGeoService.close();
-        }
         if (authService != null) {
             authService.shutdown();
         }
@@ -222,11 +219,6 @@ public final class MultiAuth extends JavaPlugin {
         if (loginHistoryManager != null && currentDb != null) {
             loginHistoryManager.setDatabase(currentDb);
         }
-        // 关闭旧的 IpGeoService（释放 xdb 句柄）
-        if (ipGeoService != null) {
-            ipGeoService.close();
-            ipGeoService = null;
-        }
         // 清空旧的安全管理器内存数据
         if (loginSecurityManager != null) {
             loginSecurityManager.clear();
@@ -235,11 +227,9 @@ public final class MultiAuth extends JavaPlugin {
         if (authService != null) {
             authService.clearForReload();
         }
-        // 若 auth 模块启用，则按新配置重建
+        // 若 auth 模块启用，则按新配置重建（IpGeoService 由 Core.reload 一并重建，此处复用新实例）
         if (config.getConfig().isAuthEnabled() && authService != null) {
-            Path dataDirectory = getDataFolder().toPath();
-            this.ipGeoService = new IpGeoService(config.getConfig(), dataDirectory, julLogger);
-            this.authService.setSecurityServices(loginSecurityManager, loginHistoryManager, ipGeoService);
+            this.authService.setSecurityServices(loginSecurityManager, loginHistoryManager, core.getIpGeoService());
             julLogger.info(Messages.get(Messages.SEC_SERVICES_RELOADED_LOG));
         }
         // 无论 auth 是否启用，只要 authService 存在就更新配置引用，

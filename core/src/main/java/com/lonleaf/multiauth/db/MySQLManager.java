@@ -71,6 +71,8 @@ public class MySQLManager implements DatabaseManager {
                 "is_premium TINYINT(1) NOT NULL DEFAULT 0, " +
                 "uuid VARCHAR(36) NOT NULL, " +
                 "updated_at BIGINT NOT NULL, " +
+                "created_at BIGINT NOT NULL DEFAULT 0, " +
+                "last_ip VARCHAR(45), " +
                 "last_world VARCHAR(64), " +
                 "last_x DOUBLE, " +
                 "last_y DOUBLE, " +
@@ -85,7 +87,7 @@ public class MySQLManager implements DatabaseManager {
     }
 
     private String getPlayerSql() {
-        return "SELECT username, is_premium, uuid, updated_at, last_world, last_x, last_y, last_z, last_yaw, last_pitch FROM " + tableName + " WHERE username = ?";
+        return "SELECT username, is_premium, uuid, updated_at, created_at, last_ip, last_world, last_x, last_y, last_z, last_yaw, last_pitch FROM " + tableName + " WHERE username = ?";
     }
 
     private String savePlayerSql() {
@@ -94,14 +96,15 @@ public class MySQLManager implements DatabaseManager {
                 " ON DUPLICATE KEY UPDATE is_premium = VALUES(is_premium), uuid = VALUES(uuid), updated_at = VALUES(updated_at)";
     }
 
-    /** 条件 UPSERT：如果已有正版记录而新记录非正版，则不覆写 */
+    /** 条件 UPSERT：如果已有正版记录而新记录非正版，则不覆写；created_at 仅在首次插入时写入 */
     private String savePlayerSafeSql() {
         return "INSERT INTO " + tableName +
-                " (username, is_premium, uuid, updated_at) VALUES (?, ?, ?, ?)" +
+                " (username, is_premium, uuid, updated_at, created_at) VALUES (?, ?, ?, ?, ?)" +
                 " ON DUPLICATE KEY UPDATE" +
                 " is_premium = IF(is_premium = 1 AND VALUES(is_premium) = 0, is_premium, VALUES(is_premium))," +
                 " uuid = IF(is_premium = 1 AND VALUES(is_premium) = 0, uuid, VALUES(uuid))," +
-                " updated_at = IF(is_premium = 1 AND VALUES(is_premium) = 0, updated_at, VALUES(updated_at))";
+                " updated_at = IF(is_premium = 1 AND VALUES(is_premium) = 0, updated_at, VALUES(updated_at))," +
+                " created_at = created_at";
     }
 
     private String existsSql() {
@@ -109,12 +112,17 @@ public class MySQLManager implements DatabaseManager {
     }
 
     private String selectAllSql() {
-        return "SELECT username, is_premium, uuid, updated_at FROM " + tableName;
+        return "SELECT username, is_premium, uuid, updated_at, created_at, last_ip FROM " + tableName;
     }
 
     private String updatePlayerLocationSql() {
         return "UPDATE " + tableName + " SET last_world = ?, last_x = ?, last_y = ?, last_z = ?, " +
                "last_yaw = ?, last_pitch = ? WHERE username = ?";
+    }
+
+    /** 更新玩家最后登录 IP（正版记录，/multiauth info 使用） */
+    private String updatePlayerLastIpSql() {
+        return "UPDATE " + tableName + " SET last_ip = ? WHERE username = ?";
     }
 
     private String createAuthTableSql() {
@@ -297,6 +305,9 @@ public class MySQLManager implements DatabaseManager {
             addMysqlColumnIfNotExists(conn, "last_z", "DOUBLE");
             addMysqlColumnIfNotExists(conn, "last_yaw", "FLOAT");
             addMysqlColumnIfNotExists(conn, "last_pitch", "FLOAT");
+            // 迁移：首次进入时间与最后登录 IP（如不存在）
+            addMysqlColumnIfNotExists(conn, "created_at", "BIGINT NOT NULL DEFAULT 0");
+            addMysqlColumnIfNotExists(conn, "last_ip", "VARCHAR(45)");
         } catch (SQLException e) {
             // 建表/迁移失败（如账号无 DDL 权限）：关闭刚创建的连接池并置空，
             // 避免"已连接但表缺失"的半健康状态与连接池泄漏
@@ -375,13 +386,15 @@ public class MySQLManager implements DatabaseManager {
                             return null;
                         }
                         long updatedAt = rs.getLong("updated_at");
+                        long createdAt = rs.getLong("created_at");
+                        String lastIp = rs.getString("last_ip");
                         String lastWorld = rs.getString("last_world");
                         double lastX = rs.getDouble("last_x");
                         double lastY = rs.getDouble("last_y");
                         double lastZ = rs.getDouble("last_z");
                         float lastYaw = rs.getFloat("last_yaw");
                         float lastPitch = rs.getFloat("last_pitch");
-                        return new PlayerRecord(name, isPremium, uuid, updatedAt,
+                        return new PlayerRecord(name, isPremium, uuid, updatedAt, createdAt, lastIp,
                                 lastWorld, lastX, lastY, lastZ, lastYaw, lastPitch);
                     }
                 }
@@ -417,10 +430,29 @@ public class MySQLManager implements DatabaseManager {
                 ps.setInt(2, isPremium ? 1 : 0);
                 ps.setString(3, uuid.toString());
                 ps.setLong(4, System.currentTimeMillis());
+                // created_at 仅在首次插入时生效，UPSERT 冲突时保持原值
+                ps.setLong(5, System.currentTimeMillis());
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_SAVE_PLAYER_SAFE_FAILED, username), e);
+        }
+    }
+
+    @Override
+    public void updatePlayerLastIp(String username, String ip) {
+        if (ip == null) {
+            return;
+        }
+        try (Connection conn = borrowConnection()) {
+            if (conn == null) return;
+            try (PreparedStatement ps = conn.prepareStatement(updatePlayerLastIpSql())) {
+                ps.setString(1, ip);
+                ps.setString(2, normName(username));
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_LOCATION_FAILED, username), e);
         }
     }
 

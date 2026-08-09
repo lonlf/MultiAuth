@@ -28,6 +28,8 @@ public class SQLiteManager implements DatabaseManager {
             "is_premium INTEGER NOT NULL DEFAULT 0, " +
             "uuid TEXT NOT NULL, " +
             "updated_at INTEGER NOT NULL, " +
+            "created_at INTEGER NOT NULL DEFAULT 0, " +
+            "last_ip TEXT, " +
             "last_world TEXT, " +
             "last_x REAL, " +
             "last_y REAL, " +
@@ -39,33 +41,38 @@ public class SQLiteManager implements DatabaseManager {
             "CREATE INDEX IF NOT EXISTS idx_" + TABLE_NAME + "_premium ON " + TABLE_NAME + " (is_premium, updated_at)";
 
     private static final String GET_PLAYER_SQL =
-            "SELECT username, is_premium, uuid, updated_at, last_world, last_x, last_y, last_z, last_yaw, last_pitch FROM " + TABLE_NAME + " WHERE username = ?";
+            "SELECT username, is_premium, uuid, updated_at, created_at, last_ip, last_world, last_x, last_y, last_z, last_yaw, last_pitch FROM " + TABLE_NAME + " WHERE username = ?";
 
     private static final String SAVE_PLAYER_SQL =
             "INSERT OR REPLACE INTO " + TABLE_NAME +
             " (username, is_premium, uuid, updated_at) VALUES (?, ?, ?, ?)";
 
-    /** 条件 UPSERT：如果已有正版记录而新记录非正版，则不覆写 */
+    /** 条件 UPSERT：如果已有正版记录而新记录非正版，则不覆写；created_at 仅在首次插入时写入 */
     private static final String SAVE_PLAYER_SAFE_SQL =
             "INSERT INTO " + TABLE_NAME +
-            " (username, is_premium, uuid, updated_at) VALUES (?, ?, ?, ?)" +
+            " (username, is_premium, uuid, updated_at, created_at) VALUES (?, ?, ?, ?, ?)" +
             " ON CONFLICT(username) DO UPDATE SET" +
             " is_premium = CASE WHEN " + TABLE_NAME + ".is_premium = 1 AND excluded.is_premium = 0" +
             " THEN " + TABLE_NAME + ".is_premium ELSE excluded.is_premium END," +
             " uuid = CASE WHEN " + TABLE_NAME + ".is_premium = 1 AND excluded.is_premium = 0" +
             " THEN " + TABLE_NAME + ".uuid ELSE excluded.uuid END," +
             " updated_at = CASE WHEN " + TABLE_NAME + ".is_premium = 1 AND excluded.is_premium = 0" +
-            " THEN " + TABLE_NAME + ".updated_at ELSE excluded.updated_at END";
+            " THEN " + TABLE_NAME + ".updated_at ELSE excluded.updated_at END," +
+            " created_at = " + TABLE_NAME + ".created_at";
 
     private static final String EXISTS_SQL =
             "SELECT 1 FROM " + TABLE_NAME + " WHERE username = ?";
 
     private static final String SELECT_ALL_SQL =
-            "SELECT username, is_premium, uuid, updated_at FROM " + TABLE_NAME;
+            "SELECT username, is_premium, uuid, updated_at, created_at, last_ip FROM " + TABLE_NAME;
 
     private static final String UPDATE_PLAYER_LOCATION_SQL =
             "UPDATE " + TABLE_NAME + " SET last_world = ?, last_x = ?, last_y = ?, last_z = ?, " +
             "last_yaw = ?, last_pitch = ? WHERE username = ?";
+
+    /** 更新玩家最后登录 IP（正版记录，/multiauth info 使用） */
+    private static final String UPDATE_PLAYER_LAST_IP_SQL =
+            "UPDATE " + TABLE_NAME + " SET last_ip = ? WHERE username = ?";
 
     private static final String CREATE_AUTH_TABLE_SQL =
             "CREATE TABLE IF NOT EXISTS multiauth_auth (" +
@@ -193,6 +200,9 @@ public class SQLiteManager implements DatabaseManager {
             addColumnIfNotExists(stmt, "last_z", "REAL");
             addColumnIfNotExists(stmt, "last_yaw", "REAL");
             addColumnIfNotExists(stmt, "last_pitch", "REAL");
+            // 迁移：首次进入时间与最后登录 IP（如不存在）
+            addColumnIfNotExists(stmt, "created_at", "INTEGER NOT NULL DEFAULT 0");
+            addColumnIfNotExists(stmt, "last_ip", "TEXT");
         }
     }
 
@@ -252,13 +262,15 @@ public class SQLiteManager implements DatabaseManager {
                         return null;
                     }
                     long updatedAt = rs.getLong("updated_at");
+                    long createdAt = rs.getLong("created_at");
+                    String lastIp = rs.getString("last_ip");
                     String lastWorld = rs.getString("last_world");
                     double lastX = rs.getDouble("last_x");
                     double lastY = rs.getDouble("last_y");
                     double lastZ = rs.getDouble("last_z");
                     float lastYaw = rs.getFloat("last_yaw");
                     float lastPitch = rs.getFloat("last_pitch");
-                    return new PlayerRecord(name, isPremium, uuid, updatedAt,
+                    return new PlayerRecord(name, isPremium, uuid, updatedAt, createdAt, lastIp,
                             lastWorld, lastX, lastY, lastZ, lastYaw, lastPitch);
                 }
             }
@@ -294,9 +306,25 @@ public class SQLiteManager implements DatabaseManager {
             ps.setInt(2, isPremium ? 1 : 0);
             ps.setString(3, uuid.toString());
             ps.setLong(4, System.currentTimeMillis());
+            // created_at 仅在首次插入时生效，UPSERT 冲突时保持原值
+            ps.setLong(5, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_SAVE_PLAYER_SAFE_FAILED, username), e);
+        }
+    }
+
+    @Override
+    public synchronized void updatePlayerLastIp(String username, String ip) {
+        if (!isConnected() || ip == null) {
+            return;
+        }
+        try (PreparedStatement ps = connection.prepareStatement(UPDATE_PLAYER_LAST_IP_SQL)) {
+            ps.setString(1, ip);
+            ps.setString(2, normName(username));
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_LOCATION_FAILED, username), e);
         }
     }
 

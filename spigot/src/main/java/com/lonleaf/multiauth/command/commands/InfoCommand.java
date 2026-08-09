@@ -2,26 +2,33 @@ package com.lonleaf.multiauth.command.commands;
 
 import com.lonleaf.multiauth.Core;
 import com.lonleaf.multiauth.Messages;
+import com.lonleaf.multiauth.SpigotConfig;
+import com.lonleaf.multiauth.auth.AuthManager;
 import com.lonleaf.multiauth.auth.AuthService;
 import com.lonleaf.multiauth.db.AuthAccount;
 import com.lonleaf.multiauth.db.PlayerRecord;
+import com.lonleaf.multiauth.geo.GeoInfo;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * /multiauth info &lt;玩家&gt; —— 查看玩家账号信息。
+ * /multiauth info &lt;玩家&gt; —— 查看玩家账号信息及认证状态。
  */
 public class InfoCommand implements Command {
 
     private final Core core;
     private final AuthService authService;
+    private final SpigotConfig config;
 
-    public InfoCommand(Core core, AuthService authService) {
+    public InfoCommand(Core core, AuthService authService, SpigotConfig config) {
         this.core = core;
         this.authService = authService;
+        this.config = config;
     }
 
     @Override
@@ -29,48 +36,116 @@ public class InfoCommand implements Command {
         if (args.length == 0 || !args[0].equalsIgnoreCase("info")) {
             return false;
         }
-        if (!sender.hasPermission("multiauth.admin")) {
-            sender.sendMessage(Messages.GENERIC_PERMISSION_DENIED);
-            return true;
+        // 权限：管理员可查询任意玩家；普通玩家（multiauth.info，默认 true）仅能查询自己
+        boolean isAdmin = sender.hasPermission("multiauth.admin");
+        if (!isAdmin) {
+            if (!(sender instanceof Player player) || !player.hasPermission("multiauth.info")) {
+                sender.sendMessage(Messages.GENERIC_PERMISSION_DENIED);
+                return true;
+            }
+            if (args.length >= 2 && !args[1].equalsIgnoreCase(player.getName())) {
+                sender.sendMessage(Messages.get(Messages.CMD_INFO_SELF_ONLY));
+                return true;
+            }
         }
         if (authService == null) {
             sender.sendMessage(Messages.AUTH_MODULE_DISABLED);
             return true;
         }
+        // 无目标参数：玩家（含管理员玩家）默认查自己；控制台必须指定玩家名
         if (args.length < 2) {
-            sender.sendMessage(Messages.CMD_INFO_USAGE);
-            return true;
+            if (sender instanceof Player p) {
+                args = new String[]{args[0], p.getName()};
+            } else {
+                sender.sendMessage(Messages.CMD_INFO_USAGE);
+                return true;
+            }
         }
 
         String targetName = args[1];
+        Player online = sender.getServer().getPlayerExact(targetName);
+        String status = online != null
+                ? Messages.get(Messages.AUTH_INFO_STATUS_ONLINE)
+                : Messages.get(Messages.AUTH_INFO_STATUS_OFFLINE);
         AuthAccount account = authService.getAccountInfo(targetName);
         if (account != null) {
-            // 离线玩家：显示 auth 账号信息
+            // 离线账号：公共信息（UUID/状态/最后IP/地理位置）+ 离线专属信息
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String registerTime = sdf.format(new Date(account.registerTime()));
             String lastLogin = account.lastLoginTime() > 0
                     ? sdf.format(new Date(account.lastLoginTime()))
                     : Messages.AUTH_INFO_NEVER_LOGGED_IN;
-            String lastIp = account.lastIp() != null ? account.lastIp() : Messages.GENERIC_UNKNOWN;
-            sender.sendMessage(Messages.get(Messages.AUTH_INFO_FORMAT,
-                    targetName, registerTime, lastLogin, lastIp));
+            String lastIp = account.lastIp() != null ? account.lastIp() : Messages.get(Messages.GENERIC_UNKNOWN);
+            String geo = formatGeo(account.lastIp());
+            // 离线账号无存储 UUID，使用离线算法生成（离线 UUID 固定且可复现）
+            sender.sendMessage(buildInfo(Messages.AUTH_INFO_OFFLINE_EXTRA,
+                    targetName, AuthManager.generateOfflineUuid(targetName).toString(), status, lastIp, geo,
+                    registerTime, lastLogin));
+            // 在线玩家用实时 UUID 校验（会话劫持检测）
+            if (online != null) {
+                checkUuidMismatch(sender, targetName, online.getUniqueId(), false);
+            }
             return true;
         }
 
-        // 无 auth 账号：查询 PlayerRecord（正版玩家）
+        // 正版玩家
         if (core != null && core.getAuthManager() != null) {
             PlayerRecord record = core.getAuthManager().getPlayerRecord(targetName);
             if (record != null && record.isPremium()) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String lastUpdate = sdf.format(new Date(record.updatedAt()));
-                sender.sendMessage(Messages.get(Messages.AUTH_INFO_PREMIUM_FORMAT,
-                        targetName, record.uuid().toString(), lastUpdate));
+                String firstJoin = record.createdAt() > 0
+                        ? sdf.format(new Date(record.createdAt()))
+                        : Messages.get(Messages.GENERIC_UNKNOWN);
+                String lastIp = record.lastIp() != null ? record.lastIp() : Messages.get(Messages.GENERIC_UNKNOWN);
+                String geo = formatGeo(record.lastIp());
+                sender.sendMessage(buildInfo(Messages.AUTH_INFO_PREMIUM_EXTRA,
+                        targetName, record.uuid().toString(), status, lastIp, geo,
+                        lastUpdate, firstJoin));
+                // 校验记录 UUID 与预期是否一致（会话劫持检测）
+                checkUuidMismatch(sender, targetName, record.uuid(), true);
                 return true;
             }
         }
 
         sender.sendMessage(Messages.get(Messages.AUTH_INFO_NOT_REGISTERED, targetName));
         return true;
+    }
+
+    /** 组装信息：公共部分（玩家名/UUID/状态/最后IP/地理位置）+ 按账户类型追加的专属部分 */
+    private String buildInfo(String extraKey, String name, String uuid, String status,
+                             String lastIp, String geo, String... extraArgs) {
+        String base = Messages.get(Messages.AUTH_INFO_BASE, name, uuid, status, lastIp, geo);
+        return base + Messages.get(extraKey, extraArgs);
+    }
+
+    /**
+     * 校验 UUID 与预期是否一致（合并自 /multiauth status 的玩家状态检查）。
+     * use-mojang-uuid=true：正版玩家用 Mojang UUID（与离线 UUID 不同属正常）；
+     * 离线账号与 use-mojang-uuid=false 时预期为离线 UUID，不一致则提示可能的会话劫持。
+     */
+    private void checkUuidMismatch(CommandSender sender, String username, UUID uuid, boolean verified) {
+        boolean expectOfflineUuid = !verified || !config.isUseMojangUuid();
+        UUID offlineUuid = AuthManager.generateOfflineUuid(username);
+        if (expectOfflineUuid && !uuid.equals(offlineUuid)) {
+            sender.sendMessage(Messages.get(Messages.AUTH_UUID_MISMATCH, username, offlineUuid.toString(), uuid.toString()));
+        }
+    }
+
+    /** 查询 IP 地理位置（国家/省份/城市），geo 服务未就绪或无结果时返回"未知" */
+    private String formatGeo(String ip) {
+        if (ip == null || core == null || core.getIpGeoService() == null || !core.getIpGeoService().isReady()) {
+            return Messages.get(Messages.GENERIC_UNKNOWN);
+        }
+        GeoInfo info = core.getIpGeoService().search(ip);
+        if (info == null) {
+            return Messages.get(Messages.GENERIC_UNKNOWN);
+        }
+        StringBuilder sb = new StringBuilder();
+        if (info.country() != null) sb.append(info.country());
+        if (info.province() != null) sb.append('/').append(info.province());
+        if (info.city() != null) sb.append('/').append(info.city());
+        return sb.length() == 0 ? Messages.get(Messages.GENERIC_UNKNOWN) : sb.toString();
     }
 
     @Override

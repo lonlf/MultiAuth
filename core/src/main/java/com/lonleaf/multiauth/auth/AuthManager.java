@@ -109,6 +109,14 @@ public class AuthManager {
         database.savePlayerSafe(username, isPremium, uuid);
     }
 
+    /**
+     * 更新玩家最后登录 IP（正版记录，/multiauth info 使用）。
+     */
+    public void updatePlayerLastIp(String username, String ip) {
+        if (database == null) return;
+        database.updatePlayerLastIp(username, ip);
+    }
+
     public boolean wasPremiumPlayer(String username) {
         PlayerRecord record = getPlayerRecord(username);
         return record != null && record.isPremium();

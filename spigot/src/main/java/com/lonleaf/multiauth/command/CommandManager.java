@@ -39,8 +39,8 @@ public class CommandManager {
         this.reloadCommand = new ReloadCommand((MultiAuth) plugin, config, core);
         this.migrateCommand = new MigrateCommand(plugin, core);
         this.backupCommand = new BackupCommand(core);
-        this.statusCommand = new StatusCommand(core, config);
-        this.infoCommand = new InfoCommand(core, authService);
+        this.statusCommand = new StatusCommand((MultiAuth) plugin, core, config);
+        this.infoCommand = new InfoCommand(core, authService, config);
         this.unregisterCommand = new UnregisterCommand((MultiAuth) plugin, authService);
 
         this.subCommands = List.of(
@@ -84,7 +84,13 @@ public class CommandManager {
                 case "migrate" -> migrateCommand.completeList(args);
                 case "backup" -> backupCommand.completeList(args);
                 case "status" -> statusCommand.completeList(args);
-                case "info" -> infoCommand.completeList(args);
+                case "info" -> {
+                    // 非管理员玩家仅补全自己的名字
+                    if (!sender.hasPermission("multiauth.admin")) {
+                        yield List.of(sender.getName());
+                    }
+                    yield infoCommand.completeList(args);
+                }
                 case "unregister" -> unregisterCommand.completeList(args);
                 default -> List.of();
             };
@@ -98,11 +104,12 @@ public class CommandManager {
             subs.add("reload");
             subs.add("migrate");
             subs.add("backup");
+            subs.add("status");
             subs.add("info");
             subs.add("unregister");
-        }
-        if (sender.hasPermission("multiauth.status") || sender.hasPermission("multiauth.admin")) {
-            subs.add("status");
+        } else if (sender.hasPermission("multiauth.info")) {
+            // 普通玩家仅可查询自己的信息
+            subs.add("info");
         }
         // 复用 Command 接口的 filter 默认方法逻辑
         if (prefix == null || prefix.isEmpty()) {

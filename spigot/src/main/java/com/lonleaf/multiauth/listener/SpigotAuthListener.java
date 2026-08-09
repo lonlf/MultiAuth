@@ -305,6 +305,7 @@ public class SpigotAuthListener implements Listener {
         if (result.allowed()) {
             // 过程细节：玩家最终通过预登录检查（聚合结果日志已在 handleLoginStartAsync 输出）
             logger.fine(Messages.get(Messages.AUTH_PLAYER_VERIFIED_DEBUG, username, String.valueOf(result.uuid())));
+            updatePlayerLastIp(core.getAuthManager(), username, event);
             cacheLoginSummary(username, result.uuid(), null);
             event.allow();
         } else {
@@ -380,6 +381,7 @@ public class SpigotAuthListener implements Listener {
             }
         }
 
+        updatePlayerLastIp(authManager, username, event);
         cacheLoginSummary(username, playerUuid, record);
         event.allow();
     }
@@ -451,6 +453,21 @@ public class SpigotAuthListener implements Listener {
             return addr != null ? addr.getHostAddress() : "?";
         } catch (Exception e) {
             return "?";
+        }
+    }
+
+    /** 更新玩家最后登录 IP（预登录验证通过后调用，写入正版玩家记录供 /multiauth info 使用） */
+    private void updatePlayerLastIp(AuthManager authManager, String username, AsyncPlayerPreLoginEvent event) {
+        if (authManager == null) {
+            return;
+        }
+        try {
+            InetAddress addr = event.getAddress();
+            if (addr != null) {
+                authManager.updatePlayerLastIp(username, addr.getHostAddress());
+            }
+        } catch (Exception e) {
+            logger.fine(Messages.get(Messages.DB_UPDATE_LOCATION_FAILED, username));
         }
     }
 

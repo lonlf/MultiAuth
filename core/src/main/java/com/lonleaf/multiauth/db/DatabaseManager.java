@@ -29,6 +29,9 @@ public interface DatabaseManager {
     /** 更新玩家最后下线位置 */
     void updatePlayerLocation(String username, String world, double x, double y, double z, float yaw, float pitch);
 
+    /** 更新玩家最后登录 IP（正版记录，/multiauth info 使用）；ip 为 null 时忽略 */
+    void updatePlayerLastIp(String username, String ip);
+
     boolean exists(String username);
 
     /**

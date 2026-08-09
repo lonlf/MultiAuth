@@ -145,6 +145,22 @@ public class MojangApiService {
     }
 
     /**
+     * 检查层（checkPremium）是否启用。
+     * proxy=true 的 Spigot 端不做任何 API 调用，fallback 列表为空即视为未启用。
+     */
+    public boolean isEnabled() {
+        return !fallbackApiUrls.isEmpty();
+    }
+
+    /**
+     * 是否处于"全部 API 宕机"状态（由真实验证调用维护，无额外网络请求）。
+     * 供 /multiauth status 展示 API 状态。
+     */
+    public boolean isAllDown() {
+        return allApisDown;
+    }
+
+    /**
      * 检查用户名是否为正版账号（仅在玩家连接时按需调用）。
      *
      * @param username 用户名
