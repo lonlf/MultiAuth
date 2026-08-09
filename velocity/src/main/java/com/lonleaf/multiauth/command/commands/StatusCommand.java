@@ -2,11 +2,10 @@ package com.lonleaf.multiauth.command.commands;
 
 import com.lonleaf.multiauth.Core;
 import com.lonleaf.multiauth.Messages;
-import com.lonleaf.multiauth.MultiAuth;
 import com.lonleaf.multiauth.auth.AuthManager;
 import com.lonleaf.multiauth.mojang.MojangApiService;
 import com.velocitypowered.api.command.CommandSource;
-import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.proxy.ProxyServer;
 
 import java.util.List;
 
@@ -15,11 +14,11 @@ import java.util.List;
  */
 public class StatusCommand implements Command {
 
-    private final MultiAuth plugin;
+    private final ProxyServer server;
     private final Core core;
 
-    public StatusCommand(MultiAuth plugin, Core core) {
-        this.plugin = plugin;
+    public StatusCommand(ProxyServer server, Core core) {
+        this.server = server;
         this.core = core;
     }
 
@@ -42,9 +41,13 @@ public class StatusCommand implements Command {
         String premiumCount = premium >= 0 ? String.valueOf(premium) : "?";
         String totalRecords = total >= 0 ? String.valueOf(total) : "?";
 
-        // Velocity 端始终作为代理执行验证
+        // Velocity 端始终作为代理执行验证；版本读取 velocity-plugin.json（${project.version}，
+        // 打包时替换为 Maven 版本），避免与 @Plugin 注解硬编码版本不同步
+        String version = server.getPluginManager().getPlugin("multiauth")
+                .map(c -> c.getDescription().getVersion().orElse("?"))
+                .orElse("?");
         source.sendMessage(Command.legacy(Messages.get(Messages.CMD_STATUS,
-                plugin.getClass().getAnnotation(Plugin.class).version(),
+                version,
                 dbType + " (" + dbStatus + ")",
                 Messages.CMD_MODE_PROXY,
                 resolveApiStatus(),

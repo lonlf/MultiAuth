@@ -42,7 +42,7 @@ public class CommandManager {
         this.reloadCommand = new ReloadCommand(config, core, logger, plugin);
         this.migrateCommand = new MigrateCommand(core, logger);
         this.backupCommand = new BackupCommand(core);
-        this.statusCommand = new StatusCommand(plugin, core);
+        this.statusCommand = new StatusCommand(server, core);
         this.infoCommand = new InfoCommand(core, server);
         this.unregisterCommand = new UnregisterCommand(core, server, logger);
         registerCommand(plugin, server);
