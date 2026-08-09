@@ -32,6 +32,17 @@ public interface DatabaseManager {
     /** 更新玩家最后登录 IP（正版记录，/multiauth info 使用）；ip 为 null 时忽略 */
     void updatePlayerLastIp(String username, String ip);
 
+    /**
+     * 获取最近一次登录 IP 相同（归因）的全部账号用户名列表（多账号检测）。
+     * 参考 AuthMe 归属逻辑：仅用最后登录 IP（last_ip），覆盖离线账号表（multiauth_auth）
+     * 与正版玩家表（multiauth_players is_premium=1），合并去重。玩家更换 IP 后，
+     * 新关联集合即按新 IP 反查得到的列表。
+     *
+     * @param ip 最后登录 IP
+     * @return 用户名列表；查询失败返回空列表（多账号提示非安全功能，调用方静默忽略）
+     */
+    java.util.List<String> getAccountsByLastIp(String ip);
+
     boolean exists(String username);
 
     /**

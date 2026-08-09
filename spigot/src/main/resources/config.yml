@@ -231,6 +231,16 @@ auth:
   # Note: the quit location is always stored in the database (for /multiauth info admin query),
   #       this switch only controls whether players are teleported back after login
   return-last-location: false
+  # 登录成功后是否提示该 IP 关联的其他账号（多账号检测）
+  # 开启后：
+  #   - 玩家登录成功时自动提示同 IP 的其他账号
+  #   - 普通玩家使用 /multiauth info 时也展示关联账号；关闭则仅管理员可见
+  #
+  # Notify the player of other accounts associated with their IP on successful login (multi-account detection)
+  # When enabled:
+  #   - Players are automatically notified of other accounts on their IP after login
+  #   - Normal players also see the associated accounts in /multiauth info; when disabled, only admins see them
+  notify-other-accounts: false
   # 登录后是否强制生存模式（覆盖原始游戏模式）
   # Force survival mode after login (overrides the original game mode)
   force-survival: false

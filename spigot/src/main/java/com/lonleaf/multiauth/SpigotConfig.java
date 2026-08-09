@@ -140,6 +140,7 @@ public class SpigotConfig {
         newConfig.setAuthSpawnPointYaw((float) f.getDouble("auth.login-spawn-point.yaw", 0.0));
         newConfig.setAuthSpawnPointPitch((float) f.getDouble("auth.login-spawn-point.pitch", 0.0));
         newConfig.setAuthReturnLastLocation(f.getBoolean("auth.return-last-location", false));
+        newConfig.setAuthNotifyOtherAccounts(f.getBoolean("auth.notify-other-accounts", false));
         newConfig.setAuthForceSurvival(f.getBoolean("auth.force-survival", false));
         newConfig.setSessionTimeout(f.getInt("session.timeout", 0));
 

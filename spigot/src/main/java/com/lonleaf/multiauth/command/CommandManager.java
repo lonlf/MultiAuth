@@ -40,7 +40,7 @@ public class CommandManager {
         this.migrateCommand = new MigrateCommand(plugin, core);
         this.backupCommand = new BackupCommand(core);
         this.statusCommand = new StatusCommand((MultiAuth) plugin, core, config);
-        this.infoCommand = new InfoCommand(core, authService, config);
+        this.infoCommand = new InfoCommand(plugin, core, authService, config);
         this.unregisterCommand = new UnregisterCommand((MultiAuth) plugin, authService);
 
         this.subCommands = List.of(

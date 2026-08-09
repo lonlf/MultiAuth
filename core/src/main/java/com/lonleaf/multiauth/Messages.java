@@ -92,6 +92,7 @@ public class Messages {
     public static volatile String DB_GET_IP_STATS_FAILED;
     public static volatile String DB_INCREMENT_IP_ACCOUNT_FAILED;
     public static volatile String DB_DECREMENT_IP_ACCOUNT_FAILED;
+    public static volatile String DB_GET_ACCOUNTS_BY_IP_FAILED;
     public static volatile String DB_CREATE_INDEX_FAILED;
     public static volatile String DB_PARSE_UUID_FAILED;
     public static volatile String CORE_INIT_PROXY;
@@ -194,6 +195,9 @@ public class Messages {
     public static volatile String AUTH_INFO_STATUS_ONLINE;
     public static volatile String AUTH_INFO_STATUS_OFFLINE;
     public static volatile String AUTH_INFO_LOCATION;
+    public static volatile String AUTH_INFO_OTHER_ACCOUNTS;
+    public static volatile String AUTH_INFO_OTHER_ACCOUNTS_NONE;
+    public static volatile String AUTH_OTHER_ACCOUNTS_NOTIFY;
     public static volatile String AUTH_MODULE_DISABLED;
     public static volatile String AUTH_UNREGISTER_KICK;
 
@@ -742,6 +746,7 @@ public class Messages {
         DB_GET_IP_STATS_FAILED = messages.getOrDefault("db_get_ip_stats_failed", "[DB] Failed to get ip stats for {0}");
         DB_INCREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("db_increment_ip_account_failed", "[DB] Failed to increment ip account count for {0}");
         DB_DECREMENT_IP_ACCOUNT_FAILED = messages.getOrDefault("db_decrement_ip_account_failed", "[DB] Failed to decrement ip account count for {0}");
+        DB_GET_ACCOUNTS_BY_IP_FAILED = messages.getOrDefault("db_get_accounts_by_ip_failed", "[DB] Failed to query accounts by last IP {0}: {1}");
         DB_CREATE_INDEX_FAILED = messages.getOrDefault("db_create_index_failed", "[DB] Failed to create index: {0}");
         DB_PARSE_UUID_FAILED = messages.getOrDefault("db_parse_uuid_failed", "[DB] Failed to parse UUID for player {0}: {1}, skipped");
         CORE_INIT_PROXY = messages.getOrDefault("core_init_proxy", "Core initialized in PROXY mode (UUID verification via shared DB)");
@@ -841,6 +846,9 @@ public class Messages {
         AUTH_INFO_STATUS_ONLINE = messages.getOrDefault("auth_info_status_online", "在线");
         AUTH_INFO_STATUS_OFFLINE = messages.getOrDefault("auth_info_status_offline", "离线");
         AUTH_INFO_LOCATION = messages.getOrDefault("auth_info_location", "\n§7登出地点: §f{0}");
+        AUTH_INFO_OTHER_ACCOUNTS = messages.getOrDefault("auth_info_other_accounts", "\n§7关联账号({0}): §f{1}");
+        AUTH_INFO_OTHER_ACCOUNTS_NONE = messages.getOrDefault("auth_info_other_accounts_none", "\n§7关联账号: §f无");
+        AUTH_OTHER_ACCOUNTS_NOTIFY = messages.getOrDefault("auth_other_accounts_notify", "§e该IP关联的其他账号：§f{0}");
         AUTH_MODULE_DISABLED = messages.getOrDefault("auth_module_disabled", "§c认证模块已禁用。");
         AUTH_UNREGISTER_KICK = messages.getOrDefault("auth_unregister_kick", "§c您的账号已被管理员删除，请重新注册。");
         // 安全增强消息

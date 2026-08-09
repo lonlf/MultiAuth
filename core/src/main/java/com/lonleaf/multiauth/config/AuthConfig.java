@@ -132,6 +132,9 @@ public class AuthConfig {
     /** 登录成功后是否回到上次下线地点 */
     private boolean authReturnLastLocation = false;
 
+    /** 登录成功后是否提示该 IP 关联的其他账号（多账号检测，按最近一次登录 IP 归因） */
+    private boolean authNotifyOtherAccounts = false;
+
     /** 登录后是否强制生存模式 */
     private boolean authForceSurvival = false;
 
@@ -378,6 +381,9 @@ public class AuthConfig {
 
     public boolean isAuthReturnLastLocation() { return authReturnLastLocation; }
     public void setAuthReturnLastLocation(boolean authReturnLastLocation) { this.authReturnLastLocation = authReturnLastLocation; }
+
+    public boolean isAuthNotifyOtherAccounts() { return authNotifyOtherAccounts; }
+    public void setAuthNotifyOtherAccounts(boolean authNotifyOtherAccounts) { this.authNotifyOtherAccounts = authNotifyOtherAccounts; }
 
     public boolean isAuthForceSurvival() { return authForceSurvival; }
     public void setAuthForceSurvival(boolean authForceSurvival) { this.authForceSurvival = authForceSurvival; }

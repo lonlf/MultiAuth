@@ -74,9 +74,10 @@ public class InfoCommand implements Command {
             String geo = formatGeo(account.lastIp());
             // 离线账号无存储 UUID，使用离线算法生成（离线 UUID 固定且可复现）
             String location = isAdmin ? formatLocation(core.getAuthManager().getPlayerRecord(targetName)) : null;
+            String otherAccounts = formatOtherAccounts(account.lastIp(), isAdmin);
             source.sendMessage(Command.legacy(buildInfo(Messages.AUTH_INFO_OFFLINE_EXTRA,
                     targetName, AuthManager.generateOfflineUuid(targetName).toString(), status, lastIp, geo,
-                    location, registerTime, lastLogin)));
+                    location, otherAccounts, registerTime, lastLogin)));
             return true;
         }
 
@@ -91,9 +92,10 @@ public class InfoCommand implements Command {
             String lastIp = record.lastIp() != null ? record.lastIp() : Messages.get(Messages.GENERIC_UNKNOWN);
             String geo = formatGeo(record.lastIp());
             String location = isAdmin ? formatLocation(record) : null;
+            String otherAccounts = formatOtherAccounts(record.lastIp(), isAdmin);
             source.sendMessage(Command.legacy(buildInfo(Messages.AUTH_INFO_PREMIUM_EXTRA,
                     targetName, record.uuid().toString(), status, lastIp, geo,
-                    location, lastUpdate, firstJoin)));
+                    location, otherAccounts, lastUpdate, firstJoin)));
             return true;
         }
 
@@ -101,15 +103,60 @@ public class InfoCommand implements Command {
         return true;
     }
 
-    /** 组装信息：公共部分（玩家名/UUID/状态/最后IP/地理位置）+ 类型专属 + 登出地点（仅管理员） */
+    /** 组装信息：公共部分（玩家名/UUID/状态/最后IP/地理位置）+ 类型专属 + 登出地点 + 关联账号（可见性由调用方决定） */
     private String buildInfo(String extraKey, String name, String uuid, String status,
-                             String lastIp, String geo, String location, String... extraArgs) {
+                             String lastIp, String geo, String location, String otherAccounts, String... extraArgs) {
         String base = Messages.get(Messages.AUTH_INFO_BASE, name, uuid, status, lastIp, geo);
         String msg = base + Messages.get(extraKey, extraArgs);
         if (location != null) {
             msg += location;
         }
+        if (otherAccounts != null) {
+            msg += otherAccounts;
+        }
         return msg;
+    }
+
+    /**
+     * 格式化多账号信息（按最近一次登录 IP 归因，参考 AuthMe 归属逻辑）。
+     * 可见性与登出地点同级：管理员始终可见；普通玩家可见性由 Spigot 端
+     * auth.notify-other-accounts 决定（该开关唯一真源在 Spigot config.yml，
+     * 控制登录提示与 Spigot 端 info，此处仅从共享 AuthConfig 读取同一字段）。
+     * 玩家更换 IP 后，新关联集合即按新 IP 反查得到的列表。
+     */
+    private String formatOtherAccounts(String lastIp, boolean isAdmin) {
+        boolean show = isAdmin || core.getConfig().isAuthNotifyOtherAccounts();
+        if (!show || lastIp == null || core.getAuthManager() == null) {
+            return null;
+        }
+        List<String> accounts = core.getAuthManager().getAccountsByLastIp(lastIp);
+        if (accounts == null || accounts.isEmpty()) {
+            return null;
+        }
+        if (accounts.size() <= 1) {
+            return Messages.get(Messages.AUTH_INFO_OTHER_ACCOUNTS_NONE);
+        }
+        // 在线账号显示绿色，离线保持白色
+        StringBuilder colored = new StringBuilder();
+        for (int i = 0; i < accounts.size(); i++) {
+            if (i > 0) {
+                colored.append(", ");
+            }
+            String name = accounts.get(i);
+            colored.append(isOnline(name) ? "§a" + name : "§f" + name);
+        }
+        return Messages.get(Messages.AUTH_INFO_OTHER_ACCOUNTS,
+                String.valueOf(accounts.size()), colored.toString());
+    }
+
+    /** 账号是否在线（在线显示绿色，离线保持默认色） */
+    private boolean isOnline(String name) {
+        for (Player online : server.getAllPlayers()) {
+            if (online.getUsername().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 格式化登出地点（世界名 + 坐标），无记录或未记录位置时显示"未知" */

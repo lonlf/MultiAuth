@@ -6,6 +6,7 @@ import com.lonleaf.multiauth.mojang.MojangApiService;
 import com.lonleaf.multiauth.mojang.MojangSessionService;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -115,6 +116,18 @@ public class AuthManager {
     public void updatePlayerLastIp(String username, String ip) {
         if (database == null) return;
         database.updatePlayerLastIp(username, ip);
+    }
+
+    /**
+     * 获取最近一次登录 IP 相同（归因）的全部账号用户名列表（多账号检测）。
+     * 玩家更换 IP 后，新关联集合即按新 IP 反查得到的列表。
+     *
+     * @param ip 最后登录 IP
+     * @return 用户名列表；数据库不可用或查询失败返回空列表
+     */
+    public List<String> getAccountsByLastIp(String ip) {
+        if (database == null || ip == null) return java.util.Collections.emptyList();
+        return database.getAccountsByLastIp(ip);
     }
 
     public boolean wasPremiumPlayer(String username) {

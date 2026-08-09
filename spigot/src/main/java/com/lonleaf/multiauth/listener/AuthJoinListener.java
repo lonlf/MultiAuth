@@ -19,6 +19,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -74,8 +76,12 @@ public class AuthJoinListener implements Listener {
             authService.markLoggedIn(uuid);
             if (authConfig.isAuthReturnLastLocation()) {
                 onLoginSuccess(player);
-            } else if (authConfig.isAuthLoginSpawnPoint()) {
-                player.teleport(resolveSpawnPoint(player));
+            } else {
+                // return-last-location=false 时不走 onLoginSuccess，仍需补发多账号提示
+                if (authConfig.isAuthLoginSpawnPoint()) {
+                    player.teleport(resolveSpawnPoint(player));
+                }
+                notifyOtherAccounts(player);
             }
             if (authConfig.isAuthForceSurvival()) {
                 player.setGameMode(GameMode.SURVIVAL);
@@ -87,8 +93,11 @@ public class AuthJoinListener implements Listener {
         if (authService.isLoggedIn(uuid)) {
             if (authConfig.isAuthReturnLastLocation()) {
                 onLoginSuccess(player);
-            } else if (authConfig.isAuthLoginSpawnPoint()) {
-                player.teleport(resolveSpawnPoint(player));
+            } else {
+                if (authConfig.isAuthLoginSpawnPoint()) {
+                    player.teleport(resolveSpawnPoint(player));
+                }
+                notifyOtherAccounts(player);
             }
             if (authConfig.isAuthForceSurvival()) {
                 player.setGameMode(GameMode.SURVIVAL);
@@ -228,6 +237,48 @@ public class AuthJoinListener implements Listener {
         // 向 Velocity 会话中心上报认证成功（离线玩家注册/登录成功后），
         // 使跨服切换时目标服务器能收到 LOGIN_SYNC 保持登录状态
         plugin.notifySessionAuthUp(player);
+        // 登录成功后提示该 IP 关联的其他账号（多账号检测）
+        notifyOtherAccounts(player);
+    }
+
+    /**
+     * 登录成功后按最近一次登录 IP 提示玩家关联的其他账号（多账号检测）。
+     * 参考 AuthMe 归属逻辑：仅用最后登录 IP 归因，玩家更换 IP 后按新 IP 反查新关联集合。
+     * 需配置 auth.notify-other-accounts 开启；查询失败静默跳过（非安全功能，不拒绝登录）。
+     */
+    private void notifyOtherAccounts(Player player) {
+        AuthConfig authConfig = config.getConfig();
+        if (!authConfig.isAuthNotifyOtherAccounts()
+                || core == null || core.getAuthManager() == null) {
+            return;
+        }
+        final String ip = getPlayerIp(player);
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                List<String> accounts = core.getAuthManager().getAccountsByLastIp(ip);
+                if (accounts.size() <= 1) {
+                    return; // 该 IP 下仅当前账号，无需提示
+                }
+                List<String> others = new ArrayList<>();
+                for (String name : accounts) {
+                    if (!name.equalsIgnoreCase(player.getName())) {
+                        others.add(name);
+                    }
+                }
+                if (others.isEmpty()) {
+                    return;
+                }
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (player.isOnline()) {
+                        player.sendMessage(Messages.get(Messages.AUTH_OTHER_ACCOUNTS_NOTIFY,
+                                String.join(", ", others)));
+                    }
+                });
+            } catch (Exception e) {
+                plugin.getLogger().warning(Messages.get(Messages.DB_GET_ACCOUNTS_BY_IP_FAILED,
+                        ip, e.getMessage()));
+            }
+        });
     }
 
     // ==================== 位置相关 ====================

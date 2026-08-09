@@ -125,6 +125,14 @@ public class MySQLManager implements DatabaseManager {
         return "UPDATE " + tableName + " SET last_ip = ? WHERE username = ?";
     }
 
+    /** 按最近一次登录 IP 反查关联账号（多账号检测）：离线账号表 + 正版玩家表（is_premium=1），UNION 去重 */
+    private String getAccountsByLastIpSql() {
+        return "SELECT username FROM " + authTableName + " WHERE last_ip = ? AND username IS NOT NULL " +
+               "UNION " +
+               "SELECT username FROM " + tableName + " WHERE is_premium = 1 AND last_ip = ? AND username IS NOT NULL " +
+               "ORDER BY username";
+    }
+
     private String createAuthTableSql() {
         return "CREATE TABLE IF NOT EXISTS " + authTableName + " (" +
                 "username VARCHAR(16) PRIMARY KEY, " +
@@ -454,6 +462,29 @@ public class MySQLManager implements DatabaseManager {
         } catch (SQLException e) {
             logger.log(Level.WARNING, Messages.get(Messages.DB_UPDATE_LOCATION_FAILED, username), e);
         }
+    }
+
+    @Override
+    public List<String> getAccountsByLastIp(String ip) {
+        List<String> result = new ArrayList<>();
+        if (ip == null) {
+            return result;
+        }
+        try (Connection conn = borrowConnection()) {
+            if (conn == null) return result;
+            try (PreparedStatement ps = conn.prepareStatement(getAccountsByLastIpSql())) {
+                ps.setString(1, ip);
+                ps.setString(2, ip);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        result.add(rs.getString("username"));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            logger.log(Level.WARNING, Messages.get(Messages.DB_GET_ACCOUNTS_BY_IP_FAILED, ip), e);
+        }
+        return result;
     }
 
     @Override
