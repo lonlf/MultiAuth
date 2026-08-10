@@ -115,7 +115,6 @@ run/
 # Generated Javadoc
 javadocs/
 /.vscode
-/docs
 /参考用资料
 功能汇总.md
 FLOWCHART.md
