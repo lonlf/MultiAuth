@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 
 import java.nio.file.Path;
 
-@Plugin(id = "multiauth", name = "multiauth", version = "0.5.0", description = "Login authenticated players and other players.", url = "https://github.com/lonlf", authors = {"lonlf"})
+@Plugin(id = "multiauth", name = "multiauth", version = "0.6.0", description = "Login authenticated players and other players.", url = "https://github.com/lonlf", authors = {"lonlf"})
 public class MultiAuth {
 
     private final Logger logger;

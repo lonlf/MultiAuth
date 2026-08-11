@@ -14,6 +14,12 @@
 #   - Non-premium players: forceOfflineMode() skips verification and uses the offline UUID
 # It is recommended to keep velocity.toml online-mode = true to avoid affecting plugins that rely on the global setting
 
+# 配置版本号：插件升级时自动检测，版本落后时自动将新增配置项补充到文件中
+# 请勿手动修改此值
+# Config version: auto-detected on plugin upgrade; missing options are appended to this file with defaults
+# Do not edit this value manually
+config-version = 1
+
 # 语言设置
 # 插件启动时会生成 lang/ 文件夹，内含多种语言文件
 # 修改此项后执行 /multiauth reload 即可生效

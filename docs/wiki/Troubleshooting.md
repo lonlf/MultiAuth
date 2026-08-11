@@ -28,3 +28,25 @@
 ## 修改语言文件不生效
 
 已生成的 `plugins/MultiAuth/lang/` 目录不会自动更新。需删除该目录让插件重新生成，或手动编辑对应语言文件后执行 `/multiauth reload`。
+
+## 进服被踢：XConomy UUID mismatch
+
+正版玩家进服后被 XConomy 踢出，提示：
+
+```
+[XConomy] UUID mismatch
+Username - ZZZZZZ
+UUID[C] - XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+UUID[O] - YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY
+```
+
+`UUID[C]` 为玩家当前连接携带的 UUID，`UUID[O]` 为 XConomy 按玩家名实时计算的标准离线 UUID（`MD5("OfflinePlayer:"+名字)`，version 3）。
+
+**原因**：XConomy 配置 `UUID-mode: Offline` 时期望玩家 UUID 等于离线 UUID；MultiAuth 默认 `use-mojang-uuid: true` 保持正版 UUID（version 4）转发，两者不一致即被 XConomy 实时检测踢出。**该检测与数据库数据无关，清除 XConomy 数据库无效**。
+
+**解决**（二选一）：
+
+- 将 MultiAuth 配置 [use-mojang-uuid](Configuration.md) 改为 `false`，正版玩家统一使用离线 UUID 进服（与 FastLogin `premiumUuid: false` 行为一致）
+- 将 XConomy 配置 `UUID-mode` 改为 `Online` 或 `SemiOnline`（正版 + 离线混合支持）
+
+参考：[XConomy issue #86](https://github.com/YiC200333/XConomy/issues/86)

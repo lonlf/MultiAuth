@@ -21,4 +21,5 @@ MultiAuth is a Minecraft authentication plugin that supports **mixed verificatio
 |---|---|
 | [Installation](Installation-EN.md) | Requirements, standalone & proxy deployment |
 | [Configuration](Configuration-EN.md) | Config files and key options |
+| [Commands](Commands-EN.md) | Player/admin commands, permissions, info & status |
 | [Troubleshooting](Troubleshooting-EN.md) | Common deployment & usage issues |

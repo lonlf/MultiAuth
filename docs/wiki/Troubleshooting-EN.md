@@ -33,7 +33,30 @@ With the message `Login failed: Invalid session (Please restart your game and th
 
 An already-generated `plugins/MultiAuth/lang/` directory is not updated automatically. Delete the directory to let the plugin regenerate the files, or edit the corresponding file manually and run `/multiauth reload`.
 
+## Kicked on join: XConomy UUID mismatch
+
+Premium players are kicked by XConomy on join with:
+
+```
+[XConomy] UUID mismatch
+Username - ZZZZZZ
+UUID[C] - XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+UUID[O] - YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY
+```
+
+`UUID[C]` is the UUID the player carries on the current connection; `UUID[O]` is the standard offline UUID that XConomy computes on the fly from the username (`MD5("OfflinePlayer:"+name)`, version 3).
+
+**Cause**: with XConomy's `UUID-mode: Offline`, XConomy expects the player UUID to equal the offline UUID. MultiAuth keeps the premium UUID (version 4) by default (`use-mojang-uuid: true`), so the mismatch is detected in real time and the player is kicked. **This check is independent of the database — clearing the XConomy database does not help.**
+
+**Fix** (choose one):
+
+- Set MultiAuth's [use-mojang-uuid](Configuration-EN.md) to `false` so premium players use the offline UUID on join (same behavior as FastLogin `premiumUuid: false`)
+- Set XConomy's `UUID-mode` to `Online` or `SemiOnline` (supports both premium and offline players)
+
+Reference: [XConomy issue #86](https://github.com/YiC200333/XConomy/issues/86)
+
 ## Related Docs
 
 - [Installation](Installation-EN.md) — installation & deployment
 - [Configuration](Configuration-EN.md) — config file details
+- [Commands](Commands-EN.md) — player/admin commands & permissions

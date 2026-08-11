@@ -3,11 +3,17 @@ package com.lonleaf.multiauth;
 import com.lonleaf.multiauth.config.AuthConfig;
 import com.lonleaf.multiauth.Messages;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Spigot 端配置管理器，使用 YAML 格式。
@@ -26,30 +32,190 @@ public class SpigotConfig {
 
     /**
      * 加载配置文件；saveDefaultConfig 会自动释放资源中的 config.yml。
+     * 配置加载失败（YAML 语法错误/IO 异常）时保留旧配置继续运行，不让插件加载失败（与 Velocity 端一致）。
      */
     public void load() {
-        // 首次启动（config.yml 不存在）：saveDefaultConfig 复制模板后按系统语言自动设置 language 项
-        boolean firstStart = !new java.io.File(plugin.getDataFolder(), "config.yml").exists();
-        plugin.saveDefaultConfig();
-        plugin.reloadConfig();
+        try {
+            // 首次启动（config.yml 不存在）：saveDefaultConfig 复制模板后按系统语言自动设置 language 项
+            boolean firstStart = !new java.io.File(plugin.getDataFolder(), "config.yml").exists();
+            plugin.saveDefaultConfig();
+            plugin.reloadConfig();
 
-        FileConfiguration fileConfig = plugin.getConfig();
-        if (firstStart) {
-            applySystemLanguage(fileConfig);
+            // 自动升级：config-version 落后时把新增配置项以默认值追加到文件末尾（保留用户已有键与注释）
+            upgradeConfigFile();
+            // 重新加载升级后的配置
+            plugin.reloadConfig();
+
+            FileConfiguration fileConfig = plugin.getConfig();
+            if (firstStart) {
+                applySystemLanguage();
+                // 文本级修改 language 后重新加载，让内存配置反映新值
+                plugin.reloadConfig();
+                fileConfig = plugin.getConfig();
+            }
+            applyConfig(fileConfig);
+
+            logger.fine(Messages.get(Messages.CONFIG_LOADED_DEBUG, String.valueOf(config.isProxy()), String.valueOf(config.isUseMojangUuid()), String.valueOf(config.isDebug())));
+        } catch (Exception e) {
+            logger.severe(Messages.get(Messages.CONFIG_LOAD_FAILED, e.getMessage()));
+            logger.log(java.util.logging.Level.SEVERE, "Config load failure, keeping previous config", e);
         }
-        applyConfig(fileConfig);
+    }
 
-        logger.fine(Messages.get(Messages.CONFIG_LOADED_DEBUG, String.valueOf(config.isProxy()), String.valueOf(config.isUseMojangUuid()), String.valueOf(config.isDebug())));
+    /**
+     * 配置自动升级：以 jar 内模板为准，若文件中 config-version 低于模板版本，
+     * 先执行链式结构迁移（重命名/删除/调整键，文本级修改保留注释），
+     * 再将模板中缺失的键以扁平键形式追加到文件末尾（不重写已有内容，保留注释），
+     * 最后更新 config-version 并原子写回（tmp + ATOMIC_MOVE，避免写入中断损坏文件）。
+     * 文件内容不匹配模板时由 applyConfig 的默认值兜底。
+     */
+    private void upgradeConfigFile() {
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        FileConfiguration template;
+        try (java.io.InputStream in = plugin.getResource("config.yml")) {
+            if (in == null) {
+                return;
+            }
+            template = YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(in, StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            logger.warning(Messages.get(Messages.CONFIG_UPGRADE_FAILED, e.getMessage()));
+            return;
+        }
+
+        int latestVersion = template.getInt("config-version", 1);
+
+        String raw;
+        try {
+            raw = new String(Files.readAllBytes(configFile.toPath()), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            logger.warning(Messages.get(Messages.CONFIG_UPGRADE_FAILED, e.getMessage()));
+            return;
+        }
+
+        FileConfiguration current = YamlConfiguration.loadConfiguration(new java.io.StringReader(raw));
+        int currentVersion = current.getInt("config-version", 0);
+        if (currentVersion >= latestVersion) {
+            return; // 已是最新或无需升级
+        }
+
+        // D：链式结构迁移，从 currentVersion 逐版本应用到 latestVersion（文本级修改，保留注释）
+        for (int v = currentVersion + 1; v <= latestVersion; v++) {
+            raw = applyMigration(raw, v);
+        }
+
+        // 基于迁移后的文本重新解析，收集模板中用户配置缺失的叶键（config-version 单独处理）
+        FileConfiguration migrated = YamlConfiguration.loadConfiguration(new java.io.StringReader(raw));
+        List<String> missing = new ArrayList<>();
+        for (String key : template.getKeys(true)) {
+            if (!"config-version".equals(key) && !migrated.contains(key)) {
+                missing.add(key);
+            }
+        }
+
+        StringBuilder append = new StringBuilder();
+        if (!missing.isEmpty()) {
+            append.append("\n# --- MultiAuth config upgrade to v").append(latestVersion)
+                    .append(": newly added options (defaults) ---\n");
+            for (String key : missing) {
+                append.append(flatYaml(key, template.get(key)));
+            }
+        }
+
+        // 更新文件中的 config-version：已存在则替换值，否则追加
+        if (Pattern.compile("(?m)^config-version:.*$").matcher(raw).find()) {
+            raw = raw.replaceAll("(?m)^config-version:.*$", "config-version: " + latestVersion);
+        } else {
+            append.append("config-version: ").append(latestVersion).append("\n");
+        }
+
+        try {
+            writeConfigAtomic(configFile, raw + append);
+        } catch (Exception e) {
+            logger.warning(Messages.get(Messages.CONFIG_UPGRADE_FAILED, e.getMessage()));
+            return;
+        }
+
+        logger.info(Messages.get(Messages.CONFIG_UPGRADE_DONE, String.valueOf(missing.size()), String.valueOf(latestVersion)));
+    }
+
+    /**
+     * 应用从 v-1 升级到 v 的结构迁移。迁移可能涉及键重命名/删除/结构调整，
+     * 必须在原始文本上做行级替换（保留注释），并返回修改后的文本。
+     * 当前 config-version=1，暂无历史迁移，仅预留框架：未来新增配置版本时，
+     * 在 switch 中添加对应 case，并把模板 config-version 递增。
+     */
+    private String applyMigration(String raw, int v) {
+        switch (v) {
+            // 示例（新增版本时按此模式添加）：
+            // case 2:
+            //     // 键重命名：auth.old-key → auth.new-key（行级替换保留注释）
+            //     raw = raw.replaceAll("(?m)^auth\\.old-key:.*$", "auth.new-key:");
+            //     // 键删除：整行连同上方注释一起删除
+            //     raw = raw.replaceAll("(?m)^(?:#[^\\n]*\\n)*auth\\.removed-key:.*$", "");
+            //     break;
+            default:
+                break;
+        }
+        return raw;
+    }
+
+    /**
+     * 原子写回配置文件：先写入同名 .tmp 文件，再原子替换目标文件，
+     * 避免写入中断（磁盘满/进程崩溃）导致配置文件损坏。
+     * 文件系统不支持原子移动时降级为普通替换。
+     */
+    private void writeConfigAtomic(File configFile, String content) throws java.io.IOException {
+        java.nio.file.Path path = configFile.toPath();
+        java.nio.file.Path tmp = path.resolveSibling(configFile.getName() + ".tmp");
+        try {
+            Files.write(tmp, content.getBytes(StandardCharsets.UTF_8));
+            try {
+                Files.move(tmp, path, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                Files.move(tmp, path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            try {
+                Files.deleteIfExists(tmp);
+            } catch (Exception ignored) {
+                // 清理失败不影响主流程
+            }
+        }
+    }
+
+    /**
+     * 将单个键序列化为 YAML 扁平键形式（如 {@code auth.return-last-location: false}，
+     * 列表值输出顶格块序列），便于追加到现有配置末尾而不破坏原有嵌套结构。
+     */
+    private String flatYaml(String key, Object value) {
+        YamlConfiguration tmp = new YamlConfiguration();
+        tmp.set("x", value);
+        String s = tmp.saveToString();
+        int nl = s.indexOf('\n');
+        String head = nl >= 0 ? s.substring(0, nl) : s;
+        String rest = nl >= 0 ? s.substring(nl) : "\n";
+        return key + head.substring("x:".length()) + rest;
     }
 
     /**
      * 首次启动时根据系统语言自动设置 language 项（仅当检测结果与默认 en_gb 不同时写入）。
+     * 采用文本级替换 + 原子写回，避免 saveConfig() 重写整个文件导致注释丢失（B）。
      */
-    private void applySystemLanguage(FileConfiguration fileConfig) {
+    private void applySystemLanguage() {
         String detected = Messages.detectSystemLanguage();
-        if (!"en_gb".equals(detected)) {
-            fileConfig.set("language", detected);
-            plugin.saveConfig();
+        if ("en_gb".equals(detected)) {
+            return;
+        }
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        try {
+            String raw = new String(Files.readAllBytes(configFile.toPath()), StandardCharsets.UTF_8);
+            if (Pattern.compile("(?m)^language:.*$").matcher(raw).find()) {
+                raw = raw.replaceAll("(?m)^language:.*$", "language: " + detected);
+                writeConfigAtomic(configFile, raw);
+            }
+        } catch (Exception e) {
+            logger.warning(Messages.get(Messages.CONFIG_UPGRADE_FAILED, e.getMessage()));
         }
     }
 
@@ -141,6 +307,7 @@ public class SpigotConfig {
         newConfig.setAuthSpawnPointPitch((float) f.getDouble("auth.login-spawn-point.pitch", 0.0));
         newConfig.setAuthReturnLastLocation(f.getBoolean("auth.return-last-location", false));
         newConfig.setAuthNotifyOtherAccounts(f.getBoolean("auth.notify-other-accounts", false));
+        newConfig.setAuthReminderInterval(f.getInt("auth.reminder-interval", 6));
         newConfig.setAuthForceSurvival(f.getBoolean("auth.force-survival", false));
         newConfig.setSessionTimeout(f.getInt("session.timeout", 0));
 
@@ -158,8 +325,9 @@ public class SpigotConfig {
         newConfig.setSecMaxOnlinePerIp(f.getInt("auth.security.ip-limits.max-online-per-ip", 2));
 
         newConfig.setSecIpChangeEnabled(f.getBoolean("auth.security.ip-change.enabled", true));
-        newConfig.setSecIpChangeWarnPlayer(f.getBoolean("auth.security.ip-change.warn-player", true));
-        newConfig.setSecIpChangeNotifyAdmin(f.getBoolean("auth.security.ip-change.notify-admin", false));
+        // 默认值与 config.yml 模板保持一致（warn-player=false, notify-admin=true）
+        newConfig.setSecIpChangeWarnPlayer(f.getBoolean("auth.security.ip-change.warn-player", false));
+        newConfig.setSecIpChangeNotifyAdmin(f.getBoolean("auth.security.ip-change.notify-admin", true));
 
         newConfig.setSecGeoEnabled(f.getBoolean("auth.security.geo-detection.enabled", false));
         newConfig.setSecGeoXdbDir(f.getString("auth.security.geo-detection.xdb-dir", "ip2region"));

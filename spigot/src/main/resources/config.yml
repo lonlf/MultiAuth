@@ -2,6 +2,12 @@
 #
 # MultiAuth Spigot configuration file
 
+# 配置版本号：插件升级时自动检测，版本落后时自动将新增配置项以默认值追加到文件末尾
+# 请勿手动修改此值
+# Config version: auto-detected on plugin upgrade; new options are appended to this file with defaults
+# Do not edit this value manually
+config-version: 1
+
 # 语言设置
 # 插件启动时会生成 lang/ 文件夹，内含多种语言文件
 # 修改此项后执行 /multiauth reload 即可生效
@@ -241,6 +247,16 @@ auth:
   #   - Players are automatically notified of other accounts on their IP after login
   #   - Normal players also see the associated accounts in /multiauth info; when disabled, only admins see them
   notify-other-accounts: false
+  # 未登录/未注册玩家的登录/注册提醒间隔（秒）
+  # 玩家进入服务器后，若一直未登录/注册，则每隔该时间发送一次提醒
+  # 0 = 关闭定时提醒（仅在进入服务器时提示一次）
+  # 默认 6 秒
+  #
+  # Interval (seconds) for repeating the login/register reminder to unauthenticated players
+  # Players who have not logged in or registered receive the reminder at this interval
+  # 0 = disable repeated reminders (only one prompt on join)
+  # Default: 6 seconds
+  reminder-interval: 6
   # 登录后是否强制生存模式（覆盖原始游戏模式）
   # Force survival mode after login (overrides the original game mode)
   force-survival: false

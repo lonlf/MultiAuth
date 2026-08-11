@@ -156,6 +156,8 @@ config_online_mode_incompatible_warn=[MultiAuth] proxy=false 模式要求 server
 config_proxy_change_restart=§c代理模式已变更为 {0}，请重启服务端使配置完全生效！
 config_default_created=默认 config.toml 已创建
 config_load_failed=config.toml 加载失败，使用默认配置：{0}
+config_upgrade_done=配置已自动升级到 v{1}：新增 {0} 个配置项（已以默认值追加到配置文件中，可自行调整）
+config_upgrade_failed=配置自动升级失败：{0}
 
 # 插件相关
 plugin_velocity_initialized=MultiAuth Velocity 插件已初始化
@@ -226,7 +228,7 @@ session_complete=[SESSION] 玩家 {0} 认证完成 - {1}
 session_disconnect=[SESSION] 玩家 {0} 断开连接 - 清理认证状态
 session_join_notify=[SESSION] 玩家 {0} 加入服务器（UUID: {1}，正版: {2}）
 session_hijack_warning=§c[安全警告] {0} 的 UUID 不匹配！怀疑会话劫持！
-session_status_notify=§e您当前为{0}登录状态\n§7UUID: {1}
+session_status_notify=§e您当前为{0}登录状态
 session_status_log=[SESSION] 玩家 {0} 登录状态：{1}（UUID: {2}）
 session_sync_enabled=[MultiAuth] 跨服会话同步已启用（通道: {0}）
 session_sync_receiver_registered=[MultiAuth] 跨服会话同步接收器已注册（通道: {0}）

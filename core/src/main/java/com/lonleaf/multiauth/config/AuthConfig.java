@@ -135,6 +135,9 @@ public class AuthConfig {
     /** 登录成功后是否提示该 IP 关联的其他账号（多账号检测，按最近一次登录 IP 归因） */
     private boolean authNotifyOtherAccounts = false;
 
+    /** 未登录/未注册玩家提示提醒间隔（秒），0=关闭定时提醒，默认 6 秒 */
+    private int authReminderInterval = 6;
+
     /** 登录后是否强制生存模式 */
     private boolean authForceSurvival = false;
 
@@ -384,6 +387,9 @@ public class AuthConfig {
 
     public boolean isAuthNotifyOtherAccounts() { return authNotifyOtherAccounts; }
     public void setAuthNotifyOtherAccounts(boolean authNotifyOtherAccounts) { this.authNotifyOtherAccounts = authNotifyOtherAccounts; }
+
+    public int getAuthReminderInterval() { return authReminderInterval; }
+    public void setAuthReminderInterval(int authReminderInterval) { this.authReminderInterval = authReminderInterval; }
 
     public boolean isAuthForceSurvival() { return authForceSurvival; }
     public void setAuthForceSurvival(boolean authForceSurvival) { this.authForceSurvival = authForceSurvival; }

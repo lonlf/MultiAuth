@@ -133,8 +133,9 @@ public class AuthJoinListener implements Listener {
                     return;
                 }
                 if (!registered) {
-                    // 未注册玩家不会被 LOGIN_SYNC 标记，直接提示注册
+                    // 未注册玩家不会被 LOGIN_SYNC 标记，直接提示注册并定时提醒
                     player.sendMessage(Messages.AUTH_REGISTER_PROMPT);
+                    state.startReminder(player, Messages.AUTH_REGISTER_PROMPT);
                     scheduleTimeout(player, authConfig.getAuthRegisterTimeout(), Messages.AUTH_REGISTER_TIMEOUT);
                     return;
                 }
@@ -163,6 +164,7 @@ public class AuthJoinListener implements Listener {
                                         AuthConfig authConfig, AuthService.SessionResumeCheck secCheck) {
         if (!authService.tryResumeSession(username, ip, uuid)) {
             player.sendMessage(Messages.AUTH_LOGIN_PROMPT);
+            state.startReminder(player, Messages.AUTH_LOGIN_PROMPT);
             scheduleTimeout(player, authConfig.getAuthLoginTimeout(), Messages.AUTH_LOGIN_TIMEOUT);
             return;
         }
@@ -181,6 +183,7 @@ public class AuthJoinListener implements Listener {
                 }
                 player.sendMessage(Messages.AUTH_GEO_REQUIRE_LOGIN);
                 player.sendMessage(Messages.AUTH_LOGIN_PROMPT);
+                state.startReminder(player, Messages.AUTH_LOGIN_PROMPT);
                 scheduleTimeout(player, authConfig.getAuthLoginTimeout(), Messages.AUTH_LOGIN_TIMEOUT);
                 return;
             }

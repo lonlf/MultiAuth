@@ -264,6 +264,8 @@ public class Messages {
     public static volatile String CONFIG_PROXY_CHANGE_RESTART;
     public static volatile String CONFIG_DEFAULT_CREATED;
     public static volatile String CONFIG_LOAD_FAILED;
+    public static volatile String CONFIG_UPGRADE_DONE;
+    public static volatile String CONFIG_UPGRADE_FAILED;
 
     // --- 插件相关 ---
     public static volatile String PLUGIN_VELOCITY_INITIALIZED;
@@ -920,6 +922,10 @@ public class Messages {
                 "§cProxy mode changed to {0} - please restart the server for the change to fully take effect!");
         CONFIG_DEFAULT_CREATED = messages.getOrDefault("config_default_created", "Default config.toml created");
         CONFIG_LOAD_FAILED = messages.getOrDefault("config_load_failed", "Failed to load config.toml, using defaults: {0}");
+        CONFIG_UPGRADE_DONE = messages.getOrDefault("config_upgrade_done",
+                "Config auto-upgraded to v{1}: {0} new options appended with defaults");
+        CONFIG_UPGRADE_FAILED = messages.getOrDefault("config_upgrade_failed",
+                "Failed to auto-upgrade config: {0}");
 
         PLUGIN_VELOCITY_INITIALIZED = messages.getOrDefault("plugin_velocity_initialized", "MultiAuth Velocity plugin initialized");
         PLUGIN_VELOCITY_SHUTDOWN = messages.getOrDefault("plugin_velocity_shutdown", "MultiAuth Velocity plugin shutdown");
@@ -989,7 +995,7 @@ public class Messages {
         SESSION_JOIN_NOTIFY = messages.getOrDefault("session_join_notify", "[SESSION] Player {0} joined the server (UUID: {1}, Premium: {2})");
         SESSION_HIJACK_WARNING = messages.getOrDefault("session_hijack_warning", "§c[SECURITY WARNING] UUID mismatch for {0}! Session hijack suspected!");
         SESSION_STATUS_NOTIFY = messages.getOrDefault("session_status_notify",
-                "§e您当前为{0}登录状态\n§7UUID: {1}");
+                "§e您当前为{0}登录状态");
         SESSION_STATUS_LOG = messages.getOrDefault("session_status_log",
                 "[SESSION] Player {0} login status: {1} (UUID: {2})");
         SESSION_SYNC_ENABLED = messages.getOrDefault("session_sync_enabled",

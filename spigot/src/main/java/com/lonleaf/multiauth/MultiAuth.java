@@ -239,10 +239,11 @@ public final class MultiAuth extends JavaPlugin {
         }
     }
 
-    /** 取消玩家的超时踢出任务（登录/注册成功时调用） */
+    /** 取消玩家的超时踢出任务与定时提醒（登录/注册成功时调用） */
     public void cancelAuthTimeout(java.util.UUID uuid) {
         if (authState != null) {
             authState.cancelTimeout(uuid);
+            authState.cancelReminder(uuid);
         }
     }
 

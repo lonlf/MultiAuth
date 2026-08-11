@@ -33,6 +33,9 @@ public class AuthState {
     /** 未登录/注册玩家的超时踢出任务，玩家 UUID → 任务 */
     private final ConcurrentMap<UUID, BukkitTask> timeoutTasks = new ConcurrentHashMap<>();
 
+    /** 未登录/注册玩家的定时提醒任务，玩家 UUID → 任务 */
+    private final ConcurrentMap<UUID, BukkitTask> reminderTasks = new ConcurrentHashMap<>();
+
     /** 玩家被强制冒险模式前的原始游戏模式，玩家 UUID → GameMode */
     private final ConcurrentMap<UUID, GameMode> originalGameModes = new ConcurrentHashMap<>();
 
@@ -180,6 +183,47 @@ public class AuthState {
         timeoutTasks.put(uuid, task);
     }
 
+    // ==================== 定时提醒 ====================
+
+    /** 取消玩家的定时提醒任务（登录/注册成功或退出时调用） */
+    public void cancelReminder(UUID uuid) {
+        BukkitTask task = reminderTasks.remove(uuid);
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    /**
+     * 启动未登录/未注册玩家的定时提醒任务。
+     * 间隔为配置项 auth.reminder-interval（秒，0=关闭）；每个周期检查玩家仍在线且未登录才发送提醒，
+     * 已登录或离线时自动停止。
+     *
+     * @param player  玩家
+     * @param message 提醒消息（登录/注册提示）
+     */
+    public void startReminder(Player player, String message) {
+        int interval = config.getConfig().getAuthReminderInterval();
+        if (interval <= 0) {
+            return; // 定时提醒关闭，仅在进入服务器时提示一次
+        }
+        UUID uuid = player.getUniqueId();
+        cancelReminder(uuid);
+        long period = interval * 20L;
+        BukkitTask task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            Player p = plugin.getServer().getPlayer(uuid);
+            if (p == null || !p.isOnline()) {
+                cancelReminder(uuid);
+                return;
+            }
+            if (authService.isLoggedIn(uuid)) {
+                cancelReminder(uuid);
+                return;
+            }
+            p.sendMessage(message);
+        }, period, period);
+        reminderTasks.put(uuid, task);
+    }
+
     // ==================== 清理 ====================
 
     /** 清理所有状态（插件禁用/reload 时调用） */
@@ -191,6 +235,10 @@ public class AuthState {
             task.cancel();
         }
         timeoutTasks.clear();
+        for (BukkitTask task : reminderTasks.values()) {
+            task.cancel();
+        }
+        reminderTasks.clear();
     }
 
     /** 玩家退出时清理其个人状态 */
@@ -199,5 +247,6 @@ public class AuthState {
         frozenLocations.remove(uuid);
         offlinePlayerCache.remove(uuid);
         cancelTimeout(uuid);
+        cancelReminder(uuid);
     }
 }

@@ -156,6 +156,8 @@ config_online_mode_incompatible_warn=[MultiAuth] proxy=false requires online-mod
 config_proxy_change_restart=§cProxy mode changed to {0} - please restart the server for the change to fully take effect!
 config_default_created=Default config.toml created
 config_load_failed=Failed to load config.toml, using defaults: {0}
+config_upgrade_done=Config auto-upgraded to v{1}: {0} new options appended with defaults
+config_upgrade_failed=Failed to auto-upgrade config: {0}
 
 # Plugin
 plugin_velocity_initialized=MultiAuth Velocity plugin initialized
@@ -226,7 +228,7 @@ session_complete=[SESSION] Player {0} authentication complete - {1}
 session_disconnect=[SESSION] Player {0} disconnected - cleaning up auth state
 session_join_notify=[SESSION] Player {0} joined the server (UUID: {1}, Premium: {2})
 session_hijack_warning=§c[SECURITY WARNING] UUID mismatch for {0}! Session hijack suspected!
-session_status_notify=§eYour current login status: {0}\n§7UUID: {1}
+session_status_notify=§eYour current login status: {0}
 session_status_log=[SESSION] Player {0} login status: {1} (UUID: {2})
 session_sync_enabled=[MultiAuth] Cross-server session sync enabled (channel: {0})
 session_sync_receiver_registered=[MultiAuth] Cross-server session sync receiver registered (channel: {0})

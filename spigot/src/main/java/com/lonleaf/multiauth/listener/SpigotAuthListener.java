@@ -652,7 +652,8 @@ public class SpigotAuthListener implements Listener {
     private void notifyLoginStatus(Player player, String username, UUID playerUuid, boolean isPremium) {
         String status = resolveLoginType(isPremium);
         if (config.isNotifyPlayerStatus()) {
-            String notifyMsg = Messages.get(Messages.SESSION_STATUS_NOTIFY, status, playerUuid.toString());
+            // 仅通知正版/离线状态，不向玩家暴露 UUID（SESSION_STATUS_LOG 日志仍保留 UUID 审计留痕）
+            String notifyMsg = Messages.get(Messages.SESSION_STATUS_NOTIFY, status);
             player.sendMessage(notifyMsg);
             logger.fine(Messages.get(Messages.MSG_STATUS_NOTIFY_SENT, username, notifyMsg.replace("\n", "\\n")));
         }
