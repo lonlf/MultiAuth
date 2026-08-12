@@ -150,6 +150,22 @@ backup:
   # Maximum number of backups; the oldest ones are removed when exceeded
   max-count: 7
 
+# 更新检查配置
+# 插件启动后定期向 GitHub Releases API 检查是否有新版本，有更新时在控制台与在线管理员通知。
+# 检查失败仅记录日志并静默降级，不影响插件任何功能。
+#
+# Update check configuration
+# The plugin periodically checks GitHub Releases API for new versions after startup, notifying
+# the console and online admins when an update is available. A failed check is only logged and
+# silently degraded; it never affects any plugin functionality.
+update-check:
+  # 是否启用更新检查
+  # Enable update checking
+  enabled: true
+  # 检查间隔（小时）
+  # Check interval (hours)
+  interval-hours: 24
+
 # 离线玩家注册登录配置
 # 仅对离线玩家（非正版）生效，正版玩家不受限制
 #

@@ -60,6 +60,7 @@ public class MultiAuth {
 
         java.util.logging.Logger julLogger = new Slf4jLoggerAdapter(logger);
         this.core = new Core(config.getConfig(), dataDirectory, julLogger);
+        core.setCurrentVersion(MultiAuth.class.getAnnotation(Plugin.class).version());
         boolean ok = core.init();
         if (!ok) {
             logger.error(Messages.get(Messages.DB_INIT_FAILED));

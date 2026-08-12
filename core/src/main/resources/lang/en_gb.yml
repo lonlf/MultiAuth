@@ -277,7 +277,9 @@ geo_init_success_after_download=[GEO] ip2region service initialized successfully
 geo_init_failed_after_download=[GEO] Failed to initialize ip2region after download: {0}
 geo_download_failed_disabled=[GEO] Failed to download xdb files, geo service remains disabled
 geo_xdb_missing_no_download=[GEO] xdb file(s) missing and auto-download disabled, geo service disabled
+geo_partial_missing_warn=[GEO] Missing xdb file(s): {0}; initializing with available parts
 geo_ipv6_skipped=[GEO] Player connected via IPv6 but v6 query is disabled, skipping
+geo_ipv4_skipped=[GEO] Player connected via IPv4 but v4 query is disabled, skipping
 geo_query_failed=[GEO] Failed to query IP {0}: {1}
 geo_close_failed=[GEO] Failed to close ip2region: {0}
 geo_downloaded_file=[GEO] Downloaded xdb file: {0}
@@ -352,6 +354,13 @@ generic_permission_denied=§cYou don't have permission to use this command.
 generic_player_only=§cThis command can only be used by players.
 generic_player_not_found=§cPlayer not found: {0}
 generic_unknown=unknown
+update_check_enabled_log=[Update] Update check enabled (repository: {0}, interval: {1}h)
+update_available_log=[Update] New version available: {0} (current: {1}) | {2}
+update_up_to_date_log=[Update] You are running the latest version {0}
+update_check_failed_log=[Update] Unable to check for updates: {0}, please check manually
+update_notify_player=§e[MultiAuth] §aNew version available: §f{0} §a(current: {1}) §7§o{2}
+update_status_current=§7Current version: §f{0}
+update_status_latest=§7Latest version: §f{0}
 
 # Offline player register/login
 auth_register_prompt=§ePlease register first! Use §f/register <password> <confirm> §eto register

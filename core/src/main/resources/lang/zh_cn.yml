@@ -277,7 +277,9 @@ geo_init_success_after_download=[GEO] 下载后 ip2region 服务初始化成功
 geo_init_failed_after_download=[GEO] 下载后初始化 ip2region 失败: {0}
 geo_download_failed_disabled=[GEO] 下载 xdb 文件失败，地理位置服务保持停用
 geo_xdb_missing_no_download=[GEO] xdb 文件缺失且自动下载已禁用，地理位置服务已停用
+geo_partial_missing_warn=[GEO] 缺少 xdb 文件：{0}；使用可用部分初始化
 geo_ipv6_skipped=[GEO] 玩家通过 IPv6 连接但 v6 查询已禁用，跳过
+geo_ipv4_skipped=[GEO] 玩家通过 IPv4 连接但 v4 查询已禁用，跳过
 geo_query_failed=[GEO] 查询 IP {0} 失败: {1}
 geo_close_failed=[GEO] 关闭 ip2region 失败: {0}
 geo_downloaded_file=[GEO] 已下载 xdb 文件: {0}
@@ -352,6 +354,13 @@ generic_permission_denied=§c你没有权限使用此命令。
 generic_player_only=§c此命令只能由玩家使用。
 generic_player_not_found=§c未找到玩家：{0}
 generic_unknown=未知
+update_check_enabled_log=[Update] 更新检查已启用（仓库: {0}, 间隔: {1}小时）
+update_available_log=[Update] 发现新版本: {0}（当前: {1}）| {2}
+update_up_to_date_log=[Update] 当前已是最新版本 {0}
+update_check_failed_log=[Update] 无法检测更新：{0}，请自行检查
+update_notify_player=§e[MultiAuth] §a发现新版本 §f{0} §a(当前: {1}) §7§o{2}
+update_status_current=§7当前版本: §f{0}
+update_status_latest=§7最新版本: §f{0}
 
 # 离线玩家注册/登录
 auth_register_prompt=§e请先注册账号！使用 §f/register <密码> <确认密码> §e注册

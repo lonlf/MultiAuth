@@ -284,6 +284,10 @@ public class SpigotConfig {
         newConfig.setBackupDir(f.getString("backup.dir", "backups"));
         newConfig.setBackupMaxCount(f.getInt("backup.max-count", 7));
 
+        // 更新检查
+        newConfig.setUpdateCheckEnabled(f.getBoolean("update-check.enabled", true));
+        newConfig.setUpdateCheckIntervalHours(f.getInt("update-check.interval-hours", 24));
+
         // 离线玩家注册登录
         newConfig.setAuthEnabled(f.getBoolean("auth.enabled", true));
         newConfig.setAuthPasswordMin(f.getInt("auth.password-min-length", 4));

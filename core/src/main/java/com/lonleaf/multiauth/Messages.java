@@ -427,7 +427,9 @@ public class Messages {
     public static volatile String GEO_INIT_FAILED_AFTER_DOWNLOAD;
     public static volatile String GEO_DOWNLOAD_FAILED_DISABLED;
     public static volatile String GEO_XDB_MISSING_NO_DOWNLOAD;
+    public static volatile String GEO_PARTIAL_MISSING_WARN;
     public static volatile String GEO_IPV6_SKIPPED;
+    public static volatile String GEO_IPV4_SKIPPED;
     public static volatile String GEO_QUERY_FAILED;
     public static volatile String GEO_CLOSE_FAILED;
     public static volatile String GEO_DOWNLOADED_FILE;
@@ -470,6 +472,15 @@ public class Messages {
     public static volatile String GENERIC_PLAYER_ONLY;
     public static volatile String GENERIC_PLAYER_NOT_FOUND;
     public static volatile String GENERIC_UNKNOWN;
+
+    // --- 更新检查 ---
+    public static volatile String UPDATE_CHECK_ENABLED_LOG;
+    public static volatile String UPDATE_AVAILABLE_LOG;
+    public static volatile String UPDATE_UP_TO_DATE_LOG;
+    public static volatile String UPDATE_CHECK_FAILED_LOG;
+    public static volatile String UPDATE_NOTIFY_PLAYER;
+    public static volatile String UPDATE_STATUS_CURRENT;
+    public static volatile String UPDATE_STATUS_LATEST;
 
     // ==================== 初始化 ====================
 
@@ -1166,8 +1177,12 @@ public class Messages {
                 "[GEO] Failed to download xdb files, geo service remains disabled");
         GEO_XDB_MISSING_NO_DOWNLOAD = messages.getOrDefault("geo_xdb_missing_no_download",
                 "[GEO] xdb file(s) missing and auto-download disabled, geo service disabled");
+        GEO_PARTIAL_MISSING_WARN = messages.getOrDefault("geo_partial_missing_warn",
+                "[GEO] Missing xdb file(s): {0}; initializing with available parts");
         GEO_IPV6_SKIPPED = messages.getOrDefault("geo_ipv6_skipped",
                 "[GEO] Player connected via IPv6 but v6 query is disabled, skipping");
+        GEO_IPV4_SKIPPED = messages.getOrDefault("geo_ipv4_skipped",
+                "[GEO] Player connected via IPv4 but v4 query is disabled, skipping");
         GEO_QUERY_FAILED = messages.getOrDefault("geo_query_failed",
                 "[GEO] Failed to query IP {0}: {1}");
         GEO_CLOSE_FAILED = messages.getOrDefault("geo_close_failed",
@@ -1239,6 +1254,18 @@ public class Messages {
         GENERIC_PLAYER_ONLY = messages.getOrDefault("generic_player_only", "§cThis command can only be used by players.");
         GENERIC_PLAYER_NOT_FOUND = messages.getOrDefault("generic_player_not_found", "§cPlayer not found: {0}");
         GENERIC_UNKNOWN = messages.getOrDefault("generic_unknown", "未知");
+        UPDATE_CHECK_ENABLED_LOG = messages.getOrDefault("update_check_enabled_log",
+                "[Update] Update check enabled (repository: {0}, interval: {1}h)");
+        UPDATE_AVAILABLE_LOG = messages.getOrDefault("update_available_log",
+                "[Update] New version available: {0} (current: {1}) | {2}");
+        UPDATE_UP_TO_DATE_LOG = messages.getOrDefault("update_up_to_date_log",
+                "[Update] You are running the latest version {0}");
+        UPDATE_CHECK_FAILED_LOG = messages.getOrDefault("update_check_failed_log",
+                "[Update] Unable to check for updates: {0}, please check manually");
+        UPDATE_NOTIFY_PLAYER = messages.getOrDefault("update_notify_player",
+                "§e[MultiAuth] §aNew version available: §f{0} §a(current: {1}) §7§o{2}");
+        UPDATE_STATUS_CURRENT = messages.getOrDefault("update_status_current", "§7Current version: §f{0}");
+        UPDATE_STATUS_LATEST = messages.getOrDefault("update_status_latest", "§7Latest version: §f{0}");
 
         LOGGER.info("Messages verified: " + messages.size() + " entries loaded for lang=" + currentLang);
     }
@@ -1341,7 +1368,9 @@ public class Messages {
             sb.append("geo_init_failed_after_download=[GEO] 下载后初始化 ip2region 失败: {0}\n");
             sb.append("geo_download_failed_disabled=[GEO] 下载 xdb 文件失败，地理位置服务保持停用\n");
             sb.append("geo_xdb_missing_no_download=[GEO] xdb 文件缺失且自动下载已禁用，地理位置服务已停用\n");
+            sb.append("geo_partial_missing_warn=[GEO] 缺少 xdb 文件：{0}；使用可用部分初始化\n");
             sb.append("geo_ipv6_skipped=[GEO] 玩家通过 IPv6 连接但 v6 查询已禁用，跳过\n");
+            sb.append("geo_ipv4_skipped=[GEO] 玩家通过 IPv4 连接但 v4 查询已禁用，跳过\n");
             sb.append("geo_query_failed=[GEO] 查询 IP {0} 失败: {1}\n");
             sb.append("geo_close_failed=[GEO] 关闭 ip2region 失败: {0}\n");
             sb.append("geo_downloaded_file=[GEO] 已下载 xdb 文件: {0}\n");
@@ -1640,6 +1669,13 @@ public class Messages {
             sb.append("generic_player_only=§c此命令只能由玩家使用。\n");
             sb.append("generic_player_not_found=§c未找到玩家：{0}\n");
             sb.append("generic_unknown=未知\n");
+            sb.append("update_check_enabled_log=[Update] 更新检查已启用（仓库: {0}, 间隔: {1}小时）\n");
+            sb.append("update_available_log=[Update] 发现新版本: {0}（当前: {1}）| {2}\n");
+            sb.append("update_up_to_date_log=[Update] 当前已是最新版本 {0}\n");
+            sb.append("update_check_failed_log=[Update] 无法检测更新：{0}，请自行检查\n");
+            sb.append("update_notify_player=§e[MultiAuth] §a发现新版本 §f{0} §a(当前: {1}) §7§o{2}\n");
+            sb.append("update_status_current=§7当前版本: §f{0}\n");
+            sb.append("update_status_latest=§7最新版本: §f{0}\n");
         } else {
             // en_gb
             sb.append("# Database\n");
@@ -1730,7 +1766,9 @@ public class Messages {
             sb.append("geo_init_failed_after_download=[GEO] Failed to initialize ip2region after download: {0}\n");
             sb.append("geo_download_failed_disabled=[GEO] Failed to download xdb files, geo service remains disabled\n");
             sb.append("geo_xdb_missing_no_download=[GEO] xdb file(s) missing and auto-download disabled, geo service disabled\n");
+            sb.append("geo_partial_missing_warn=[GEO] Missing xdb file(s): {0}; initializing with available parts\n");
             sb.append("geo_ipv6_skipped=[GEO] Player connected via IPv6 but v6 query is disabled, skipping\n");
+            sb.append("geo_ipv4_skipped=[GEO] Player connected via IPv4 but v4 query is disabled, skipping\n");
             sb.append("geo_query_failed=[GEO] Failed to query IP {0}: {1}\n");
             sb.append("geo_close_failed=[GEO] Failed to close ip2region: {0}\n");
             sb.append("geo_downloaded_file=[GEO] Downloaded xdb file: {0}\n");
@@ -2029,6 +2067,13 @@ public class Messages {
             sb.append("generic_player_only=§cThis command can only be used by players.\n");
             sb.append("generic_player_not_found=§cPlayer not found: {0}\n");
             sb.append("generic_unknown=unknown\n");
+            sb.append("update_check_enabled_log=[Update] Update check enabled (repository: {0}, interval: {1}h)\n");
+            sb.append("update_available_log=[Update] New version available: {0} (current: {1}) | {2}\n");
+            sb.append("update_up_to_date_log=[Update] You are running the latest version {0}\n");
+            sb.append("update_check_failed_log=[Update] Unable to check for updates: {0}, please check manually\n");
+            sb.append("update_notify_player=§e[MultiAuth] §aNew version available: §f{0} §a(current: {1}) §7§o{2}\n");
+            sb.append("update_status_current=§7Current version: §f{0}\n");
+            sb.append("update_status_latest=§7Latest version: §f{0}\n");
         }
 
         Files.writeString(target, sb.toString(), StandardCharsets.UTF_8);

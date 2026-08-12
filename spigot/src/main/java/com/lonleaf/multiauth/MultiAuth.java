@@ -14,6 +14,7 @@ import com.lonleaf.multiauth.listener.PlayerRestrictionListener;
 import com.lonleaf.multiauth.listener.SessionSyncReceiver;
 import com.lonleaf.multiauth.listener.SpigotAuthListener;
 import com.lonleaf.multiauth.listener.SpigotPacketListener;
+import com.lonleaf.multiauth.listener.UpdateNotifyListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
@@ -53,6 +54,7 @@ public final class MultiAuth extends JavaPlugin {
         Messages.init(dataDirectory, config.getConfig().getLanguage());
 
         this.core = new Core(config.getConfig(), dataDirectory, julLogger);
+        core.setCurrentVersion(getDescription().getVersion());
         boolean ok = core.init();
         if (!ok) {
             julLogger.severe(Messages.DB_INIT_FAILED);
@@ -134,6 +136,9 @@ public final class MultiAuth extends JavaPlugin {
 
         // 注册命令（CommandManager 内部完成 executor/tabCompleter 注册）
         new CommandManager(this, core, config, authService);
+
+        // 注册更新通知监听器（在线管理员进服时提示新版本，无副作用）
+        getServer().getPluginManager().registerEvents(new UpdateNotifyListener(core, this), this);
 
         getLogger().info(Messages.get(Messages.CONFIG_LOADED, String.valueOf(config.isProxy()),
                 core != null && core.getConfig() != null ? core.getConfig().getDatabaseType() : "unknown"));

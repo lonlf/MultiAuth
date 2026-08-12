@@ -330,6 +330,10 @@ public class VelocityConfig {
         newConfig.setBackupDir(source.getOrElse("backup.dir", "backups"));
         newConfig.setBackupMaxCount(source.getIntOrElse("backup.max-count", 7));
 
+        // 更新检查
+        newConfig.setUpdateCheckEnabled(source.getOrElse("update-check.enabled", true));
+        newConfig.setUpdateCheckIntervalHours(source.getIntOrElse("update-check.interval-hours", 24));
+
         // 原子发布：volatile 写，确保其他线程读到完整的新配置
         this.config = newConfig;
     }

@@ -16,7 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,6 +42,9 @@ public class IpGeoService {
     private final boolean v6Enabled;
     private final boolean skipLan;
     private final Logger logger;
+    // v4/v6 查询被禁用时的跳过警告只打印一次，避免每次查询都刷屏（G3）
+    private final AtomicBoolean v4SkipWarned = new AtomicBoolean(false);
+    private final AtomicBoolean v6SkipWarned = new AtomicBoolean(false);
 
     public IpGeoService(AuthConfig config, Path dataDirectory, Logger logger) {
         this.logger = logger;
@@ -69,6 +75,7 @@ public class IpGeoService {
         boolean v6Ready = !v6Enabled || Files.exists(v6Path);
 
         if (v4Ready && v6Ready) {
+            // 全部就绪：正常初始化
             try {
                 initIp2Region(v4Path, v6Path, cachePolicy, searchers);
                 this.ready = true;
@@ -88,7 +95,8 @@ public class IpGeoService {
             CompletableFuture.runAsync(() -> {
                 boolean v4Ok = finalV4Ready || downloadWithRetries(V4_DOWNLOAD_URL, finalV4Path);
                 boolean v6Ok = finalV6Ready || !v6Enabled || downloadWithRetries(V6_DOWNLOAD_URL, finalV6Path);
-                if (v4Ok && v6Ok) {
+                if (v4Ok || v6Ok) {
+                    // 至少一个库可用：初始化可用部分；下载失败的一方仅警告，不影响可用方（G1）
                     try {
                         initIp2Region(finalV4Path, finalV6Path, finalCachePolicy, finalSearchers);
                         this.ready = true;
@@ -96,13 +104,35 @@ public class IpGeoService {
                     } catch (Exception e) {
                         logger.log(Level.WARNING, Messages.get(Messages.GEO_INIT_FAILED_AFTER_DOWNLOAD, e.getMessage()), e);
                     }
+                    if (!finalV4Ready && !v4Ok) {
+                        logger.warning(Messages.get(Messages.GEO_PARTIAL_MISSING_WARN, "v4 xdb"));
+                    }
+                    if (v6Enabled && !finalV6Ready && !v6Ok) {
+                        logger.warning(Messages.get(Messages.GEO_PARTIAL_MISSING_WARN, "v6 xdb"));
+                    }
                 } else {
                     logger.warning(Messages.get(Messages.GEO_DOWNLOAD_FAILED_DISABLED));
                 }
             });
         } else {
-            logger.warning(Messages.get(Messages.GEO_XDB_MISSING_NO_DOWNLOAD));
-            this.ready = false;
+            // 未开启自动下载：初始化已存在的部分，缺失方仅警告（G1）
+            if (v4Ready || v6Ready) {
+                List<String> missing = new ArrayList<>();
+                if (v4Enabled && !v4Ready) missing.add(v4Path.getFileName().toString());
+                if (v6Enabled && !v6Ready) missing.add(v6Path.getFileName().toString());
+                logger.warning(Messages.get(Messages.GEO_PARTIAL_MISSING_WARN, String.join(", ", missing)));
+                try {
+                    initIp2Region(v4Path, v6Path, cachePolicy, searchers);
+                    this.ready = true;
+                    logger.info(Messages.get(Messages.GEO_INIT_SUCCESS));
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, Messages.get(Messages.GEO_INIT_FAILED, e.getMessage()), e);
+                    this.ready = false;
+                }
+            } else {
+                logger.warning(Messages.get(Messages.GEO_XDB_MISSING_NO_DOWNLOAD));
+                this.ready = false;
+            }
         }
     }
 
@@ -131,10 +161,17 @@ public class IpGeoService {
 
         boolean isV6 = ip.contains(":");
         if (isV6 && !v6Enabled) {
-            logger.warning(Messages.get(Messages.GEO_IPV6_SKIPPED));
+            // 首次警告一次即可，避免每次 IPv6 查询都刷屏（G3）
+            if (v6SkipWarned.compareAndSet(false, true)) {
+                logger.warning(Messages.get(Messages.GEO_IPV6_SKIPPED));
+            }
             return null;
         }
         if (!isV6 && !v4Enabled) {
+            // 与 IPv6 分支对称：仅首次警告（G3）
+            if (v4SkipWarned.compareAndSet(false, true)) {
+                logger.warning(Messages.get(Messages.GEO_IPV4_SKIPPED));
+            }
             return null;
         }
 
@@ -228,13 +265,23 @@ public class IpGeoService {
             return false;
         }
         if (ip.contains(":")) {
-            // IPv6 loopback / link-local / unique local address
             String lower = ip.toLowerCase();
+            // IPv4-mapped IPv6（::ffff:x.x.x.x）：提取内嵌 IPv4 复用 IPv4 内网判断（G5）
+            // 仅精确匹配 ::ffff: 前缀 + 点分私有段，公网 IPv4 不会被误判为内网
+            if (lower.startsWith("::ffff:")) {
+                return isLanIpV4(lower.substring("::ffff:".length()));
+            }
+            // IPv6 loopback / link-local / unique local address
             return lower.equals("::1")
                     || lower.startsWith("fe80:")
                     || lower.startsWith("fc")
                     || lower.startsWith("fd");
         }
+        return isLanIpV4(ip);
+    }
+
+    /** 判断点分 IPv4 是否为内网地址 */
+    private static boolean isLanIpV4(String ip) {
         if (ip.startsWith("127.") || ip.startsWith("10.") || ip.startsWith("192.168.")) {
             return true;
         }
@@ -289,7 +336,15 @@ public class IpGeoService {
                     .timeout(Duration.ofMinutes(5))
                     .GET()
                     .build();
-            try (InputStream in = client.send(request, HttpResponse.BodyHandlers.ofInputStream()).body();
+            HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            if (response.statusCode() != 200) {
+                // 非 200（404/403/5xx）：drain 并关闭错误响应体后抛异常，避免把错误页内容写入 xdb 文件（G2）
+                try (InputStream err = response.body()) {
+                    err.transferTo(OutputStream.nullOutputStream());
+                }
+                throw new IOException("HTTP " + response.statusCode() + " while downloading " + url);
+            }
+            try (InputStream in = response.body();
                  OutputStream out = Files.newOutputStream(tmp)) {
                 in.transferTo(out);
             }

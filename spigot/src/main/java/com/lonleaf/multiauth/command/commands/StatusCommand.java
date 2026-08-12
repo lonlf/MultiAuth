@@ -54,6 +54,14 @@ public class StatusCommand implements Command {
                 config.isProxy() ? Messages.CMD_MODE_PROXY : Messages.CMD_MODE_DIRECT,
                 resolveApiStatus(),
                 totalRecords, premiumCount));
+
+        // 更新检查信息：当前版本 + 最新版本（未检查/检查失败时为"未知"）
+        com.lonleaf.multiauth.update.UpdateChecker updateChecker = core.getUpdateChecker();
+        String latestVersion = updateChecker != null && updateChecker.getLastResult() != null
+                ? updateChecker.getLastResult().latestVersion()
+                : Messages.get(Messages.GENERIC_UNKNOWN);
+        sender.sendMessage(Messages.get(Messages.UPDATE_STATUS_CURRENT, plugin.getDescription().getVersion()));
+        sender.sendMessage(Messages.get(Messages.UPDATE_STATUS_LATEST, latestVersion));
         return true;
     }
 

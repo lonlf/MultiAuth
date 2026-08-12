@@ -84,6 +84,14 @@ public class AuthConfig {
     /** 最大备份数量 */
     private int backupMaxCount = 7;
 
+    // ==================== 更新检查 ====================
+
+    /** 是否启用更新检查 */
+    private boolean updateCheckEnabled = true;
+
+    /** 检查间隔（小时） */
+    private int updateCheckIntervalHours = 24;
+
     // ==================== 离线玩家注册登录 ====================
 
     /** 是否启用离线玩家注册登录 */
@@ -312,6 +320,14 @@ public class AuthConfig {
 
     public int getBackupMaxCount() { return backupMaxCount; }
     public void setBackupMaxCount(int backupMaxCount) { this.backupMaxCount = backupMaxCount; }
+
+    // ==================== 更新检查 ====================
+
+    public boolean isUpdateCheckEnabled() { return updateCheckEnabled; }
+    public void setUpdateCheckEnabled(boolean updateCheckEnabled) { this.updateCheckEnabled = updateCheckEnabled; }
+
+    public int getUpdateCheckIntervalHours() { return updateCheckIntervalHours; }
+    public void setUpdateCheckIntervalHours(int updateCheckIntervalHours) { this.updateCheckIntervalHours = updateCheckIntervalHours; }
 
     public boolean isDebug() { return debug; }
     public void setDebug(boolean debug) { this.debug = debug; }

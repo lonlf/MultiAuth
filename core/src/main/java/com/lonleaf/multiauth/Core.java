@@ -8,6 +8,7 @@ import com.lonleaf.multiauth.db.SQLiteManager;
 import com.lonleaf.multiauth.geo.IpGeoService;
 import com.lonleaf.multiauth.mojang.MojangApiService;
 import com.lonleaf.multiauth.mojang.MojangSessionService;
+import com.lonleaf.multiauth.update.UpdateChecker;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,8 @@ public class Core {
     private volatile MojangApiService mojangApiService;
     private volatile AuthManager authManager;
     private volatile IpGeoService ipGeoService;
+    private volatile UpdateChecker updateChecker;
+    private volatile String currentVersion = "";
     private final Logger logger;
     private final Path dataDirectory;
 
@@ -77,7 +80,10 @@ public class Core {
         // 初始化 IP 地理位置服务（供命令展示 geo 信息与安全模块复用；配置禁用时内部直接置为不可用）
         this.ipGeoService = new IpGeoService(config, dataDirectory, logger);
 
-        // 启动定时任务（仅数据库心跳 + 备份，不含 API 心跳）
+        // 初始化更新检查器（仅创建对象，首次检查由 startSchedulers 延迟触发）
+        this.updateChecker = new UpdateChecker(logger);
+
+        // 启动定时任务（仅数据库心跳 + 备份 + 更新检查，不含 API 心跳）
         startSchedulers();
 
         logger.info(proxyMode ? Messages.CORE_INIT_PROXY : Messages.CORE_INIT_STANDALONE);
@@ -118,7 +124,7 @@ public class Core {
      * 不再启动 API 健康检查——Mojang API 仅在玩家连接时按需调用。
      */
     private void startSchedulers() {
-        scheduler = Executors.newScheduledThreadPool(2, r -> {
+        scheduler = Executors.newScheduledThreadPool(3, r -> {
             Thread t = new Thread(r, "multiauth-scheduler");
             t.setDaemon(true);
             return t;
@@ -139,6 +145,27 @@ public class Core {
                 scheduler.scheduleAtFixedRate(this::performBackup, initialDelay, hours, TimeUnit.HOURS);
                 logger.fine(Messages.get(Messages.CORE_BACKUP_SCHEDULED, String.valueOf(hours)));
             }
+        }
+
+        // 更新检查：每次服务器启动 5 秒后进行一次检查，之后按配置间隔执行（interval-hours 小时）
+        if (updateChecker != null && config.isUpdateCheckEnabled()) {
+            int hours = config.getUpdateCheckIntervalHours();
+            if (hours > 0) {
+                scheduler.scheduleAtFixedRate(this::checkForUpdates, 5, hours * 3600L, TimeUnit.SECONDS);
+                logger.fine(Messages.get(Messages.UPDATE_CHECK_ENABLED_LOG,
+                        updateChecker.getRepository(), String.valueOf(hours)));
+            }
+        }
+    }
+
+    /** 提交异步更新检查（scheduler 线程仅负责提交，不阻塞等待网络） */
+    private void checkForUpdates() {
+        try {
+            if (updateChecker != null && currentVersion != null && !currentVersion.isBlank()) {
+                updateChecker.checkUpdateAsync(currentVersion);
+            }
+        } catch (Exception e) {
+            logger.fine(Messages.get(Messages.UPDATE_CHECK_FAILED_LOG, e.getMessage()));
         }
     }
 
@@ -345,6 +372,12 @@ public class Core {
             }
         }
 
+        // 更新检查器复用现有实例（保留 lastResult，避免 reload 后更新提示与 status 展示暂时丢失）；
+        // 仅当尚未初始化时创建。仓库为固定默认值，无需随 reload 重建；间隔配置变更由下方 startSchedulers 重新调度生效
+        if (this.updateChecker == null) {
+            this.updateChecker = new UpdateChecker(logger);
+        }
+
         // 4. 最后 close 旧服务（旧 HttpClient），此时 auth 线程已使用新 authManager
         if (oldMojangService != null) {
             try {
@@ -393,6 +426,9 @@ public class Core {
     public void shutdown() {
         if (scheduler != null) {
             scheduler.shutdownNow();
+        }
+        if (updateChecker != null) {
+            updateChecker.close();
         }
         if (ipGeoService != null) {
             try {
@@ -453,5 +489,19 @@ public class Core {
 
     public IpGeoService getIpGeoService() {
         return ipGeoService;
+    }
+
+    /** 设置当前插件版本（由平台模块在 init 前注入），供更新检查与 status 命令使用 */
+    public void setCurrentVersion(String version) {
+        this.currentVersion = version != null ? version : "";
+    }
+
+    /** 返回当前插件版本（平台模块未注入时为 ""） */
+    public String getCurrentVersion() {
+        return currentVersion;
+    }
+
+    public UpdateChecker getUpdateChecker() {
+        return updateChecker;
     }
 }
