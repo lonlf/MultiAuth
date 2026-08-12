@@ -2006,7 +2006,7 @@ public class Messages {
             sb.append("session_disconnect=[SESSION] Player {0} disconnected - cleaning up auth state\n");
             sb.append("session_join_notify=[SESSION] Player {0} joined the server (UUID: {1}, Premium: {2})\n");
             sb.append("session_hijack_warning=§c[SECURITY WARNING] UUID mismatch for {0}! Session hijack suspected!\n");
-            sb.append("session_status_notify=§eYour current login status: {0}\\n§7UUID: {1}\n");
+            sb.append("session_status_notify=§eYour current login status: {0}\n");
             sb.append("session_status_log=[SESSION] Player {0} login status: {1} (UUID: {2})\n");
             sb.append("session_sync_enabled=[MultiAuth] Cross-server session sync enabled (channel: {0})\n");
             sb.append("session_sync_receiver_registered=[MultiAuth] Cross-server session sync receiver registered (channel: {0})\n");
