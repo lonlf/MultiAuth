@@ -16,7 +16,6 @@ public interface Command {
 
     List<String> suggest(String[] args);
 
-    /** 辅助方法：过滤补全列表 */
     default List<String> filter(List<String> list, String startsWith) {
         return list.stream()
                 .filter(s -> s.toLowerCase().startsWith(startsWith.toLowerCase()))

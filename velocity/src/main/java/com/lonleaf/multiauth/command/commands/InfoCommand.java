@@ -149,7 +149,6 @@ public class InfoCommand implements Command {
                 String.valueOf(accounts.size()), colored.toString());
     }
 
-    /** 账号是否在线（在线显示绿色，离线保持默认色） */
     private boolean isOnline(String name) {
         for (Player online : server.getAllPlayers()) {
             if (online.getUsername().equalsIgnoreCase(name)) {

@@ -17,9 +17,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * 离线玩家认证的共享状态与辅助逻辑。
- */
 public class AuthState {
 
     private final AuthService authService;
@@ -63,7 +60,6 @@ public class AuthState {
         }
     }
 
-    /** 检查命令名是否在允许列表中 */
     public boolean isCommandAllowed(String cmdName) {
         return allowedCommands.contains(cmdName);
     }
@@ -112,8 +108,6 @@ public class AuthState {
     // ==================== 玩家类型判断 ====================
 
     /**
-     * 判断玩家是否不受限制（已登录或正版玩家）。
-     *
      * @return true 表示玩家不受限制（已登录、正版玩家、或 auth 功能未启用）
      */
     public boolean isUnrestricted(Player player) {
@@ -163,8 +157,6 @@ public class AuthState {
     }
 
     /**
-     * 安排超时踢出任务。
-     *
      * @param player  玩家
      * @param timeout 超时秒数（<=0 表示不限制）
      * @param message 超时踢出消息
@@ -241,7 +233,6 @@ public class AuthState {
         reminderTasks.clear();
     }
 
-    /** 玩家退出时清理其个人状态 */
     public void clearPlayerState(UUID uuid) {
         originalGameModes.remove(uuid);
         frozenLocations.remove(uuid);

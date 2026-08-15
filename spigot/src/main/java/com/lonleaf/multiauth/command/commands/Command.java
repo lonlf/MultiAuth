@@ -12,8 +12,6 @@ import java.util.stream.Collectors;
 public interface Command {
 
     /**
-     * 执行子命令。
-     *
      * @param sender 命令发送者
      * @param args   完整参数数组（含子命令名 args[0]）
      * @return true=已处理（匹配且执行）；false=未匹配，交给下一个子命令
@@ -21,8 +19,6 @@ public interface Command {
     boolean execute(CommandSender sender, String[] args);
 
     /**
-     * Tab 补全列表。
-     *
      * @param args 完整参数数组
      * @return 补全候选；返回 null 表示使用 Bukkit 默认在线玩家补全
      */

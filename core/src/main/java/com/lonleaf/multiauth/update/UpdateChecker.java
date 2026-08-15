@@ -65,7 +65,6 @@ public class UpdateChecker {
         return lastResult;
     }
 
-    /** 是否存在可用的新版本（结果缓存且版本更新） */
     public boolean isNewerAvailable() {
         return lastResult != null && lastResult.newer();
     }
@@ -153,11 +152,11 @@ public class UpdateChecker {
             for (JsonElement el : releases) {
                 JsonObject json = el.getAsJsonObject();
                 if (json.get("draft") != null && json.get("draft").getAsBoolean()) {
-                    continue; // 跳过草稿
+                    continue;
                 }
                 String target = json.has("target_commitish") ? json.get("target_commitish").getAsString() : "";
                 if (!"master".equals(target)) {
-                    continue; // 仅 master 分支
+                    continue;
                 }
                 if (!json.has("tag_name")) {
                     continue;
@@ -199,7 +198,6 @@ public class UpdateChecker {
         return 0;
     }
 
-    /** 版本号解析结果：主版本数字段 + 是否带预发布标记 */
     private record VersionParts(List<Integer> major, boolean pre) {}
 
     /** 解析版本号：'-' 前的数字段为主版本；'-' 后含预发布标记（snapshot/alpha/beta/rc/pre）时 pre=true */
@@ -225,7 +223,6 @@ public class UpdateChecker {
         return new VersionParts(major, pre);
     }
 
-    /** 去掉 v/V 前缀 */
     private static String stripPrefix(String v) {
         String s = v == null ? "" : v.trim();
         while (!s.isEmpty() && (s.charAt(0) == 'v' || s.charAt(0) == 'V')) {

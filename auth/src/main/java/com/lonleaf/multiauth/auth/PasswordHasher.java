@@ -14,9 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Argon2id 密码哈希工具。
- */
 public class PasswordHasher {
 
     // ThreadLocal：argon2-jvm 的 Argon2 实例非线程安全，2 线程池每线程独占一个实例，
@@ -92,7 +89,6 @@ public class PasswordHasher {
         }
     }
 
-    /** 关闭线程池 */
     public void shutdown() {
         executor.shutdown();
         try {

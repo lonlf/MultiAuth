@@ -11,9 +11,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * 登录历史管理器。
- */
 public class LoginHistoryManager {
 
     // volatile：reload 切换数据库时更新引用
@@ -28,7 +25,6 @@ public class LoginHistoryManager {
         this.logger = logger;
     }
 
-    /** 更新配置引用（reload 时由 AuthService 调用） */
     public void updateConfig(AuthConfig newConfig) {
         this.config = newConfig;
     }
@@ -72,7 +68,6 @@ public class LoginHistoryManager {
         return list.get(0);
     }
 
-    /** 获取指定玩家的登录历史列表 */
     public List<LoginHistoryRecord> getHistory(String username, int limit) {
         try {
             List<LoginHistoryRecord> list = database.getRecentLoginHistory(username, limit);

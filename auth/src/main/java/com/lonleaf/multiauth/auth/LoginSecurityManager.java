@@ -13,9 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * 登录安全管理器。
- */
 public class LoginSecurityManager {
 
     private final ConcurrentHashMap<String, AttemptTracker> accountAttempts = new ConcurrentHashMap<>();
@@ -35,7 +32,6 @@ public class LoginSecurityManager {
         this.logger = logger;
     }
 
-    /** 更新配置引用（reload 时由 AuthService 调用） */
     public void updateConfig(AuthConfig newConfig) {
         this.config = newConfig;
     }
@@ -50,16 +46,13 @@ public class LoginSecurityManager {
         return username == null ? null : username.toLowerCase(Locale.ROOT);
     }
 
-    /** 冷却检查结果 */
     public record CheckResult(boolean canProceed, long remainingSeconds) {}
 
-    /** 失败尝试记录结果 */
     public record FailureResult(boolean shouldKick, int remainingAttempts,
                                  boolean accountCooldown, boolean ipCooldown) {}
 
     // ==================== 冷却检查 ====================
 
-    /** 检查账户是否处于冷却期 */
     public CheckResult checkAccountCooldown(String username) {
         AttemptTracker tracker = accountAttempts.get(normName(username));
         if (tracker == null || !tracker.isInCooldown()) {
@@ -68,7 +61,6 @@ public class LoginSecurityManager {
         return new CheckResult(false, tracker.remainingCooldownSeconds());
     }
 
-    /** 检查 IP 是否处于冷却期 */
     public CheckResult checkIpCooldown(String ip) {
         AttemptTracker tracker = ipAttempts.get(ip);
         if (tracker == null || !tracker.isInCooldown()) {
@@ -128,7 +120,6 @@ public class LoginSecurityManager {
                 accountCooldownTriggered.get(), ipCooldownTriggered.get());
     }
 
-    /** 登录成功后按配置重置账户与 IP 计数器 */
     public void recordSuccessfulLogin(String username, String ip) {
         if (config.isSecAccountResetOnSuccess() && username != null) {
             accountAttempts.remove(normName(username));
@@ -155,7 +146,6 @@ public class LoginSecurityManager {
         if (ip != null) registeringIps.remove(ip);
     }
 
-    /** 该 IP 是否还可以注册新账号 */
     public boolean canRegister(String ip) {
         if (!config.isSecIpLimitsEnabled()) {
             return true;

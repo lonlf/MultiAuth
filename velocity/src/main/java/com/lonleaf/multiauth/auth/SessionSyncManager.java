@@ -17,9 +17,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-/**
- * Velocity 端跨服会话同步管理器。
- */
 public class SessionSyncManager {
 
     private static final MinecraftChannelIdentifier CHANNEL =

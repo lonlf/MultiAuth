@@ -116,6 +116,12 @@ public class AuthConfig {
     private boolean authRestrictDamage = true;
     private boolean authRestrictCommand = true;
 
+    /** 未登录玩家是否限制背包/物品操作（打开背包、移动/丢弃物品、拾取、交换副手） */
+    private boolean authRestrictInventory = true;
+
+    /** 未登录玩家是否禁止破坏与放置方块（显式限制，不依赖交互事件传播） */
+    private boolean authRestrictBreakPlace = true;
+
     /** 未登录玩家允许执行的命令列表（不区分大小写） */
     private List<String> authAllowCommands = new java.util.ArrayList<>(java.util.List.of("register", "login", "reg", "r", "l"));
 
@@ -363,6 +369,12 @@ public class AuthConfig {
 
     public boolean isAuthRestrictCommand() { return authRestrictCommand; }
     public void setAuthRestrictCommand(boolean authRestrictCommand) { this.authRestrictCommand = authRestrictCommand; }
+
+    public boolean isAuthRestrictInventory() { return authRestrictInventory; }
+    public void setAuthRestrictInventory(boolean authRestrictInventory) { this.authRestrictInventory = authRestrictInventory; }
+
+    public boolean isAuthRestrictBreakPlace() { return authRestrictBreakPlace; }
+    public void setAuthRestrictBreakPlace(boolean authRestrictBreakPlace) { this.authRestrictBreakPlace = authRestrictBreakPlace; }
 
     public List<String> getAuthAllowCommands() { return Collections.unmodifiableList(authAllowCommands); }
     public void setAuthAllowCommands(List<String> authAllowCommands) {

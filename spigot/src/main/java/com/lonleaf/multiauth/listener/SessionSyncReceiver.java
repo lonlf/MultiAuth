@@ -57,7 +57,6 @@ public class SessionSyncReceiver implements PluginMessageListener {
                             String.valueOf(msg.isPremium())) + " (skipped: player offline)");
                     return;
                 }
-                // 标记为已登录 + 恢复持久会话
                 authService.markLoggedIn(uuid);
                 authService.confirmSessionResume(username, msg.ip());
                 // 取消超时踢出任务（如果已启动）
@@ -110,7 +109,6 @@ public class SessionSyncReceiver implements PluginMessageListener {
         logger.fine(Messages.get(Messages.SESSION_SYNC_RECEIVER_REGISTERED, SessionSyncProtocol.CHANNEL_ID));
     }
 
-    /** 注销通道 */
     public void unregister() {
         plugin.getServer().getMessenger().unregisterIncomingPluginChannel(
                 plugin, SessionSyncProtocol.CHANNEL_ID, this);

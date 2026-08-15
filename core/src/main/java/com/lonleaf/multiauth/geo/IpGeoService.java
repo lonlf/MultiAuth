@@ -136,7 +136,6 @@ public class IpGeoService {
         }
     }
 
-    /** 服务是否就绪可供查询 */
     public boolean isReady() {
         return ready;
     }
@@ -187,7 +186,6 @@ public class IpGeoService {
         }
     }
 
-    /** 关闭服务，释放底层资源 */
     public void close() {
         ready = false;
         if (ip2Region != null) {
@@ -280,7 +278,6 @@ public class IpGeoService {
         return isLanIpV4(ip);
     }
 
-    /** 判断点分 IPv4 是否为内网地址 */
     private static boolean isLanIpV4(String ip) {
         if (ip.startsWith("127.") || ip.startsWith("10.") || ip.startsWith("192.168.")) {
             return true;

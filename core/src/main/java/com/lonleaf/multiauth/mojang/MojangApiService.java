@@ -140,7 +140,6 @@ public class MojangApiService {
         this.rpsLimiter = new MojangRpsLimiter(rpsLimit);
     }
 
-    /** 关闭底层 HttpClient，释放资源 */
     public void close() {
         if (httpClient != null) {
             httpClient.close();
@@ -286,7 +285,6 @@ public class MojangApiService {
             try {
                 long t0 = System.currentTimeMillis();
                 Optional<UUID> result = checkFallback(username, idx);
-                // 成功
                 resetFallbackFailure(idx);
                 activeFallbackIndex.set(idx);
                 if (allApisDown) {
@@ -312,9 +310,7 @@ public class MojangApiService {
                 markFallbackFailed(idx, e);
                 triedCount++;
 
-                // 如果已经尝试了所有 API
                 if (triedCount >= fallbackApiUrls.size()) {
-                    // 检查是否所有 API 都在冷却中
                     boolean allInCooldown = true;
                     for (int j = 0; j < fallbackApiUrls.size(); j++) {
                         if (!isFallbackInCooldown(j)) {
@@ -334,9 +330,6 @@ public class MojangApiService {
         throw new AllApisDownException("All APIs failed");
     }
 
-    /**
-     * 检查官方 API
-     */
     private Optional<UUID> checkOfficial(String username) throws IOException, InterruptedException {
         String encoded = URLEncoder.encode(username, StandardCharsets.UTF_8);
         String url = OFFICIAL_API_BASE + OFFICIAL_API_PATH + encoded;
@@ -369,9 +362,6 @@ public class MojangApiService {
         throw new IOException("Unexpected official API status: " + status);
     }
 
-    /**
-     * 检查指定索引的备用 API
-     */
     private Optional<UUID> checkFallback(String username, int index) throws IOException, InterruptedException {
         String urlTemplate = fallbackApiUrls.get(index);
         String encoded = URLEncoder.encode(username, StandardCharsets.UTF_8);
@@ -418,7 +408,6 @@ public class MojangApiService {
         }
     }
 
-    /** 官方 API 成功：重置失败计数 */
     private void resetOfficialFailure() {
         if (officialFailures.get() > 0) {
             logger.info(Messages.get(Messages.API_OFFICIAL_AVAILABLE, Messages.API_STATUS_RECOVERED, "200"));
@@ -436,9 +425,6 @@ public class MojangApiService {
         return elapsed < FAILURE_COOLDOWN_MS;
     }
 
-    /**
-     * 标记备用 API 失败
-     */
     private void markFallbackFailed(int index, IOException e) {
         fallbackFailures.incrementAndGet(index);
         fallbackLastFailureTime.set(index, System.currentTimeMillis());
@@ -450,9 +436,6 @@ public class MojangApiService {
         }
     }
 
-    /**
-     * 重置备用 API 失败计数
-     */
     private void resetFallbackFailure(int index) {
         if (fallbackFailures.get(index) > 0) {
             logger.info(Messages.get(Messages.API_FALLBACK_AVAILABLE, String.valueOf(index + 1),
@@ -462,9 +445,6 @@ public class MojangApiService {
         fallbackLastFailureTime.set(index, 0);
     }
 
-    /**
-     * 检查备用 API 是否在冷却期
-     */
     private boolean isFallbackInCooldown(int index) {
         if (fallbackFailures.get(index) < FAILURE_THRESHOLD) {
             return false;
@@ -501,9 +481,6 @@ public class MojangApiService {
 
     // ==================== 内部类 ====================
 
-    /**
-     * 所有 API 都不可用时抛出的异常
-     */
     private static class AllApisDownException extends Exception {
         AllApisDownException(String message) {
             super(message);

@@ -22,10 +22,8 @@ public class Messages {
 
     private static final Logger LOGGER = Logger.getLogger(Messages.class.getName());
 
-    /** 当前语言代码 */
     private static volatile String currentLang = "en_gb";
 
-    /** 语言文件目录 */
     private static Path langDir;
 
     /** 默认资源路径前缀（打包在 JAR 中的内置语言文件） */
@@ -485,8 +483,6 @@ public class Messages {
     // ==================== 初始化 ====================
 
     /**
-     * 初始化消息系统。
-     *
      * @param dataDirectory 插件数据目录
      * @param lang          语言代码（如 "zh_cn"、"en_gb"）
      */
@@ -505,9 +501,6 @@ public class Messages {
         }
     }
 
-    /**
-     * 重新加载指定语言的消息。
-     */
     public static void reload(String lang) {
         if (lang != null && !lang.isBlank()) {
             currentLang = lang;
@@ -532,9 +525,6 @@ public class Messages {
         return result.toString();
     }
 
-    /**
-     * 获取当前语言代码。
-     */
     public static String getCurrentLang() {
         return currentLang;
     }

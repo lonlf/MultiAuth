@@ -255,9 +255,6 @@ public class Core {
         }
     }
 
-    /**
-     * 执行手动备份。
-     */
     public boolean manualBackup() {
         return performBackup();
     }
@@ -416,9 +413,6 @@ public class Core {
                 + "|" + c.isMysqlUseSsl();
     }
 
-    /**
-     * 根据配置的 debug 标志设置 logger 级别。
-     */
     private void applyLogLevel() {
         logger.setLevel(config.isDebug() ? Level.ALL : Level.INFO);
     }

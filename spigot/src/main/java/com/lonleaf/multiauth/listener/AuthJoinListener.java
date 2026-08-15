@@ -23,9 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * 离线玩家登录流程监听器。
- */
 public class AuthJoinListener implements Listener {
 
     private final AuthState state;
@@ -50,9 +47,6 @@ public class AuthJoinListener implements Listener {
 
     // ==================== 玩家加入 ====================
 
-    /**
-     * 玩家加入服务器时的统一流程。
-     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -374,7 +368,6 @@ public class AuthJoinListener implements Listener {
         state.scheduleTimeout(player, timeout, message);
     }
 
-    /** 获取玩家 IP 地址 */
     private static String getPlayerIp(Player player) {
         try {
             java.net.InetAddress addr = player.getAddress().getAddress();

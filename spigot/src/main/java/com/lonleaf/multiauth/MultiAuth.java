@@ -86,7 +86,6 @@ public final class MultiAuth extends JavaPlugin {
             this.loginHistoryManager = new LoginHistoryManager(core.getDatabase(), config.getConfig(), julLogger);
             // 地理位置服务由 Core 统一持有（Spigot/Velocity 复用同一实例，reload 时一并重建）
             IpGeoService ipGeoService = core.getIpGeoService();
-            // 注入到 AuthService
             this.authService.setSecurityServices(loginSecurityManager, loginHistoryManager, ipGeoService);
             // 初始化共享状态 + 限制监听器 + 登录流程监听器（拆分自原 AuthListener）
             this.authState = new AuthState(authService, config, core, this);

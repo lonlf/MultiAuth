@@ -41,7 +41,6 @@ public class MojangSessionService {
         this.rpsLimiter = new MojangRpsLimiter(rpsLimit);
     }
 
-    /** 关闭底层 HttpClient，释放资源 */
     public void close() {
         if (httpClient != null) {
             httpClient.close();

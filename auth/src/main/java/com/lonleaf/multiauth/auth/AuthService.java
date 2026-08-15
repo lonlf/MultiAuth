@@ -19,9 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * 离线玩家注册/登录/改密服务。
- */
 public class AuthService {
 
     // volatile：reload 切换数据库（如 SQLite→MySQL）时更新引用，保证登录线程立即可见新数据库
@@ -709,7 +706,6 @@ public class AuthService {
 
     // ==================== 会话管理 ====================
 
-    /** 玩家是否已登录 */
     public boolean isLoggedIn(UUID uuid) {
         return sessionManager.isLoggedIn(uuid);
     }
@@ -755,7 +751,6 @@ public class AuthService {
         sessionManager.confirmSessionResume(username, ip);
     }
 
-    /** 玩家是否已注册 */
     public boolean isRegistered(String username) {
         return database.authAccountExists(username);
     }
@@ -803,7 +798,6 @@ public class AuthService {
 
     // ==================== 关闭 ====================
 
-    /** 关闭服务，释放资源 */
     public void shutdown() {
         passwordHasher.shutdown();
         sessionManager.clear();
@@ -815,11 +809,6 @@ public class AuthService {
         return sessionManager;
     }
 
-    /**
-     * 更新配置引用（reload 时调用）。
-     *
-     * @param newConfig 新的 AuthConfig
-     */
     public void updateConfig(AuthConfig newConfig) {
         this.config = newConfig;
         if (securityManager != null) {

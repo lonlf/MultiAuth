@@ -1,16 +1,11 @@
 package com.lonleaf.multiauth.auth;
 
-/**
- * 失败尝试追踪器。
- */
 public record AttemptTracker(int count, long lastTime, long cooldownUntil) {
 
-    /** 是否在冷却期内 */
     public boolean isInCooldown() {
         return cooldownUntil > System.currentTimeMillis();
     }
 
-    /** 剩余冷却秒数 */
     public long remainingCooldownSeconds() {
         long remaining = (cooldownUntil - System.currentTimeMillis()) / 1000;
         return Math.max(0, remaining);
@@ -26,12 +21,10 @@ public record AttemptTracker(int count, long lastTime, long cooldownUntil) {
         return new AttemptTracker(count + 1, now, cooldownUntil);
     }
 
-    /** 达到阈值后设置冷却 */
     public AttemptTracker withCooldown(int cooldownSeconds) {
         return new AttemptTracker(count, lastTime, System.currentTimeMillis() + cooldownSeconds * 1000L);
     }
 
-    /** 重置 */
     public static AttemptTracker reset() {
         return new AttemptTracker(0, 0, 0);
     }

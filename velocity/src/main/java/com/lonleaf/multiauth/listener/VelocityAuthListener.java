@@ -33,9 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Velocity 端认证监听器。
- */
 public class VelocityAuthListener {
 
     private final Core core;
@@ -66,9 +63,6 @@ public class VelocityAuthListener {
     /** 验证线程计数器（用于线程命名，便于线程 dump 中区分） */
     private final AtomicInteger velocityThreadCounter = new AtomicInteger();
 
-    /**
-     * 验证专用有界线程池（daemon 线程）。
-     */
     private final ExecutorService verificationExecutor = new ThreadPoolExecutor(
             4, 16, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(100),
@@ -90,7 +84,6 @@ public class VelocityAuthListener {
         this.plugin = plugin;
     }
 
-    /** 注入跨服会话同步管理器 */
     public void setSessionSyncManager(SessionSyncManager sessionSyncManager) {
         this.sessionSyncManager = sessionSyncManager;
     }
@@ -272,9 +265,6 @@ public class VelocityAuthListener {
         }).delay(3, TimeUnit.SECONDS).schedule();
     }
 
-    /**
-     * 清理握手状态缓存。
-     */
     private void cleanupHandshakeState(String username) {
         handshakeStates.remove(username);
     }

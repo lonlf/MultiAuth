@@ -22,7 +22,6 @@ public class MultiverseHook {
         this.mvPlugin = plugin.getServer().getPluginManager().getPlugin("Multiverse-Core");
     }
 
-    /** Multiverse-Core 是否存在 */
     public boolean isPresent() {
         return mvPlugin != null;
     }

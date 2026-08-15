@@ -36,7 +36,6 @@ public class ReloadCommand implements Command {
         // 记录 reload 前的 proxy 值，用于检测代理模式切换（切换后需重启服务端才完全生效）
         boolean oldProxy = config.isProxy();
         config.reload();
-        // 重载语言文件
         Messages.reload(config.getConfig().getLanguage());
         // 清理预登录缓存，避免配置切换后使用过期摘要
         plugin.clearLoginSummaries();

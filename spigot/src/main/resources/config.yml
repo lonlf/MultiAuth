@@ -199,6 +199,12 @@ auth:
   # 禁止交互（方块/实体/物品）
   # Disable interaction (blocks/entities/items)
   restrict-interact: true
+  # 禁止破坏与放置方块（显式限制，确保未登录玩家无法挖掘/放置）
+  # Disable block breaking and placement (explicit restriction)
+  restrict-break-place: true
+  # 禁止背包/物品操作（打开背包、移动/丢弃物品、拾取、交换副手）
+  # Disable inventory and item actions (open inventory, move/drop items, pickup, swap hands)
+  restrict-inventory: true
   # 免疫伤害且不能造成伤害
   # Immune to damage and cannot deal damage
   restrict-damage: true

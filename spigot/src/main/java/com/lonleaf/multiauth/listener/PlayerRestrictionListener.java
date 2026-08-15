@@ -7,19 +7,23 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 
 import java.util.UUID;
 
-/**
- * 未登录玩家行动限制监听器。
- */
 public class PlayerRestrictionListener implements Listener {
 
     private final AuthState state;
@@ -30,9 +34,6 @@ public class PlayerRestrictionListener implements Listener {
         this.config = config;
     }
 
-    /**
-     * 禁止未登录玩家移动。
-     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerMove(PlayerMoveEvent event) {
         if (!config.getConfig().isAuthRestrictMove()) return;
@@ -59,9 +60,6 @@ public class PlayerRestrictionListener implements Listener {
         }
     }
 
-    /**
-     * 禁止未登录玩家聊天。
-     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         if (!config.getConfig().isAuthRestrictChat()) return;
@@ -70,9 +68,6 @@ public class PlayerRestrictionListener implements Listener {
         event.getPlayer().sendMessage(Messages.AUTH_RESTRICTED);
     }
 
-    /**
-     * 禁止未登录玩家交互方块/物品。
-     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (!config.getConfig().isAuthRestrictInteract()) return;
@@ -80,9 +75,6 @@ public class PlayerRestrictionListener implements Listener {
         event.setCancelled(true);
     }
 
-    /**
-     * 禁止未登录玩家交互实体。
-     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         if (!config.getConfig().isAuthRestrictInteract()) return;
@@ -91,8 +83,23 @@ public class PlayerRestrictionListener implements Listener {
     }
 
     /**
-     * 禁止未登录玩家受到伤害。
+     * 显式处理 BlockBreakEvent：不依赖 PlayerInteractEvent(LEFT_CLICK_BLOCK) 的事件传播实现，
+     * 保证不同服务端/版本上行为一致（防止未登录玩家挖掘出生点周围方块逃生）。
      */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (!config.getConfig().isAuthRestrictBreakPlace()) return;
+        if (state.isUnrestricted(event.getPlayer())) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (!config.getConfig().isAuthRestrictBreakPlace()) return;
+        if (state.isUnrestricted(event.getPlayer())) return;
+        event.setCancelled(true);
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityDamage(EntityDamageEvent event) {
         if (!config.getConfig().isAuthRestrictDamage()) return;
@@ -101,9 +108,6 @@ public class PlayerRestrictionListener implements Listener {
         event.setCancelled(true);
     }
 
-    /**
-     * 禁止未登录玩家造成伤害。
-     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (!config.getConfig().isAuthRestrictDamage()) return;
@@ -112,9 +116,44 @@ public class PlayerRestrictionListener implements Listener {
         event.setCancelled(true);
     }
 
-    /**
-     * 禁止未登录玩家使用除允许列表外的命令。
-     */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onInventoryOpen(InventoryOpenEvent event) {
+        if (!config.getConfig().isAuthRestrictInventory()) return;
+        if (!(event.getPlayer() instanceof Player player)) return;
+        if (state.isUnrestricted(player)) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!config.getConfig().isAuthRestrictInventory()) return;
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        if (state.isUnrestricted(player)) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (!config.getConfig().isAuthRestrictInventory()) return;
+        if (state.isUnrestricted(event.getPlayer())) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onEntityPickupItem(EntityPickupItemEvent event) {
+        if (!config.getConfig().isAuthRestrictInventory()) return;
+        if (!(event.getEntity() instanceof Player player)) return;
+        if (state.isUnrestricted(player)) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
+        if (!config.getConfig().isAuthRestrictInventory()) return;
+        if (state.isUnrestricted(event.getPlayer())) return;
+        event.setCancelled(true);
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
         if (!config.getConfig().isAuthRestrictCommand()) return;
@@ -122,7 +161,6 @@ public class PlayerRestrictionListener implements Listener {
         if (state.isUnrestricted(player)) return;
 
         String message = event.getMessage();
-        // 解析命令名（去掉 / 前缀和空格后的参数）
         String cmdName = message.startsWith("/") ? message.substring(1) : message;
         int spaceIdx = cmdName.indexOf(' ');
         if (spaceIdx > 0) {

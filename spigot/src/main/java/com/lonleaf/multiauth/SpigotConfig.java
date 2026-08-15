@@ -95,7 +95,7 @@ public class SpigotConfig {
         FileConfiguration current = YamlConfiguration.loadConfiguration(new java.io.StringReader(raw));
         int currentVersion = current.getInt("config-version", 0);
         if (currentVersion >= latestVersion) {
-            return; // 已是最新或无需升级
+            return;
         }
 
         // D：链式结构迁移，从 currentVersion 逐版本应用到 latestVersion（文本级修改，保留注释）
@@ -219,9 +219,6 @@ public class SpigotConfig {
         }
     }
 
-    /**
-     * 重新加载配置文件。
-     */
     public void reload() {
         logger.fine(Messages.get(Messages.CONFIG_RELOADING));
         load();
@@ -299,6 +296,8 @@ public class SpigotConfig {
         newConfig.setAuthRestrictInteract(f.getBoolean("auth.restrict-interact", true));
         newConfig.setAuthRestrictDamage(f.getBoolean("auth.restrict-damage", true));
         newConfig.setAuthRestrictCommand(f.getBoolean("auth.restrict-command", true));
+        newConfig.setAuthRestrictInventory(f.getBoolean("auth.restrict-inventory", true));
+        newConfig.setAuthRestrictBreakPlace(f.getBoolean("auth.restrict-break-place", true));
         newConfig.setAuthAllowCommands(f.getStringList("auth.allow-commands"));
         newConfig.setAuthLoginTimeout(f.getInt("auth.login-timeout", 600));
         newConfig.setAuthRegisterTimeout(f.getInt("auth.register-timeout", 180));

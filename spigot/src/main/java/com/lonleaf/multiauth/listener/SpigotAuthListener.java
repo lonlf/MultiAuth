@@ -473,9 +473,6 @@ public class SpigotAuthListener implements Listener {
 
     // ==================== proxy=true：登录阶段应用预登录缓存的决策 ====================
 
-    /**
-     * 登录阶段（主线程）。
-     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
         // 其他插件已拒绝该玩家（封禁/白名单/满员等）→ 本插件不再处理

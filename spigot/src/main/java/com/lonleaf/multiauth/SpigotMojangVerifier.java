@@ -52,8 +52,6 @@ public class SpigotMojangVerifier {
     // ==================== 主验证方法 ====================
 
     /**
-     * 执行 Mojang 加密握手验证。
-     *
      * @param channel 客户端 Netty Channel（由 PacketEvents LOGIN_START 回调直接传入）
      * @param username 玩家名
      * @return 验证结果
@@ -76,7 +74,6 @@ public class SpigotMojangVerifier {
         SpigotPacketListener.PendingHandshake handshake = packetListener.registerHandshake(username, channel, crypto);
 
         try {
-            // 发送 EncryptionRequest
             packetListener.sendEncryptionRequest(channel, crypto);
             logger.fine(Messages.get(Messages.VERIFY_ENC_REQUEST_SENT_WAITING, username));
 
@@ -192,8 +189,6 @@ public class SpigotMojangVerifier {
     }
 
     /**
-     * 通过 Netty Handler 启用 AES/CFB8 加密。
-     *
      * @return true = 加密已启用；false = 锚点缺失，加密启用失败（decrypt 半启用状态已回滚）
      */
     private boolean enableAesViaNetty(Channel channel, byte[] sharedSecret) {
@@ -264,7 +259,6 @@ public class SpigotMojangVerifier {
     // ==================== spoofedUUID 设置 ====================
 
     /**
-     * 设置 Connection 的 spoofedUUID 字段。
      * Spigot 在创建 GameProfile 时会检查此字段，如果已设置则使用此 UUID 而非离线 UUID。
      */
     private void setSpoofedUUID(Channel channel, UUID uuid) {
@@ -302,7 +296,6 @@ public class SpigotMojangVerifier {
 
     // ==================== AES 加密 Handler（回退用） ====================
 
-    /** 入站解密 Handler */
     public static class AesDecryptHandler extends MessageToMessageDecoder<ByteBuf> {
         private final Cipher cipher;
 
@@ -320,7 +313,6 @@ public class SpigotMojangVerifier {
         }
     }
 
-    /** 出站加密 Handler */
     public static class AesEncryptHandler extends MessageToMessageEncoder<ByteBuf> {
         private final Cipher cipher;
 

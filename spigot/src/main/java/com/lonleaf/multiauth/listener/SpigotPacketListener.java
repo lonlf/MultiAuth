@@ -69,7 +69,6 @@ public class SpigotPacketListener extends PacketListenerAbstract {
     /** 加密响应数据（sharedSecret + verifyToken） */
     public record EncryptionResponseData(byte[] sharedSecret, byte[] verifyToken) {}
 
-    /** 待处理的加密握手 */
     public static class PendingHandshake {
         public final CompletableFuture<EncryptionResponseData> future = new CompletableFuture<>();
         public final AuthCrypto crypto;
@@ -84,7 +83,6 @@ public class SpigotPacketListener extends PacketListenerAbstract {
     /** 验证结果（传递到 AsyncPlayerPreLoginEvent）。携带 Channel 以区分同用户名的并发连接。 */
     public record VerificationResult(boolean allowed, UUID uuid, String denyMessage, Channel channel) {}
 
-    /** LOGIN_START 异步回调接口 */
     @FunctionalInterface
     public interface LoginStartCallback {
         void onLoginStart(String username, Channel channel, InetAddress address);
@@ -94,23 +92,19 @@ public class SpigotPacketListener extends PacketListenerAbstract {
         this.logger = logger;
     }
 
-    /** 注册到 PacketEvents */
     public void register() {
         PacketEvents.getAPI().getEventManager().registerListener(this);
         logger.fine(Messages.get(Messages.PACKET_LISTENER_REGISTERED));
     }
 
-    /** 注销 */
     public void unregister() {
         PacketEvents.getAPI().getEventManager().unregisterListener(this);
     }
 
-    /** 设置 LOGIN_START 回调 */
     public void setLoginStartCallback(LoginStartCallback callback) {
         this.loginStartCallback = callback;
     }
 
-    /** PacketEvents 是否可用 */
     public static boolean isAvailable() {
         try {
             Class.forName("com.github.retrooper.packetevents.PacketEvents");
@@ -129,9 +123,6 @@ public class SpigotPacketListener extends PacketListenerAbstract {
         }
     }
 
-    /**
-     * 处理 LOGIN_START 包。
-     */
     private void handleLoginStart(PacketReceiveEvent event) {
         try {
             WrapperLoginClientLoginStart start = new WrapperLoginClientLoginStart(event);
@@ -185,7 +176,6 @@ public class SpigotPacketListener extends PacketListenerAbstract {
                 }
             });
 
-            // 获取客户端 IP
             InetAddress address = null;
             if (channel.remoteAddress() instanceof InetSocketAddress socketAddr) {
                 address = socketAddr.getAddress();
@@ -250,7 +240,6 @@ public class SpigotPacketListener extends PacketListenerAbstract {
 
     // ==================== 供 SpigotMojangVerifier 调用的 API ====================
 
-    /** 注册待处理的加密握手。 */
     public PendingHandshake registerHandshake(String username, Channel channel, AuthCrypto crypto) {
         PendingHandshake handshake = new PendingHandshake(crypto, username);
         // 防重入：同一 channel 已有待处理握手（重复 ENCRYPTION_REQUEST 场景）时复用已有握手，
@@ -263,12 +252,10 @@ public class SpigotPacketListener extends PacketListenerAbstract {
         return handshake;
     }
 
-    /** 取消待处理的握手（超时或错误时调用）。 */
     public void cancelHandshake(Channel channel) {
         pendingHandshakes.remove(channel);
     }
 
-    /** 发送 EncryptionRequest 包。 */
     public void sendEncryptionRequest(Channel channel, AuthCrypto crypto) {
         String serverId = "";
         byte[] publicKey = crypto.getPublicKeyBytes();
@@ -324,9 +311,6 @@ public class SpigotPacketListener extends PacketListenerAbstract {
         verifiedUsers.put(username, result);
     }
 
-    /**
-     * 获取并移除验证结果。
-     */
     public VerificationResult getAndRemoveVerificationResult(String username) {
         return verifiedUsers.remove(username);
     }

@@ -7,15 +7,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * 管理离线玩家的登录会话状态。
- */
 public class AuthSessionManager {
 
-    /** 已登录的玩家 UUID 集合 */
     private final Set<UUID> loggedInPlayers = ConcurrentHashMap.newKeySet();
 
-    /** 正在登录验证中的玩家（防并发登录） */
     private final Set<UUID> processingPlayers = ConcurrentHashMap.newKeySet();
 
     /** 持久化会话信息：玩家用户名 → SessionInfo（退出后保留，用于重连免登录） */
@@ -35,11 +30,6 @@ public class AuthSessionManager {
      */
     public record SessionInfo(String username, long loginTime, String ip) {}
 
-    /**
-     * 标记玩家已登录。
-     *
-     * @param uuid 玩家 UUID
-     */
     public void setLoggedIn(UUID uuid) {
         loggedInPlayers.add(uuid);
         processingPlayers.remove(uuid);
@@ -68,21 +58,10 @@ public class AuthSessionManager {
         return processingPlayers.add(uuid);
     }
 
-    /**
-     * 释放验证中状态。
-     *
-     * @param uuid 玩家 UUID
-     */
     public void endProcessing(UUID uuid) {
         processingPlayers.remove(uuid);
     }
 
-    /**
-     * 判断玩家是否已登录。
-     *
-     * @param uuid 玩家 UUID
-     * @return true 表示已通过 /login 验证
-     */
     public boolean isLoggedIn(UUID uuid) {
         return loggedInPlayers.contains(uuid);
     }
